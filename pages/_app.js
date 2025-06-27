@@ -1,12 +1,12 @@
 // pages/_app.js - App wrapper replacing App.tsx
 import { useEffect } from 'react';
 import Head from 'next/head';
-import { AuthProvider } from '../src/contexts/AuthContext';
-import { CartProvider } from '../src/contexts/CartContext';
-import { Toaster } from '../src/components/ui/toaster';
-import { Toaster as Sonner } from '../src/components/ui/sonner';
-import { TooltipProvider } from '../src/components/ui/tooltip';
-import '../src/index.css';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { CartProvider } from '@/contexts/CartContext';
+import { Toaster } from '@/components/ui/toaster';
+import { Toaster as Sonner } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import '@/index.css';
 
 export default function App({ Component, pageProps }) {
   return (
