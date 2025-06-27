@@ -18,6 +18,10 @@ import TrackOrder from "./pages/TrackOrder";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Contact from "./pages/Contact";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import ShippingPolicy from "./pages/ShippingPolicy";
+import ReturnPolicy from "./pages/ReturnPolicy";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProducts from "./pages/admin/Products";
 import AdminOrders from "./pages/admin/Orders";
@@ -48,6 +52,10 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms-of-service" element={<TermsOfService />} />
+                <Route path="/shipping-policy" element={<ShippingPolicy />} />
+                <Route path="/return-policy" element={<ReturnPolicy />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/products" element={<AdminProducts />} />
                 <Route path="/admin/orders" element={<AdminOrders />} />
