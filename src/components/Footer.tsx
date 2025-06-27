@@ -1,5 +1,6 @@
 
 import { Link } from 'react-router-dom';
+import { Facebook, Instagram, Youtube } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -21,16 +22,15 @@ const Footer = () => {
               Experience the finest nuts and dried fruits from around the world.
             </p>
             <div className="flex space-x-4">
-              {/* Social Icons - placeholder for now */}
-              <div className="w-8 h-8 bg-secondary/20 rounded-full flex items-center justify-center">
-                <span className="text-xs">f</span>
-              </div>
-              <div className="w-8 h-8 bg-secondary/20 rounded-full flex items-center justify-center">
-                <span className="text-xs">t</span>
-              </div>
-              <div className="w-8 h-8 bg-secondary/20 rounded-full flex items-center justify-center">
-                <span className="text-xs">i</span>
-              </div>
+              <a href="#" className="w-8 h-8 bg-secondary/20 rounded-full flex items-center justify-center hover:bg-secondary/30 transition-colors">
+                <Facebook size={16} className="text-primary-foreground" />
+              </a>
+              <a href="#" className="w-8 h-8 bg-secondary/20 rounded-full flex items-center justify-center hover:bg-secondary/30 transition-colors">
+                <Instagram size={16} className="text-primary-foreground" />
+              </a>
+              <a href="#" className="w-8 h-8 bg-secondary/20 rounded-full flex items-center justify-center hover:bg-secondary/30 transition-colors">
+                <Youtube size={16} className="text-primary-foreground" />
+              </a>
             </div>
           </div>
 
