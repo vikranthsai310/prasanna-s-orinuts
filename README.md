@@ -4,6 +4,21 @@
 
 **URL**: https://lovable.dev/projects/8bb4b139-628b-4d00-be4e-e4ab67efaf28
 
+## Payment Gateway Integration
+
+This project includes integration with Razorpay for payment processing. To set up the payment gateway:
+
+1. See the `ENVIRONMENT_SETUP.md` file for detailed instructions on configuring environment variables
+2. For more details on the Razorpay implementation, refer to `RAZORPAY_SETUP.md`
+
+Key features of the payment integration:
+- Secure checkout with Razorpay
+- Payment verification
+- Order tracking
+- Comprehensive error handling
+
+For testing, you can use Razorpay test cards as detailed in the setup documentation.
+
 ## How can I edit this code?
 
 There are several ways of editing your application.
@@ -59,6 +74,8 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Firebase (Authentication, Firestore, Storage)
+- Razorpay Payment Gateway
 
 ## How can I deploy this project?
 

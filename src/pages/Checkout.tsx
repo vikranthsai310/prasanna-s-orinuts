@@ -1,9 +1,20 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { initializeRazorpay, createRazorpayOrder, openRazorpayCheckout, verifyPayment } from '@/services/paymentService';
+import { toast } from '@/components/ui/use-toast';
+import { getUserAddresses, type Address } from '@/services/addressService';
+import { Check, ChevronDown } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
@@ -20,8 +31,78 @@ const Checkout = () => {
     pincode: ''
   });
   
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [useNewAddress, setUseNewAddress] = useState(true);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
+  
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isProcessing, setIsProcessing] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+
+  // Load Razorpay script on component mount
+  useEffect(() => {
+    const loadRazorpay = async () => {
+      const result = await initializeRazorpay();
+      setRazorpayLoaded(result);
+      if (!result) {
+        toast({
+          title: "Payment Gateway Error",
+          description: "Failed to load payment gateway. Please try again later.",
+          variant: "destructive"
+        });
+      }
+    };
+    
+    loadRazorpay();
+  }, []);
+  
+  // Load saved addresses if user is logged in
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      if (user?.id) {
+        setIsLoadingAddresses(true);
+        try {
+          const addresses = await getUserAddresses(user.id);
+          setSavedAddresses(addresses);
+          
+          // If there are addresses, select the default one
+          const defaultAddress = addresses.find(addr => addr.isDefault);
+          if (defaultAddress) {
+            setSelectedAddressId(defaultAddress.id);
+            setUseNewAddress(false);
+          } else if (addresses.length > 0) {
+            setSelectedAddressId(addresses[0].id);
+            setUseNewAddress(false);
+          }
+        } catch (error) {
+          console.error('Error fetching addresses:', error);
+        } finally {
+          setIsLoadingAddresses(false);
+        }
+      }
+    };
+    
+    fetchAddresses();
+  }, [user?.id]);
+  
+  // Update form data when selected address changes
+  useEffect(() => {
+    if (!useNewAddress && selectedAddressId) {
+      const selectedAddress = savedAddresses.find(addr => addr.id === selectedAddressId);
+      if (selectedAddress) {
+        setFormData({
+          name: selectedAddress.name || user?.name || '',
+          email: user?.email || '',
+          phone: selectedAddress.phone || user?.phone || '',
+          address: selectedAddress.street,
+          city: selectedAddress.city,
+          state: selectedAddress.state,
+          pincode: selectedAddress.pincode
+        });
+      }
+    }
+  }, [selectedAddressId, useNewAddress, savedAddresses, user]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -49,27 +130,113 @@ const Checkout = () => {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
+  
+  const handleAddressChange = (addressId: string) => {
+    setSelectedAddressId(addressId);
+    setUseNewAddress(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) return;
     
+    if (!razorpayLoaded) {
+      toast({
+        title: "Payment Gateway Error",
+        description: "Payment gateway is not available. Please try again later.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsProcessing(true);
     
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Create a Razorpay order
+      const orderId = await createRazorpayOrder(
+        items,
+        totalPrice,
+        {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode
+        }
+      );
       
-      // Generate order ID
-      const orderId = 'ORD' + Date.now();
-      
-      // Clear cart and redirect
-      clearCart();
-      navigate(`/order/${orderId}/confirmation`);
+      // Open Razorpay checkout
+      openRazorpayCheckout(
+        orderId,
+        totalPrice,
+        {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone
+        },
+        // Success handler
+        async (response) => {
+          try {
+            const isVerified = await verifyPayment(
+              response.razorpay_order_id,
+              response.razorpay_payment_id,
+              response.razorpay_signature
+            );
+            
+            if (isVerified) {
+              toast({
+                title: "Payment Successful",
+                description: "Your order has been placed successfully!",
+                variant: "default"
+              });
+              
+              // Clear cart and redirect to order confirmation
+              clearCart();
+              navigate(`/order-confirmation`, { 
+                state: { 
+                  orderId: response.razorpay_order_id,
+                  paymentId: response.razorpay_payment_id
+                } 
+              });
+            } else {
+              toast({
+                title: "Payment Verification Failed",
+                description: "We couldn't verify your payment. Please contact support.",
+                variant: "destructive"
+              });
+            }
+          } catch (error) {
+            console.error('Payment verification failed:', error);
+            toast({
+              title: "Payment Error",
+              description: "There was an error processing your payment.",
+              variant: "destructive"
+            });
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+        // Failure handler
+        (error) => {
+          console.error('Razorpay payment failed:', error);
+          toast({
+            title: "Payment Failed",
+            description: error.error?.description || "Your payment was not successful. Please try again.",
+            variant: "destructive"
+          });
+          setIsProcessing(false);
+        }
+      );
     } catch (error) {
-      console.error('Payment processing failed:', error);
-    } finally {
+      console.error('Order creation failed:', error);
+      toast({
+        title: "Order Creation Failed",
+        description: "We couldn't create your order. Please try again.",
+        variant: "destructive"
+      });
       setIsProcessing(false);
     }
   };
@@ -99,103 +266,206 @@ const Checkout = () => {
         <div className="card-premium">
           <h2 className="font-semibold text-xl mb-6">Shipping Information</h2>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Full Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className={`input-field w-full ${errors.name ? 'border-destructive' : ''}`}
-                  placeholder="Enter your full name"
-                />
-                {errors.name && <p className="text-destructive text-sm mt-1">{errors.name}</p>}
+          {/* Saved Addresses Section */}
+          {user && savedAddresses.length > 0 && (
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-medium">Your Saved Addresses</h3>
+                <Button 
+                  variant="link" 
+                  className="text-secondary p-0 h-auto"
+                  onClick={() => navigate('/profile')}
+                >
+                  Manage Addresses
+                </Button>
+              </div>
+              
+              <div className="space-y-3">
+                <Select 
+                  value={useNewAddress ? 'new' : selectedAddressId || ''} 
+                  onValueChange={(value) => {
+                    if (value === 'new') {
+                      setUseNewAddress(true);
+                      setFormData({
+                        name: user?.name || '',
+                        email: user?.email || '',
+                        phone: user?.phone || '',
+                        address: '',
+                        city: '',
+                        state: '',
+                        pincode: ''
+                      });
+                    } else {
+                      handleAddressChange(value);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select an address" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {savedAddresses.map((address) => (
+                      <SelectItem key={address.id} value={address.id || ''}>
+                        <div className="flex items-center">
+                          <span>{address.type}: {address.street.substring(0, 30)}{address.street.length > 30 ? '...' : ''}</span>
+                          {address.isDefault && (
+                            <span className="ml-2 text-xs bg-accent text-accent-foreground px-1 py-0.5 rounded">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="new">+ Add a new address</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {!useNewAddress && selectedAddressId && (
+                <div className="mt-4 p-3 bg-accent/20 rounded-md">
+                  {savedAddresses
+                    .filter(addr => addr.id === selectedAddressId)
+                    .map((addr) => (
+                      <div key={addr.id} className="text-sm">
+                        <p className="font-medium flex items-center gap-2">
+                          <span className="bg-secondary/10 text-secondary px-2 py-0.5 rounded text-xs">
+                            {addr.type}
+                          </span>
+                          {addr.name}
+                        </p>
+                        <p>{addr.street}</p>
+                        <p>{addr.city}, {addr.state} - {addr.pincode}</p>
+                        <p className="mt-1">{addr.phone}</p>
+                      </div>
+                    ))}
+                </div>
+              )}
+              
+              {!useNewAddress && (
+                <Button 
+                  variant="link" 
+                  className="mt-2 p-0 h-auto"
+                  onClick={() => setUseNewAddress(true)}
+                >
+                  Use a different address
+                </Button>
+              )}
+            </div>
+          )}
+          
+          {/* New Address Form */}
+          {(useNewAddress || savedAddresses.length === 0) && (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Full Name *</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className={`input-field w-full ${errors.name ? 'border-destructive' : ''}`}
+                    placeholder="Enter your full name"
+                  />
+                  {errors.name && <p className="text-destructive text-sm mt-1">{errors.name}</p>}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Phone Number *</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className={`input-field w-full ${errors.phone ? 'border-destructive' : ''}`}
+                    placeholder="Enter your phone number"
+                  />
+                  {errors.phone && <p className="text-destructive text-sm mt-1">{errors.phone}</p>}
+                </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-1">Phone Number *</label>
+                <label className="block text-sm font-medium mb-1">Email Address *</label>
                 <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
+                  type="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleInputChange}
-                  className={`input-field w-full ${errors.phone ? 'border-destructive' : ''}`}
-                  placeholder="Enter your phone number"
+                  className={`input-field w-full ${errors.email ? 'border-destructive' : ''}`}
+                  placeholder="Enter your email address"
                 />
-                {errors.phone && <p className="text-destructive text-sm mt-1">{errors.phone}</p>}
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1">Email Address *</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className={`input-field w-full ${errors.email ? 'border-destructive' : ''}`}
-                placeholder="Enter your email address"
-              />
-              {errors.email && <p className="text-destructive text-sm mt-1">{errors.email}</p>}
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1">Address *</label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                className={`input-field w-full ${errors.address ? 'border-destructive' : ''}`}
-                placeholder="Enter your complete address"
-              />
-              {errors.address && <p className="text-destructive text-sm mt-1">{errors.address}</p>}
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">City *</label>
-                <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className={`input-field w-full ${errors.city ? 'border-destructive' : ''}`}
-                  placeholder="City"
-                />
-                {errors.city && <p className="text-destructive text-sm mt-1">{errors.city}</p>}
+                {errors.email && <p className="text-destructive text-sm mt-1">{errors.email}</p>}
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-1">State *</label>
+                <label className="block text-sm font-medium mb-1">Address *</label>
                 <input
                   type="text"
-                  name="state"
-                  value={formData.state}
+                  name="address"
+                  value={formData.address}
                   onChange={handleInputChange}
-                  className={`input-field w-full ${errors.state ? 'border-destructive' : ''}`}
-                  placeholder="State"
+                  className={`input-field w-full ${errors.address ? 'border-destructive' : ''}`}
+                  placeholder="Enter your complete address"
                 />
-                {errors.state && <p className="text-destructive text-sm mt-1">{errors.state}</p>}
+                {errors.address && <p className="text-destructive text-sm mt-1">{errors.address}</p>}
               </div>
               
-              <div>
-                <label className="block text-sm font-medium mb-1">Pincode *</label>
-                <input
-                  type="text"
-                  name="pincode"
-                  value={formData.pincode}
-                  onChange={handleInputChange}
-                  className={`input-field w-full ${errors.pincode ? 'border-destructive' : ''}`}
-                  placeholder="6-digit pincode"
-                  maxLength={6}
-                />
-                {errors.pincode && <p className="text-destructive text-sm mt-1">{errors.pincode}</p>}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">City *</label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    className={`input-field w-full ${errors.city ? 'border-destructive' : ''}`}
+                    placeholder="City"
+                  />
+                  {errors.city && <p className="text-destructive text-sm mt-1">{errors.city}</p>}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">State *</label>
+                  <input
+                    type="text"
+                    name="state"
+                    value={formData.state}
+                    onChange={handleInputChange}
+                    className={`input-field w-full ${errors.state ? 'border-destructive' : ''}`}
+                    placeholder="State"
+                  />
+                  {errors.state && <p className="text-destructive text-sm mt-1">{errors.state}</p>}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Pincode *</label>
+                  <input
+                    type="text"
+                    name="pincode"
+                    value={formData.pincode}
+                    onChange={handleInputChange}
+                    className={`input-field w-full ${errors.pincode ? 'border-destructive' : ''}`}
+                    placeholder="6-digit pincode"
+                    maxLength={6}
+                  />
+                  {errors.pincode && <p className="text-destructive text-sm mt-1">{errors.pincode}</p>}
+                </div>
               </div>
-            </div>
-          </form>
+              
+              {user && (
+                <div className="flex items-center mt-4">
+                  <Button 
+                    type="button" 
+                    variant="link" 
+                    className="p-0 h-auto text-secondary"
+                    onClick={() => navigate('/profile')}
+                  >
+                    Save this address to your account
+                  </Button>
+                </div>
+              )}
+            </form>
+          )}
         </div>
         
         {/* Order Summary */}
@@ -233,7 +503,7 @@ const Checkout = () => {
           <div className="mt-6 space-y-3">
             <Button 
               onClick={handleSubmit}
-              disabled={isProcessing}
+              disabled={isProcessing || !razorpayLoaded}
               className="w-full btn-secondary"
             >
               {isProcessing ? 'Processing...' : 'Pay with Razorpay'}

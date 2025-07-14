@@ -1,17 +1,98 @@
 
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Heart, ShoppingCart, Check, Shield, Award, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/ProductCard';
 import { mockProducts } from '@/data/mockProducts';
+import { useEffect, useRef, useState } from 'react';
+import { useToast } from '@/components/ui/use-toast';
 
 const Index = () => {
   const featuredProducts = mockProducts.slice(0, 4);
+  const { toast } = useToast();
+  const luxurySectionRef = useRef<HTMLElement>(null);
+  const [particles, setParticles] = useState<Array<{id: number, style: React.CSSProperties}>>([]);
+
+  // Generate floating particles
+  useEffect(() => {
+    const generateParticles = () => {
+      const newParticles = [];
+      for (let i = 0; i < 15; i++) { // Reduced from 20 to 15
+        newParticles.push({
+          id: i,
+          style: {
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 5}s`,
+            animationDuration: `${5 + Math.random() * 10}s`
+          }
+        });
+      }
+      setParticles(newParticles);
+    };
+
+    generateParticles();
+  }, []);
+
+  // Parallax effect
+  useEffect(() => {
+    const handleParallax = () => {
+      if (!luxurySectionRef.current) return;
+      
+      const scrollPosition = window.scrollY;
+      const sectionTop = luxurySectionRef.current.offsetTop;
+      const sectionHeight = luxurySectionRef.current.offsetHeight;
+      
+      if (scrollPosition > sectionTop - window.innerHeight && 
+          scrollPosition < sectionTop + sectionHeight) {
+        const parallaxBg = luxurySectionRef.current.querySelector(':before') as HTMLElement;
+        if (parallaxBg) {
+          const speed = 0.5;
+          const yPos = (scrollPosition - sectionTop) * speed;
+          parallaxBg.style.transform = `translateY(${yPos}px) translateZ(-10px)`;
+        }
+      }
+    };
+    
+    window.addEventListener('scroll', handleParallax);
+    return () => window.removeEventListener('scroll', handleParallax);
+  }, []);
+
+  // Reveal animation on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const reveals = document.querySelectorAll('.reveal');
+      
+      reveals.forEach(element => {
+        const windowHeight = window.innerHeight;
+        const elementTop = element.getBoundingClientRect().top;
+        const elementVisible = 150;
+        
+        if (elementTop < windowHeight - elementVisible) {
+          element.classList.add('active');
+        }
+      });
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Check on initial load
+    
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Handle quick add to cart
+  const handleQuickAdd = (product: string) => {
+    toast({
+      title: "Added to Cart",
+      description: `${product} has been added to your cart.`,
+      duration: 3000,
+    });
+  };
 
   return (
     <div className="animate-fade-in">
       {/* Hero Section */}
-      <section className="relative h-[70vh] flex items-center justify-center">
+      <section className="relative hero-fullscreen flex items-center justify-center">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary/60">
           <img 
             src="/placeholder.svg" 
@@ -20,18 +101,275 @@ const Index = () => {
           />
         </div>
         <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
-          <h1 className="font-playfair text-4xl md:text-6xl font-bold mb-6">
+          <h1 className="font-playfair text-5xl md:text-7xl font-bold mb-8">
             Fresh Premium Dry Fruits
           </h1>
-          <p className="text-xl md:text-2xl mb-8 text-white/90">
+          <p className="text-xl md:text-3xl mb-12 text-white/90">
             Handpicked, naturally dried, and delivered fresh to your doorstep
           </p>
           <Link to="/products">
-            <Button size="lg" className="btn-secondary text-lg px-8 py-4">
+            <Button size="lg" className="btn-secondary text-lg px-10 py-6 text-xl">
               Shop Now
-              <ArrowRight className="ml-2 h-5 w-5" />
+              <ArrowRight className="ml-3 h-6 w-6" />
             </Button>
           </Link>
+        </div>
+      </section>
+
+      {/* Luxury Dry Fruits Section */}
+      <section ref={luxurySectionRef} className="luxury-section">
+        {/* Floating particles */}
+        {particles.map(particle => (
+          <div 
+            key={particle.id} 
+            className="particle" 
+            style={particle.style}
+          />
+        ))}
+        
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-2 text-primary">
+              Nature's Finest Selection
+            </h2>
+            <p className="text-base max-w-2xl mx-auto text-[#6B5750]">
+              Indulge in our premium collection of handpicked dry fruits
+            </p>
+          </div>
+          
+          {/* Mobile view: horizontal scroll */}
+          <div className="md:hidden mobile-scroll-container">
+            {/* Almond Card */}
+            <div className="mobile-scroll-item reveal delay-1">
+              <div className="glassmorphic-card">
+                <div className="price-tag">₹899/kg</div>
+                <div className="fruit-image-container">
+                  <img 
+                    src="/almond.png" 
+                    alt="Premium Almond" 
+                    className="fruit-image float-animation-1"
+                    loading="lazy"
+                  />
+                </div>
+                <h3 className="fruit-title text-center">Premium Almonds</h3>
+                <p className="fruit-description text-center sequential-fade">
+                  <span className="golden-text">California-sourced</span> almonds with perfect crunch
+                </p>
+                <div className="flex flex-wrap justify-center mt-2 sequential-fade">
+                  <div className="benefit-badge">
+                    <Heart className="w-3 h-3 mr-1" /> Heart Health
+                  </div>
+                  <div className="benefit-badge">
+                    <Shield className="w-3 h-3 mr-1" /> Antioxidants
+                  </div>
+                </div>
+                {/* Update the button layout in the mobile view */}
+                <div className="mt-4 mb-6 text-center sequential-fade">
+                  <Link to="/products">
+                    <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
+                      Explore
+                    </Button>
+                  </Link>
+                </div>
+                <div className="quick-add-btn" onClick={() => handleQuickAdd("Premium Almonds")}>
+                  <ShoppingCart className="w-4 h-4 inline-block mr-2" /> Quick Add
+                </div>
+              </div>
+            </div>
+            
+            {/* Cashew Card */}
+            <div className="mobile-scroll-item reveal delay-2">
+              <div className="glassmorphic-card">
+                <div className="price-tag">₹1099/kg</div>
+                <div className="fruit-image-container">
+                  <img 
+                    src="/cashew.png" 
+                    alt="Premium Cashew" 
+                    className="fruit-image float-animation-2"
+                    loading="lazy"
+                  />
+                </div>
+                <h3 className="fruit-title text-center">Exotic Cashews</h3>
+                <p className="fruit-description text-center sequential-fade">
+                  Creamy <span className="golden-text">hand-selected</span> cashews with subtle sweetness
+                </p>
+                <div className="flex flex-wrap justify-center mt-2 sequential-fade">
+                  <div className="benefit-badge">
+                    <Star className="w-3 h-3 mr-1" /> Energy Boost
+                  </div>
+                  <div className="benefit-badge">
+                    <Award className="w-3 h-3 mr-1" /> Premium Quality
+                  </div>
+                </div>
+                {/* Update the button layout in the mobile view */}
+                <div className="mt-4 mb-6 text-center sequential-fade">
+                  <Link to="/products">
+                    <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
+                      Explore
+                    </Button>
+                  </Link>
+                </div>
+                <div className="quick-add-btn" onClick={() => handleQuickAdd("Exotic Cashews")}>
+                  <ShoppingCart className="w-4 h-4 inline-block mr-2" /> Quick Add
+                </div>
+              </div>
+            </div>
+            
+            {/* Walnut Card */}
+            <div className="mobile-scroll-item reveal delay-3">
+              <div className="glassmorphic-card">
+                <div className="price-tag">₹1299/kg</div>
+                <div className="fruit-image-container">
+                  <img 
+                    src="/walnut.png" 
+                    alt="Premium Walnut" 
+                    className="fruit-image float-animation-3"
+                    loading="lazy"
+                  />
+                </div>
+                <h3 className="fruit-title text-center">Organic Walnuts</h3>
+                <p className="fruit-description text-center sequential-fade">
+                  <span className="golden-text">Himalayan-grown</span> walnuts rich in omega nutrition
+                </p>
+                <div className="flex flex-wrap justify-center mt-2 sequential-fade">
+                  <div className="benefit-badge">
+                    <Check className="w-3 h-3 mr-1" /> Brain Health
+                  </div>
+                  <div className="benefit-badge">
+                    <Shield className="w-3 h-3 mr-1" /> Omega-3 Rich
+                  </div>
+                </div>
+                {/* Update the button layout in the mobile view */}
+                <div className="mt-4 mb-6 text-center sequential-fade">
+                  <Link to="/products">
+                    <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
+                      Explore
+                    </Button>
+                  </Link>
+                </div>
+                <div className="quick-add-btn" onClick={() => handleQuickAdd("Organic Walnuts")}>
+                  <ShoppingCart className="w-4 h-4 inline-block mr-2" /> Quick Add
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Desktop view: grid */}
+          <div className="hidden md:grid md:grid-cols-3 gap-6">
+            {/* Almond Card */}
+            <div className="reveal delay-1">
+              <div className="glassmorphic-card">
+                <div className="price-tag">₹899/kg</div>
+                <div className="fruit-image-container">
+                  <img 
+                    src="/almond.png" 
+                    alt="Premium Almond" 
+                    className="fruit-image float-animation-1"
+                    loading="lazy"
+                  />
+                </div>
+                <h3 className="fruit-title text-center">Premium Almonds</h3>
+                <p className="fruit-description text-center sequential-fade">
+                  <span className="golden-text">California-sourced</span> almonds with perfect crunch
+                </p>
+                <div className="flex flex-wrap justify-center mt-2 sequential-fade">
+                  <div className="benefit-badge">
+                    <Heart className="w-3 h-3 mr-1" /> Heart Health
+                  </div>
+                  <div className="benefit-badge">
+                    <Shield className="w-3 h-3 mr-1" /> Antioxidants
+                  </div>
+                </div>
+                {/* Update the button layout in the desktop view */}
+                <div className="mt-4 mb-6 text-center sequential-fade">
+                  <Link to="/products">
+                    <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
+                      Explore
+                    </Button>
+                  </Link>
+                </div>
+                <div className="quick-add-btn" onClick={() => handleQuickAdd("Premium Almonds")}>
+                  <ShoppingCart className="w-4 h-4 inline-block mr-2" /> Quick Add
+                </div>
+              </div>
+            </div>
+            
+            {/* Cashew Card */}
+            <div className="reveal delay-2">
+              <div className="glassmorphic-card">
+                <div className="price-tag">₹1099/kg</div>
+                <div className="fruit-image-container">
+                  <img 
+                    src="/cashew.png" 
+                    alt="Premium Cashew" 
+                    className="fruit-image float-animation-2"
+                    loading="lazy"
+                  />
+                </div>
+                <h3 className="fruit-title text-center">Exotic Cashews</h3>
+                <p className="fruit-description text-center sequential-fade">
+                  Creamy <span className="golden-text">hand-selected</span> cashews with subtle sweetness
+                </p>
+                <div className="flex flex-wrap justify-center mt-2 sequential-fade">
+                  <div className="benefit-badge">
+                    <Star className="w-3 h-3 mr-1" /> Energy Boost
+                  </div>
+                  <div className="benefit-badge">
+                    <Award className="w-3 h-3 mr-1" /> Premium Quality
+                  </div>
+                </div>
+                {/* Update the button layout in the desktop view */}
+                <div className="mt-4 mb-6 text-center sequential-fade">
+                  <Link to="/products">
+                    <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
+                      Explore
+                    </Button>
+                  </Link>
+                </div>
+                <div className="quick-add-btn" onClick={() => handleQuickAdd("Exotic Cashews")}>
+                  <ShoppingCart className="w-4 h-4 inline-block mr-2" /> Quick Add
+                </div>
+              </div>
+            </div>
+            
+            {/* Walnut Card */}
+            <div className="reveal delay-3">
+              <div className="glassmorphic-card">
+                <div className="price-tag">₹1299/kg</div>
+                <div className="fruit-image-container">
+                  <img 
+                    src="/walnut.png" 
+                    alt="Premium Walnut" 
+                    className="fruit-image float-animation-3"
+                    loading="lazy"
+                  />
+                </div>
+                <h3 className="fruit-title text-center">Organic Walnuts</h3>
+                <p className="fruit-description text-center sequential-fade">
+                  <span className="golden-text">Himalayan-grown</span> walnuts rich in omega nutrition
+                </p>
+                <div className="flex flex-wrap justify-center mt-2 sequential-fade">
+                  <div className="benefit-badge">
+                    <Check className="w-3 h-3 mr-1" /> Brain Health
+                  </div>
+                  <div className="benefit-badge">
+                    <Shield className="w-3 h-3 mr-1" /> Omega-3 Rich
+                  </div>
+                </div>
+                {/* Update the button layout in the desktop view */}
+                <div className="mt-4 mb-6 text-center sequential-fade">
+                  <Link to="/products">
+                    <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
+                      Explore
+                    </Button>
+                  </Link>
+                </div>
+                <div className="quick-add-btn" onClick={() => handleQuickAdd("Organic Walnuts")}>
+                  <ShoppingCart className="w-4 h-4 inline-block mr-2" /> Quick Add
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
