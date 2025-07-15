@@ -1,8 +1,8 @@
-# Welcome to your Lovable project
+# Premium Orchard - Dry Fruits E-commerce
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/8bb4b139-628b-4d00-be4e-e4ab67efaf28
+Premium Orchard is an e-commerce platform specializing in high-quality dry fruits and nuts.
 
 ## Payment Gateway Integration
 
@@ -23,15 +23,7 @@ For testing, you can use Razorpay test cards as detailed in the setup documentat
 
 There are several ways of editing your application.
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/8bb4b139-628b-4d00-be4e-e4ab67efaf28) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
 **Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
@@ -79,12 +71,9 @@ This project is built with:
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/8bb4b139-628b-4d00-be4e-e4ab67efaf28) and click on Share -> Publish.
+This project can be deployed on Vercel with both frontend and serverless backend functions.
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+1. Push your code to a Git repository
+2. Connect your Vercel account to your repository
+3. Import the project in Vercel
+4. Vercel will automatically detect your configuration and deploy both the frontend and backend
