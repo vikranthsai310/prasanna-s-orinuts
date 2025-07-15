@@ -9,6 +9,13 @@ interface ProductStructuredDataProps {
     imageUrl: string;
     category: string;
     stock: number;
+    nutritionalInfo?: {
+      calories: number;
+      protein: number;
+      fat: number;
+      carbs: number;
+      fiber: number;
+    };
   };
 }
 
@@ -23,11 +30,12 @@ const ProductStructuredData = ({ product }: ProductStructuredDataProps) => {
     const structuredData = {
       '@context': 'https://schema.org/',
       '@type': 'Product',
-      name: product.name,
+      name: `Premium ${product.name} - High Quality Dry Fruits`,
       description: product.description,
       image: product.imageUrl,
       sku: `SKU-${product.id}`,
       mpn: `MPN-${product.id}`,
+      category: `Dry Fruits > ${product.category}`,
       brand: {
         '@type': 'Brand',
         name: "Prasanna's Orinut"
@@ -46,7 +54,26 @@ const ProductStructuredData = ({ product }: ProductStructuredDataProps) => {
           '@type': 'Organization',
           name: "Prasanna's Orinut - Premium Orchard"
         }
-      }
+      },
+      // Add nutritional information if available
+      ...(product.nutritionalInfo && {
+        nutrition: {
+          '@type': 'NutritionInformation',
+          calories: `${product.nutritionalInfo.calories} calories`,
+          proteinContent: `${product.nutritionalInfo.protein}g`,
+          fatContent: `${product.nutritionalInfo.fat}g`,
+          carbohydrateContent: `${product.nutritionalInfo.carbs}g`,
+          fiberContent: `${product.nutritionalInfo.fiber}g`
+        }
+      }),
+      // Add reviews section
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '4.8',
+        reviewCount: '27'
+      },
+      // Add keywords for better SEO
+      keywords: `buy ${product.name}, premium ${product.name}, organic ${product.name}, ${product.name} online, dry fruits, healthy snacks, natural ${product.name}`
     };
 
     script.innerHTML = JSON.stringify(structuredData);

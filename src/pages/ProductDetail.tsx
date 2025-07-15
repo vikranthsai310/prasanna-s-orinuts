@@ -8,6 +8,7 @@ import { mockProducts } from '@/data/mockProducts';
 import { useCart } from '@/contexts/CartContext';
 import ProductCard from '@/components/ProductCard';
 import ProductStructuredData from '@/components/ProductStructuredData';
+import ProductFAQ from '@/components/ProductFAQ';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -216,9 +217,16 @@ const ProductDetail = () => {
         </TabsContent>
       </Tabs>
 
+      {/* FAQ Section */}
+      <ProductFAQ product={{
+        id: product.id,
+        name: product.name,
+        category: product.category
+      }} />
+      
       {/* Related Products */}
       {relatedProducts.length > 0 && (
-        <div>
+        <div className="mt-12">
           <h2 className="font-playfair text-2xl font-bold mb-6">Related Products</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {relatedProducts.map((product) => (
