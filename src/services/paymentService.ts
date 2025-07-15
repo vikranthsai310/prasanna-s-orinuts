@@ -44,7 +44,7 @@ declare global {
 }
 
 // Replace with your actual Razorpay key ID
-const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_JRf1gHoL7cYhmy';
+const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_DBSSTbBMD0V8N9';
 
 // Function to initialize Razorpay SDK
 export const initializeRazorpay = async (): Promise<boolean> => {
@@ -195,7 +195,8 @@ export const verifyPayment = async (
     const isVerified = await verifyRazorpayPaymentOnServer(
       orderId,
       paymentId,
-      signature
+      signature,
+      orderId // Pass orderId as receipt
     );
     
     if (isVerified) {

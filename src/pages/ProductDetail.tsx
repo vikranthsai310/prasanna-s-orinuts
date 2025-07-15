@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { mockProducts } from '@/data/mockProducts';
 import { useCart } from '@/contexts/CartContext';
 import ProductCard from '@/components/ProductCard';
+import ProductStructuredData from '@/components/ProductStructuredData';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -42,8 +43,38 @@ const ProductDetail = () => {
     });
   };
 
+  // Add title and meta tags for SEO
+  useEffect(() => {
+    // Update the page title
+    document.title = `${product.name} - Premium Dry Fruits | Prasanna's Orinut`;
+    
+    // Find and update the meta description
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', `Buy premium quality ${product.name} online. ${product.description}. 100% natural with no additives.`);
+    }
+    
+    return () => {
+      document.title = "Premium Dry Fruits & Nuts | Prasanna's Orinut | High-Quality Almonds, Cashews & Walnuts";
+      if (metaDescription) {
+        metaDescription.setAttribute('content', "Buy premium quality dry fruits and nuts online. Fresh, nutritious and carefully selected almonds, cashews, walnuts and more. 100% natural with no additives.");
+      }
+    };
+  }, [product]);
+
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
+      {/* Add structured data for this product */}
+      <ProductStructuredData product={{
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.prices[selectedWeight],
+        imageUrl: product.image,
+        category: product.category,
+        stock: product.stock
+      }} />
+      
       {/* Back Button */}
       <Link to="/products" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6">
         <ArrowLeft className="w-4 h-4 mr-2" />
