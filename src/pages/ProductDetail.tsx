@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, Heart } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { mockProducts } from '@/data/mockProducts';
@@ -9,19 +9,99 @@ import { useCart } from '@/contexts/CartContext';
 import ProductCard from '@/components/ProductCard';
 import ProductStructuredData from '@/components/ProductStructuredData';
 import ProductFAQ from '@/components/ProductFAQ';
+import { getProductById, getAllProducts } from '@/services/productService';
+import { Product } from '@/types/product';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const { addItem } = useCart();
   const [selectedWeight, setSelectedWeight] = useState<'250g' | '500g' | '1kg'>('250g');
   const [quantity, setQuantity] = useState(1);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const product = mockProducts.find(p => p.id === id);
-  const relatedProducts = mockProducts
-    .filter(p => p.id !== id && p.category === product?.category)
-    .slice(0, 4);
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!id) return;
+      
+      setIsLoading(true);
+      try {
+        // Fetch the product
+        const fetchedProduct = await getProductById(id);
+        
+        if (fetchedProduct) {
+          setProduct(fetchedProduct);
+          
+          // Fetch related products
+          const allProducts = await getAllProducts();
+          const related = allProducts
+            .filter(p => p.id !== id && p.category === fetchedProduct.category)
+            .slice(0, 4);
+          
+          setRelatedProducts(related);
+        } else {
+          setError('Product not found');
+          
+          // Fallback to mock data if product not found
+          const mockProduct = mockProducts.find(p => p.id === id);
+          if (mockProduct) {
+            setProduct(mockProduct);
+            
+            const mockRelated = mockProducts
+              .filter(p => p.id !== id && p.category === mockProduct.category)
+              .slice(0, 4);
+            
+            setRelatedProducts(mockRelated);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching product:', err);
+        setError('Failed to load product. Please try again later.');
+        
+        // Fallback to mock data if fetch fails
+        const mockProduct = mockProducts.find(p => p.id === id);
+        if (mockProduct) {
+          setProduct(mockProduct);
+          
+          const mockRelated = mockProducts
+            .filter(p => p.id !== id && p.category === mockProduct.category)
+            .slice(0, 4);
+          
+          setRelatedProducts(mockRelated);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProduct();
+  }, [id]);
 
-  if (!product) {
+  const handleAddToCart = () => {
+    if (!product) return;
+    
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.prices[selectedWeight],
+      weight: selectedWeight,
+      quantity,
+      image: product.image
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-16 flex justify-center items-center">
+        <Loader2 className="w-8 h-8 animate-spin text-secondary" />
+        <span className="ml-2">Loading product...</span>
+      </div>
+    );
+  }
+
+  if (error || !product) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
@@ -34,35 +114,6 @@ const ProductDetail = () => {
     );
   }
 
-  const handleAddToCart = () => {
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.prices[selectedWeight],
-      weight: selectedWeight,
-      image: product.image
-    });
-  };
-
-  // Add title and meta tags for SEO
-  useEffect(() => {
-    // Update the page title
-    document.title = `${product.name} - Premium Dry Fruits | Prasanna's Orinut`;
-    
-    // Find and update the meta description
-    let metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', `Buy premium quality ${product.name} online. ${product.description}. 100% natural with no additives.`);
-    }
-    
-    return () => {
-      document.title = "Premium Dry Fruits & Nuts | Prasanna's Orinut | High-Quality Almonds, Cashews & Walnuts";
-      if (metaDescription) {
-        metaDescription.setAttribute('content', "Buy premium quality dry fruits and nuts online. Fresh, nutritious and carefully selected almonds, cashews, walnuts and more. 100% natural with no additives.");
-      }
-    };
-  }, [product]);
-
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       {/* Add structured data for this product */}
@@ -73,7 +124,8 @@ const ProductDetail = () => {
         price: product.prices[selectedWeight],
         imageUrl: product.image,
         category: product.category,
-        stock: product.stock
+        stock: product.stock,
+        nutritionalInfo: product.nutritionalInfo
       }} />
       
       {/* Back Button */}
@@ -145,7 +197,7 @@ const ProductDetail = () => {
           </div>
 
           {/* Price & Actions */}
-          <div className="border-t pt-6">
+          <div>
             <div className="flex items-center justify-between mb-4">
               <span className="text-2xl font-bold text-secondary">
                 ₹{(product.prices[selectedWeight] * quantity).toLocaleString()}
@@ -173,64 +225,49 @@ const ProductDetail = () => {
       </div>
 
       {/* Product Details Tabs */}
-      <Tabs defaultValue="description" className="mb-12">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="description">Description</TabsTrigger>
-          <TabsTrigger value="nutrition">Nutrition Facts</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="description" className="mt-6">
-          <div className="prose max-w-none">
-            <p className="text-muted-foreground leading-relaxed">
-              {product.description}
-            </p>
-            <p className="mt-4 text-muted-foreground">
-              Our {product.name.toLowerCase()} are carefully selected and processed to maintain their natural goodness. 
-              Rich in essential nutrients, they make for a perfect healthy snack or ingredient for your recipes.
-            </p>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="nutrition" className="mt-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-accent/20 rounded-lg">
-              <div className="text-2xl font-bold text-secondary">{product.nutritionalInfo.calories}</div>
-              <div className="text-sm text-muted-foreground">Calories</div>
+      <div className="mb-16">
+        <Tabs defaultValue="description">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="description">Description</TabsTrigger>
+            <TabsTrigger value="nutrition">Nutrition Facts</TabsTrigger>
+            <TabsTrigger value="faq">FAQs</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="description" className="mt-6">
+            <div className="prose max-w-none">
+              <h3>About {product.name}</h3>
+              <p>{product.description}</p>
+              <p>Our premium quality dry fruits are sourced directly from the best farms around the world. We ensure that each product meets our strict quality standards before it reaches you.</p>
             </div>
-            <div className="text-center p-4 bg-accent/20 rounded-lg">
-              <div className="text-2xl font-bold text-secondary">{product.nutritionalInfo.protein}g</div>
-              <div className="text-sm text-muted-foreground">Protein</div>
+          </TabsContent>
+          
+          <TabsContent value="nutrition" className="mt-6">
+            <div className="prose max-w-none">
+              <h3>Nutrition Information</h3>
+              <p>Nutritional values per 100g:</p>
+              <ul>
+                <li><strong>Calories:</strong> {product.nutritionalInfo.calories} kcal</li>
+                <li><strong>Protein:</strong> {product.nutritionalInfo.protein}g</li>
+                <li><strong>Fat:</strong> {product.nutritionalInfo.fat}g</li>
+                <li><strong>Carbohydrates:</strong> {product.nutritionalInfo.carbs}g</li>
+                <li><strong>Fiber:</strong> {product.nutritionalInfo.fiber}g</li>
+              </ul>
             </div>
-            <div className="text-center p-4 bg-accent/20 rounded-lg">
-              <div className="text-2xl font-bold text-secondary">{product.nutritionalInfo.fat}g</div>
-              <div className="text-sm text-muted-foreground">Fat</div>
-            </div>
-            <div className="text-center p-4 bg-accent/20 rounded-lg">
-              <div className="text-2xl font-bold text-secondary">{product.nutritionalInfo.carbs}g</div>
-              <div className="text-sm text-muted-foreground">Carbs</div>
-            </div>
-            <div className="text-center p-4 bg-accent/20 rounded-lg">
-              <div className="text-2xl font-bold text-secondary">{product.nutritionalInfo.fiber}g</div>
-              <div className="text-sm text-muted-foreground">Fiber</div>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+          
+          <TabsContent value="faq" className="mt-6">
+            <ProductFAQ productName={product.name} />
+          </TabsContent>
+        </Tabs>
+      </div>
 
-      {/* FAQ Section */}
-      <ProductFAQ product={{
-        id: product.id,
-        name: product.name,
-        category: product.category
-      }} />
-      
       {/* Related Products */}
       {relatedProducts.length > 0 && (
-        <div className="mt-12">
-          <h2 className="font-playfair text-2xl font-bold mb-6">Related Products</h2>
+        <div>
+          <h2 className="font-playfair text-2xl font-bold mb-6">You May Also Like</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {relatedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {relatedProducts.map((relatedProduct) => (
+              <ProductCard key={relatedProduct.id} product={relatedProduct} />
             ))}
           </div>
         </div>
