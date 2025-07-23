@@ -8,10 +8,11 @@ import {
   signOut,
   onAuthStateChanged,
   PhoneAuthProvider,
-  User as FirebaseUser
+  User as FirebaseUser,
+  signInWithPopup
 } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import { auth, db, googleProvider } from '@/lib/firebase';
 
 interface User {
   id: string;
@@ -24,6 +25,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   loginWithPhone: (phone: string, otp: string) => Promise<void>;
   sendOTP: (phone: string) => Promise<string>;
   logout: () => Promise<void>;
@@ -111,6 +113,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const loginWithGoogle = async () => {
+    setIsLoading(true);
+    try {
+      await signInWithPopup(auth, googleProvider);
+      // Auth state listener will handle updating the user state
+    } catch (error) {
+      console.error('Google login error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const sendOTP = async (phone: string) => {
     setIsLoading(true);
     try {
@@ -168,6 +183,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider value={{
       user,
       login,
+      loginWithGoogle,
       loginWithPhone,
       sendOTP,
       logout,

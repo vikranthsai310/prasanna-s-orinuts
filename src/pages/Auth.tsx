@@ -9,7 +9,7 @@ import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
 const Auth = () => {
-  const { login, loginWithPhone, sendOTP, isLoading, user } = useAuth();
+  const { login, loginWithGoogle, isLoading, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,12 +25,6 @@ const Auth = () => {
     email: '',
     password: '',
     confirmPassword: ''
-  });
-  
-  const [phoneForm, setPhoneForm] = useState({
-    phone: '',
-    otp: '',
-    otpSent: false
   });
   
   const [activeTab, setActiveTab] = useState('login');
@@ -54,6 +48,22 @@ const Auth = () => {
       toast({
         title: "Login failed",
         description: error.message || "Please check your credentials and try again.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handleGoogleLogin = async () => {
+    try {
+      await loginWithGoogle();
+      toast({
+        title: "Login successful",
+        description: "Welcome!"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Google login failed",
+        description: error.message || "There was an error signing in with Google.",
         variant: "destructive"
       });
     }
@@ -87,47 +97,6 @@ const Auth = () => {
     }
   };
 
-  const handleSendOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Format phone number to E.164 format if it doesn't already start with +
-    const formattedPhone = phoneForm.phone.startsWith('+') 
-      ? phoneForm.phone 
-      : `+91${phoneForm.phone}`; // Assuming India as default country code
-    
-    try {
-      await sendOTP(formattedPhone);
-      setPhoneForm(prev => ({ ...prev, otpSent: true, phone: formattedPhone }));
-      toast({
-        title: "OTP sent",
-        description: "Please check your phone for the verification code."
-      });
-    } catch (error: any) {
-      toast({
-        title: "Failed to send OTP",
-        description: error.message || "Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handlePhoneLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await loginWithPhone(phoneForm.phone, phoneForm.otp);
-      toast({
-        title: "Login successful",
-        description: "Welcome!"
-      });
-    } catch (error: any) {
-      toast({
-        title: "Login failed",
-        description: error.message || "Invalid OTP. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
   return (
     <div className="container mx-auto px-4 py-16 animate-fade-in">
       <div className="max-w-md mx-auto">
@@ -142,185 +111,161 @@ const Auth = () => {
           </p>
         </div>
 
-        <div className="card-premium">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="login" className="space-y-4">
-              <Tabs defaultValue="email" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="email">Email</TabsTrigger>
-                  <TabsTrigger value="phone">Phone</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="email" className="space-y-4">
-                  <form onSubmit={handleEmailLogin} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Email</label>
-                      <input
-                        type="email"
-                        value={emailForm.email}
-                        onChange={(e) => setEmailForm(prev => ({ ...prev, email: e.target.value }))}
-                        className="input-field w-full"
-                        placeholder="Enter your email"
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Password</label>
-                      <input
-                        type="password"
-                        value={emailForm.password}
-                        onChange={(e) => setEmailForm(prev => ({ ...prev, password: e.target.value }))}
-                        className="input-field w-full"
-                        placeholder="Enter your password"
-                        required
-                      />
-                    </div>
-                    
-                    <Button type="submit" disabled={isLoading} className="w-full btn-primary">
-                      {isLoading ? 'Signing in...' : 'Sign In'}
-                    </Button>
-                  </form>
-                </TabsContent>
-                
-                <TabsContent value="phone" className="space-y-4">
-                  {!phoneForm.otpSent ? (
-                    <form onSubmit={handleSendOTP} className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Phone Number</label>
-                        <input
-                          type="tel"
-                          value={phoneForm.phone}
-                          onChange={(e) => setPhoneForm(prev => ({ ...prev, phone: e.target.value }))}
-                          className="input-field w-full"
-                          placeholder="Enter your phone number"
-                          required
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Format: +91XXXXXXXXXX or just 10 digits (Indian number)
-                        </p>
-                      </div>
-                      
-                      <Button type="submit" disabled={isLoading} className="w-full btn-primary">
-                        {isLoading ? 'Sending OTP...' : 'Send OTP'}
-                      </Button>
-                    </form>
-                  ) : (
-                    <form onSubmit={handlePhoneLogin} className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Enter OTP</label>
-                        <input
-                          type="text"
-                          value={phoneForm.otp}
-                          onChange={(e) => setPhoneForm(prev => ({ ...prev, otp: e.target.value }))}
-                          className="input-field w-full"
-                          placeholder="Enter 6-digit OTP"
-                          maxLength={6}
-                          required
-                        />
-                        <p className="text-sm text-muted-foreground mt-1">
-                          OTP sent to {phoneForm.phone}
-                        </p>
-                      </div>
-                      
-                      <Button type="submit" disabled={isLoading} className="w-full btn-primary">
-                        {isLoading ? 'Verifying...' : 'Verify OTP'}
-                      </Button>
-                      
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setPhoneForm(prev => ({ ...prev, otpSent: false, otp: '' }))}
-                        className="w-full"
-                      >
-                        Change Phone Number
-                      </Button>
-                    </form>
-                  )}
-                </TabsContent>
-              </Tabs>
-            </TabsContent>
-            
-            <TabsContent value="signup" className="space-y-4">
-              <form onSubmit={handleSignup} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={signupForm.email}
-                    onChange={(e) => setSignupForm(prev => ({ ...prev, email: e.target.value }))}
-                    className="input-field w-full"
-                    placeholder="Enter your email"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Password</label>
-                  <input
-                    type="password"
-                    value={signupForm.password}
-                    onChange={(e) => setSignupForm(prev => ({ ...prev, password: e.target.value }))}
-                    className="input-field w-full"
-                    placeholder="Create a password"
-                    required
-                    minLength={6}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Confirm Password</label>
-                  <input
-                    type="password"
-                    value={signupForm.confirmPassword}
-                    onChange={(e) => setSignupForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    className="input-field w-full"
-                    placeholder="Confirm your password"
-                    required
-                    minLength={6}
-                  />
-                </div>
-                
-                <Button type="submit" disabled={isLoading} className="w-full btn-primary">
-                  {isLoading ? 'Creating Account...' : 'Create Account'}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="login">Login</TabsTrigger>
+            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          </TabsList>
           
-          <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              {activeTab === 'login' ? (
-                <>
-                  Don't have an account?{' '}
-                  <button 
-                    onClick={() => setActiveTab('signup')}
-                    className="text-secondary hover:underline"
-                  >
-                    Sign up here
-                  </button>
-                </>
-              ) : (
-                <>
-                  Already have an account?{' '}
-                  <button 
-                    onClick={() => setActiveTab('login')}
-                    className="text-secondary hover:underline"
-                  >
-                    Sign in here
-                  </button>
-                </>
-              )}
-            </p>
-          </div>
+          <TabsContent value="login" className="space-y-4">
+            <form onSubmit={handleEmailLogin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <input
+                  type="email"
+                  value={emailForm.email}
+                  onChange={(e) => setEmailForm(prev => ({ ...prev, email: e.target.value }))}
+                  className="input-field w-full"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Password</label>
+                <input
+                  type="password"
+                  value={emailForm.password}
+                  onChange={(e) => setEmailForm(prev => ({ ...prev, password: e.target.value }))}
+                  className="input-field w-full"
+                  placeholder="Enter your password"
+                  required
+                />
+              </div>
+              
+              <Button type="submit" disabled={isLoading} className="w-full btn-primary">
+                {isLoading ? 'Signing in...' : 'Sign In with Email'}
+              </Button>
+            </form>
+            
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or</span>
+              </div>
+            </div>
+            
+            <Button 
+              type="button" 
+              onClick={handleGoogleLogin} 
+              disabled={isLoading} 
+              className="w-full flex items-center justify-center gap-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+            >
+              <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+              </svg>
+              <span>{isLoading ? 'Signing in...' : 'Sign In with Google'}</span>
+            </Button>
+          </TabsContent>
           
-          {/* Recaptcha container for phone auth */}
-          <div id="recaptcha-container"></div>
+          <TabsContent value="signup" className="space-y-4">
+            <form onSubmit={handleSignup} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <input
+                  type="email"
+                  value={signupForm.email}
+                  onChange={(e) => setSignupForm(prev => ({ ...prev, email: e.target.value }))}
+                  className="input-field w-full"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Password</label>
+                <input
+                  type="password"
+                  value={signupForm.password}
+                  onChange={(e) => setSignupForm(prev => ({ ...prev, password: e.target.value }))}
+                  className="input-field w-full"
+                  placeholder="Create a password"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Confirm Password</label>
+                <input
+                  type="password"
+                  value={signupForm.confirmPassword}
+                  onChange={(e) => setSignupForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  className="input-field w-full"
+                  placeholder="Confirm your password"
+                  required
+                />
+              </div>
+              
+              <Button type="submit" disabled={isLoading} className="w-full btn-primary">
+                {isLoading ? 'Creating Account...' : 'Create Account'}
+              </Button>
+            </form>
+            
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or</span>
+              </div>
+            </div>
+            
+            <Button 
+              type="button" 
+              onClick={handleGoogleLogin} 
+              disabled={isLoading} 
+              className="w-full flex items-center justify-center gap-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+            >
+              <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+              </svg>
+              <span>{isLoading ? 'Signing in...' : 'Sign Up with Google'}</span>
+            </Button>
+          </TabsContent>
+        </Tabs>
+        
+        <div className="mt-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            {activeTab === 'login' ? (
+              <>
+                Don't have an account?{' '}
+                <button 
+                  onClick={() => setActiveTab('signup')}
+                  className="text-secondary hover:underline"
+                >
+                  Sign up here
+                </button>
+              </>
+            ) : (
+              <>
+                Already have an account?{' '}
+                <button 
+                  onClick={() => setActiveTab('login')}
+                  className="text-secondary hover:underline"
+                >
+                  Sign in here
+                </button>
+              </>
+            )}
+          </p>
         </div>
       </div>
     </div>
