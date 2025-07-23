@@ -100,7 +100,7 @@ export const createRazorpayOrder = async (
     const orderId = await createOrder(newOrder);
     
     // Create a Razorpay order on the server
-    await createRazorpayOrderOnServer(
+    const razorpayOrder = await createRazorpayOrderOnServer(
       totalAmount,
       'INR',
       orderId,
@@ -111,7 +111,7 @@ export const createRazorpayOrder = async (
       }
     );
     
-    return orderId;
+    return razorpayOrder.id; // Return the Razorpay order ID, not your database order ID
   } catch (error) {
     console.error('Error creating Razorpay order:', error);
     throw error;
@@ -195,13 +195,18 @@ export const verifyPayment = async (
     const isVerified = await verifyRazorpayPaymentOnServer(
       orderId,
       paymentId,
-      signature,
-      orderId // Pass orderId as receipt
+      signature
     );
     
     if (isVerified) {
       // Update payment status in your database
-      await updatePaymentStatus(orderId, 'paid');
+      // Note: This might already be done in the verify-payment API
+      try {
+        await updatePaymentStatus(orderId, 'paid');
+      } catch (err) {
+        console.error('Error updating payment status:', err);
+        // Continue even if this fails, as the payment is verified
+      }
     }
     
     return isVerified;

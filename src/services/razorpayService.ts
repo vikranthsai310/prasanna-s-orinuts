@@ -21,7 +21,13 @@ export const createRazorpayOrderOnServer = async (
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch (e) {
+        throw new Error(`Failed to create Razorpay order: ${response.status} ${response.statusText}`);
+      }
       throw new Error(errorData.error || 'Failed to create Razorpay order');
     }
 
@@ -58,7 +64,13 @@ export const verifyRazorpayPaymentOnServer = async (
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch (e) {
+        throw new Error(`Failed to verify payment: ${response.status} ${response.statusText}`);
+      }
       throw new Error(errorData.error || 'Failed to verify Razorpay payment');
     }
 
