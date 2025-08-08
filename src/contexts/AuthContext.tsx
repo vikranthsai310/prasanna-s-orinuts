@@ -8,8 +8,10 @@ import {
   signOut,
   onAuthStateChanged,
   PhoneAuthProvider,
+  signInWithCredential,
   User as FirebaseUser,
-  signInWithPopup
+  signInWithPopup,
+  updateProfile
 } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
@@ -20,6 +22,7 @@ interface User {
   phone: string;
   name: string;
   isAdmin: boolean;
+  phoneVerified?: boolean;
 }
 
 interface AuthContextType {
@@ -42,6 +45,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [verificationId, setVerificationId] = useState<string>('');
 
+  // Enable test mode for development (disable in production)
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      // Enable testing with fictional phone numbers and disable app verification
+      (auth as any).settings = (auth as any).settings || {};
+      (auth as any).settings.appVerificationDisabledForTesting = true;
+      console.log('🔧 Development Mode: App verification disabled for testing');
+      console.log('📱 You can now use test phone numbers from Firebase Console');
+    }
+  }, []);
+
   // Listen for auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -59,7 +73,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               email: firebaseUser.email || userData.email || '',
               phone: firebaseUser.phoneNumber || userData.phone || '',
               name: userData.name || firebaseUser.displayName || 'User',
-              isAdmin: userData.isAdmin || ADMIN_EMAILS.includes(firebaseUser.email || '')
+              isAdmin: userData.isAdmin || ADMIN_EMAILS.includes(firebaseUser.email || ''),
+              phoneVerified: userData.phoneVerified || false
             });
           } else {
             // User doesn't exist in Firestore yet, create a new document
@@ -68,6 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               phone: firebaseUser.phoneNumber || '',
               name: firebaseUser.displayName || 'User',
               isAdmin: ADMIN_EMAILS.includes(firebaseUser.email || ''),
+              phoneVerified: false,
               createdAt: new Date()
             };
             
@@ -87,7 +103,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             email: firebaseUser.email || '',
             phone: firebaseUser.phoneNumber || '',
             name: firebaseUser.displayName || 'User',
-            isAdmin: ADMIN_EMAILS.includes(firebaseUser.email || '')
+            isAdmin: ADMIN_EMAILS.includes(firebaseUser.email || ''),
+            phoneVerified: false
           });
         }
       } else {
@@ -126,43 +143,174 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const sendOTP = async (phone: string) => {
-    setIsLoading(true);
+  const sendOTP = async (phone: string): Promise<string> => {
     try {
-      // For web, we need a reCAPTCHA verifier
-      const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      console.log('Attempting to send OTP to:', phone);
+      
+      // More aggressive cleanup of existing reCAPTCHA
+      if ((window as any).recaptchaVerifier) {
+        try {
+          (window as any).recaptchaVerifier.clear();
+        } catch (e) {
+          console.log('Error clearing reCAPTCHA:', e);
+        }
+        (window as any).recaptchaVerifier = null;
+      }
+      
+      // Clear any global reCAPTCHA widgets
+      if (typeof window !== 'undefined' && (window as any).grecaptcha) {
+        try {
+          (window as any).grecaptcha.reset();
+        } catch (e) {
+          console.log('Error resetting grecaptcha:', e);
+        }
+      }
+      
+      // Wait for cleanup to complete
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Check if reCAPTCHA container exists
+      const container = document.getElementById('recaptcha-container');
+      if (!container) {
+        throw new Error('reCAPTCHA container not found. Please ensure the dialog is open.');
+      }
+      
+      // Aggressively clear the container
+      container.innerHTML = '';
+      container.style.display = 'block';
+      
+      // Wait a bit more to ensure DOM is clean
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      console.log('Creating fresh reCAPTCHA verifier...');
+      
+      // Create completely fresh reCAPTCHA verifier with unique ID
+      const timestamp = Date.now();
+      const uniqueContainerId = `recaptcha-container-${timestamp}`;
+      
+      // Create a new container element
+      const newContainer = document.createElement('div');
+      newContainer.id = uniqueContainerId;
+      newContainer.style.display = 'none'; // Keep invisible
+      container.appendChild(newContainer);
+      
+      // Create fresh reCAPTCHA verifier with the new container
+      const recaptchaVerifier = new RecaptchaVerifier(auth, uniqueContainerId, {
         size: 'invisible',
+        callback: (response: any) => {
+          console.log('reCAPTCHA solved successfully');
+        },
+        'expired-callback': () => {
+          console.log('reCAPTCHA expired, please try again');
+        }
       });
       
-      const provider = new PhoneAuthProvider(auth);
-      const verificationId = await provider.verifyPhoneNumber(phone, recaptchaVerifier);
+      // Store verifier globally for cleanup
+      (window as any).recaptchaVerifier = recaptchaVerifier;
       
-      setVerificationId(verificationId);
-      return verificationId;
-    } catch (error) {
+      console.log('reCAPTCHA verifier created, sending SMS...');
+      
+      // Send SMS using Firebase method
+      const confirmationResult = await signInWithPhoneNumber(auth, phone, recaptchaVerifier);
+      
+      // Store the confirmation result for verification
+      (window as any).confirmationResult = confirmationResult;
+      
+      console.log('SMS sent successfully');
+      return confirmationResult.verificationId;
+      
+    } catch (error: any) {
       console.error('Error sending OTP:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
+      
+      // More thorough cleanup on error
+      if ((window as any).recaptchaVerifier) {
+        try {
+          (window as any).recaptchaVerifier.clear();
+        } catch (e) {
+          console.log('Error during error cleanup:', e);
+        }
+        (window as any).recaptchaVerifier = null;
+      }
+      
+      // Clear the entire container
+      const container = document.getElementById('recaptcha-container');
+      if (container) {
+        container.innerHTML = '';
+      }
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to send OTP. Please try again.';
+      
+      if (error.code === 'auth/invalid-app-credential') {
+        errorMessage = 'Firebase configuration error. Please check your setup.';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many attempts. Please try again later.';
+      } else if (error.code === 'auth/invalid-phone-number') {
+        errorMessage = 'Invalid phone number format.';
+      } else if (error.message?.includes('reCAPTCHA')) {
+        errorMessage = 'reCAPTCHA verification failed. Please try again.';
+      } else if (error.message?.includes('already been rendered')) {
+        errorMessage = 'Please close and reopen the dialog, then try again.';
+      }
+      
+      throw new Error(errorMessage);
     }
   };
 
   const loginWithPhone = async (phone: string, otp: string) => {
     setIsLoading(true);
     try {
-      // This is a simplified version - in a real app, you'd use PhoneAuthProvider.credential
-      // and signInWithCredential
+      // Get the stored confirmation result (as per Firebase docs)
+      const confirmationResult = (window as any).confirmationResult;
       
-      // For now, let's just simulate it
-      console.log(`Verifying OTP ${otp} for phone ${phone}`);
+      if (!confirmationResult) {
+        throw new Error('No confirmation result available. Please request OTP again.');
+      }
       
-      // In a real implementation, you would do:
-      // const credential = PhoneAuthProvider.credential(verificationId, otp);
-      // await signInWithCredential(auth, credential);
+      // Confirm the verification code (following Firebase docs pattern)
+      const result = await confirmationResult.confirm(otp);
+      const user = result.user;
       
-      // Auth state listener will handle updating the user state
-    } catch (error) {
-      console.error('Phone login error:', error);
+      console.log('User signed in successfully:', user.uid);
+      
+      // Update user data in Firestore with phone verification info
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        const userData = {
+          phone: phone,
+          name: user.displayName || userDoc.data()?.name || 'User',
+          email: user.email || userDoc.data()?.email || '',
+          isAdmin: userDoc.data()?.isAdmin || ADMIN_EMAILS.includes(user.email || ''),
+          phoneVerified: true,
+          updatedAt: new Date(),
+          ...(userDoc.exists() ? {} : { createdAt: new Date() })
+        };
+        
+        await setDoc(userDocRef, userData, { merge: true });
+        console.log('User data updated in Firestore');
+        
+      } catch (firestoreError) {
+        console.error('Error updating user data in Firestore:', firestoreError);
+        // Don't throw here - authentication was successful
+      }
+      
+      // Clean up stored confirmation result
+      (window as any).confirmationResult = null;
+      
+    } catch (error: any) {
+      console.error('Phone verification error:', error);
+      
+      // Provide more specific error messages
+      if (error.code === 'auth/invalid-verification-code') {
+        throw new Error('Invalid verification code. Please check and try again.');
+      } else if (error.code === 'auth/code-expired') {
+        throw new Error('Verification code expired. Please request a new one.');
+      } else if (error.code === 'auth/too-many-requests') {
+        throw new Error('Too many attempts. Please try again later.');
+      }
+      
       throw error;
     } finally {
       setIsLoading(false);

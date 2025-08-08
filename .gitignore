@@ -26,3 +26,10 @@ dist-ssr
 .env.*
 functions/.runtimeconfig.json
 
+# Firebase Migration - Service Account Keys (NEVER commit!)
+src/scripts/*-firebase-key.json
+src/scripts/serviceAccountKey*.json
+src/scripts/firebase-backup.json
+src/scripts/products-backup.json
+src/scripts/example-config.txt
+

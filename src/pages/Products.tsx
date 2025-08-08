@@ -1,23 +1,47 @@
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ProductCard from '@/components/ProductCard';
 import { mockProducts } from '@/data/mockProducts';
 import { Button } from '@/components/ui/button';
-import { getAllProducts } from '@/services/productService';
+import { getAllProducts, searchProducts } from '@/services/productService';
 import { Product } from '@/types/product';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
 
 const Products = () => {
+  const [searchParams] = useSearchParams();
   const [filter, setFilter] = useState<string>('all');
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const searchQuery = searchParams.get('search');
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
-        const fetchedProducts = await getAllProducts();
+        let fetchedProducts: Product[] = [];
+        
+        if (searchQuery) {
+          // Search for products if search query exists
+          try {
+            fetchedProducts = await searchProducts(searchQuery);
+          } catch (error) {
+            // Fallback to searching mock products
+            fetchedProducts = mockProducts.filter(product =>
+              product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              product.description.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+          }
+        } else {
+          // Fetch all products if no search query
+          try {
+            fetchedProducts = await getAllProducts();
+          } catch (error) {
+            fetchedProducts = mockProducts;
+          }
+        }
+        
         setProducts(fetchedProducts);
         setError(null);
       } catch (err) {
@@ -31,7 +55,7 @@ const Products = () => {
     };
 
     fetchProducts();
-  }, []);
+  }, [searchQuery]);
 
   const categories = [
     { id: 'all', name: 'All Products' },
@@ -41,34 +65,55 @@ const Products = () => {
     { id: 'mixed', name: 'Mixed' }
   ];
 
-  const filteredProducts = filter === 'all' 
+  // Apply category filter only when not searching
+  const filteredProducts = searchQuery 
     ? products 
-    : products.filter(product => product.category === filter);
+    : filter === 'all' 
+      ? products 
+      : products.filter(product => product.category === filter);
 
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       <div className="text-center mb-8">
-        <h1 className="font-playfair text-3xl md:text-4xl font-bold mb-4">
-          Our Premium Collection
-        </h1>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Discover our carefully curated selection of the finest dry fruits from around the world
-        </p>
+        {searchQuery ? (
+          <>
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Search className="h-6 w-6 text-secondary" />
+              <h1 className="font-playfair text-3xl md:text-4xl font-bold">
+                Search Results
+              </h1>
+            </div>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Found {products.length} result{products.length !== 1 ? 's' : ''} for "{searchQuery}"
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className="font-playfair text-3xl md:text-4xl font-bold mb-4">
+              Our Premium Collection
+            </h1>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Discover our carefully curated selection of the finest dry fruits from around the world
+            </p>
+          </>
+        )}
       </div>
 
-      {/* Category Filter */}
-      <div className="flex flex-wrap gap-2 justify-center mb-8">
-        {categories.map((category) => (
-          <Button
-            key={category.id}
-            variant={filter === category.id ? "default" : "outline"}
-            onClick={() => setFilter(category.id)}
-            className="mb-2"
-          >
-            {category.name}
-          </Button>
-        ))}
-      </div>
+      {/* Category Filter - Only show when not searching */}
+      {!searchQuery && (
+        <div className="flex flex-wrap gap-2 justify-center mb-8">
+          {categories.map((category) => (
+            <Button
+              key={category.id}
+              variant={filter === category.id ? "default" : "outline"}
+              onClick={() => setFilter(category.id)}
+              className="mb-2"
+            >
+              {category.name}
+            </Button>
+          ))}
+        </div>
+      )}
 
       {/* Loading State */}
       {isLoading && (
@@ -94,7 +139,12 @@ const Products = () => {
             ))
           ) : (
             <div className="col-span-3 text-center py-16">
-              <p className="text-muted-foreground">No products found in this category.</p>
+              <p className="text-muted-foreground">
+                {searchQuery 
+                  ? `No products found for "${searchQuery}". Try a different search term.`
+                  : 'No products found in this category.'
+                }
+              </p>
             </div>
           )}
         </div>

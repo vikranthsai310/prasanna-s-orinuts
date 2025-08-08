@@ -5,6 +5,7 @@ import { ShoppingCart, User, Menu, X } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import SearchBar from '@/components/SearchBar';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -54,7 +55,17 @@ const Header = () => {
           </nav>
 
           {/* Right side actions */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 md:space-x-4">
+            {/* Desktop Search - beside cart */}
+            <div className="hidden md:flex">
+              <SearchBar isExpandable={true} />
+            </div>
+
+            {/* Mobile Search */}
+            <div className="md:hidden">
+              <SearchBar isMobile={true} />
+            </div>
+
             {/* Cart */}
             <Link to="/cart" className="relative">
               <Button variant="ghost" size="icon" className="relative">

@@ -1,11 +1,99 @@
 
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
+import GoogleSignInDialog from '@/components/GoogleSignInDialog';
+import ProfileCompletionDialog from '@/components/ProfileCompletionDialog';
+import { sampleStorage } from '@/utils/sampleStorage';
+import { mockProducts } from '@/data/mockProducts';
+import { toast } from '@/components/ui/use-toast';
 
 const Cart = () => {
-  const { items, updateQuantity, removeItem, totalPrice } = useCart();
+  const { items, updateQuantity, removeItem, totalPrice, addItem } = useCart();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [showSignInDialog, setShowSignInDialog] = useState(false);
+  const [showProfileCompletion, setShowProfileCompletion] = useState(false);
+
+  const addSamplesToCart = () => {
+    const selectedSamples = sampleStorage.getSelectedSamples();
+    const sampleProducts = mockProducts.slice(0, 6);
+    
+    selectedSamples.forEach(selectedSample => {
+      const product = sampleProducts.find(p => p.id === selectedSample.id);
+      if (product) {
+        // Check if sample is not already in cart to avoid duplicates
+        const existingCartItem = items.find(item => 
+          item.id === product.id && item.name.includes('(Sample)')
+        );
+        
+        if (!existingCartItem) {
+          addItem({
+            id: product.id,
+            name: `${product.name} (Sample)`,
+            price: 0, // Free sample
+            weight: '50g', // Sample size
+            quantity: 1,
+            image: product.image
+          });
+        }
+      }
+    });
+  };
+
+  const handleProceedToCheckout = () => {
+    if (user) {
+      // Check if user has verified phone number
+      if (user.phone && user.phone.startsWith('+91')) {
+        // Check if samples are already selected
+        if (sampleStorage.hasSamplesSelected()) {
+          // Add samples to cart and proceed to checkout
+          addSamplesToCart();
+          toast({
+            title: "Your samples are ready!",
+            description: "Previously selected samples have been added to your order.",
+            variant: "default"
+          });
+          navigate('/checkout');
+        } else {
+          // No samples selected, go to samples page
+          navigate('/samples');
+        }
+      } else {
+        // User logged in but needs mobile verification
+        setShowProfileCompletion(true);
+      }
+    } else {
+      // User not logged in, show Google sign-in dialog
+      setShowSignInDialog(true);
+    }
+  };
+
+  const handleGoogleSignInSuccess = () => {
+    // After Google sign-in, show profile completion for mobile verification
+    setShowProfileCompletion(true);
+  };
+
+  const handleProfileCompletion = () => {
+    setShowProfileCompletion(false);
+    // Check if samples are already selected after profile completion
+    if (sampleStorage.hasSamplesSelected()) {
+      // Add samples to cart and proceed to checkout
+      addSamplesToCart();
+      toast({
+        title: "Your samples are ready!",
+        description: "Previously selected samples have been added to your order.",
+        variant: "default"
+      });
+      navigate('/checkout');
+    } else {
+      // No samples selected, go to samples page
+      navigate('/samples');
+    }
+  };
 
   if (items.length === 0) {
     return (
@@ -106,11 +194,12 @@ const Cart = () => {
               Estimated delivery: 3-5 business days
             </p>
             
-            <Link to="/checkout" className="block w-full">
-              <Button className="w-full btn-primary">
-                Proceed to Checkout
-              </Button>
-            </Link>
+            <Button 
+              className="w-full btn-primary"
+              onClick={handleProceedToCheckout}
+            >
+              Proceed to Checkout
+            </Button>
             
             <Link to="/products" className="block w-full mt-3">
               <Button variant="outline" className="w-full">
@@ -120,6 +209,20 @@ const Cart = () => {
           </div>
         </div>
       </div>
+
+      {/* Google Sign-In Dialog */}
+      <GoogleSignInDialog
+        isOpen={showSignInDialog}
+        onClose={() => setShowSignInDialog(false)}
+        onGoogleSignInSuccess={handleGoogleSignInSuccess}
+      />
+
+      {/* Profile Completion Dialog */}
+      <ProfileCompletionDialog
+        isOpen={showProfileCompletion}
+        onClose={() => setShowProfileCompletion(false)}
+        onComplete={handleProfileCompletion}
+      />
     </div>
   );
 };

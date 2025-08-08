@@ -1,9 +1,11 @@
 
 import { useState, useEffect } from 'react';
-import { User, MapPin, Phone, Mail, Edit, Trash2, Plus, Check } from 'lucide-react';
+import { User, MapPin, Phone, Mail, Edit, Trash2, Plus, Check, Shield, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import ProfileCompletionDialog from '@/components/ProfileCompletionDialog';
 import { 
   getUserAddresses, 
   addAddress, 
@@ -39,6 +41,7 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const [showPhoneVerification, setShowPhoneVerification] = useState(false);
   
   const [addressForm, setAddressForm] = useState({
     type: 'Home' as AddressType,
@@ -48,6 +51,10 @@ const Profile = () => {
     pincode: '',
     isDefault: false
   });
+
+  // Check if phone is verified
+  const isPhoneVerified = user?.phoneVerified || false;
+  const hasPhone = user?.phone && user.phone.length > 0;
   
   // Fetch user addresses
   useEffect(() => {
@@ -250,6 +257,39 @@ const Profile = () => {
     }
   };
 
+  const handlePhoneVerificationComplete = async () => {
+    if (!user?.id) return;
+    
+    try {
+      // Update user's phone verification status in Firestore
+      await updateDoc(doc(db, 'users', user.id), {
+        phoneVerified: true,
+        updatedAt: new Date()
+      });
+      
+      // Close the verification dialog
+      setShowPhoneVerification(false);
+      
+      // Show success message
+      toast({
+        title: "Phone Verified! ✅",
+        description: "Your phone number has been verified successfully. You'll now receive order updates via SMS.",
+        duration: 5000,
+      });
+      
+      // Refresh user data to show verification status
+      window.location.reload(); // Simple way to refresh user state
+      
+    } catch (error) {
+      console.error('Error updating phone verification status:', error);
+      toast({
+        title: "Verification Failed",
+        description: "Phone verification succeeded, but failed to update your profile. Please refresh the page.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       <h1 className="font-playfair text-3xl font-bold mb-8">My Profile</h1>
@@ -318,15 +358,74 @@ const Profile = () => {
               
               <div>
                 <label className="block text-sm font-medium mb-1">Phone Number</label>
-                <div className="flex items-center space-x-2">
-                  <Phone className="w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="tel"
-                    value={profileData.phone}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
-                    disabled={!isEditing}
-                    className={`input-field flex-1 ${!isEditing ? 'bg-muted' : ''}`}
-                  />
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="tel"
+                      value={profileData.phone}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+                      disabled={!isEditing}
+                      placeholder="+91 XXXXXXXXXX"
+                      className={`input-field flex-1 ${!isEditing ? 'bg-muted' : ''}`}
+                    />
+                    {hasPhone && (
+                      <Badge 
+                        variant={isPhoneVerified ? "default" : "secondary"}
+                        className={`flex items-center space-x-1 ${
+                          isPhoneVerified 
+                            ? 'bg-green-100 text-green-800 border-green-200' 
+                            : 'bg-orange-100 text-orange-800 border-orange-200'
+                        }`}
+                      >
+                        {isPhoneVerified ? (
+                          <>
+                            <Shield className="w-3 h-3" />
+                            <span>Verified</span>
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle className="w-3 h-3" />
+                            <span>Unverified</span>
+                          </>
+                        )}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {hasPhone && !isPhoneVerified && (
+                    <div className="flex items-center space-x-2 mt-2">
+                      <div className="flex-1 text-sm text-muted-foreground">
+                        Your phone number is not verified. Verify it to enable order notifications and better security.
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowPhoneVerification(true)}
+                        className="whitespace-nowrap"
+                      >
+                        <Shield className="w-4 h-4 mr-1" />
+                        Verify Phone
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {!hasPhone && !isEditing && (
+                    <div className="flex items-center space-x-2 mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                      <AlertCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
+                      <div className="flex-1 text-sm text-orange-800">
+                        Add your phone number to receive order updates and enable phone verification.
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditing(true)}
+                        className="whitespace-nowrap border-orange-300 text-orange-700 hover:bg-orange-100"
+                      >
+                        Add Phone
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -520,6 +619,13 @@ const Profile = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Phone Verification Dialog */}
+      <ProfileCompletionDialog
+        isOpen={showPhoneVerification}
+        onClose={() => setShowPhoneVerification(false)}
+        onComplete={handlePhoneVerificationComplete}
+      />
     </div>
   );
 };

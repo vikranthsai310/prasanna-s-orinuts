@@ -1,20 +1,117 @@
 
-import { BarChart3, ShoppingBag, Users, TrendingUp, Package } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { BarChart3, ShoppingBag, Users, TrendingUp, Package, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-// Mock data for charts
-const orderData = [
-  { date: 'Jan 21', orders: 12 },
-  { date: 'Jan 22', orders: 18 },
-  { date: 'Jan 23', orders: 15 },
-  { date: 'Jan 24', orders: 22 },
-  { date: 'Jan 25', orders: 28 },
-  { date: 'Jan 26', orders: 24 },
-  { date: 'Jan 27', orders: 31 },
-];
+import { 
+  getTotalRevenue, 
+  getTotalOrders, 
+  getTotalUsers, 
+  getTotalProducts, 
+  getOrdersByDateRange,
+  getRecentOrders,
+  getLowStockProducts
+} from '@/services/analyticsService';
+import { useToast } from '@/hooks/use-toast';
+import { Order } from '@/services/orderService';
+import { Product } from '@/types/product';
+import { Badge } from '@/components/ui/badge';
 
 const AdminDashboard = () => {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    totalRevenue: 0,
+    totalUsers: 0,
+    totalProducts: 0
+  });
+  const [orderData, setOrderData] = useState<{ date: string; orders: number }[]>([]);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch all data in parallel
+      const [
+        revenue, 
+        orders, 
+        users, 
+        products, 
+        ordersByDate,
+        recentOrdersData,
+        lowStockProductsData
+      ] = await Promise.all([
+        getTotalRevenue(),
+        getTotalOrders(),
+        getTotalUsers(),
+        getTotalProducts(),
+        getOrdersByDateRange(7),
+        getRecentOrders(5),
+        getLowStockProducts(20)
+      ]);
+
+      setStats({
+        totalOrders: orders,
+        totalRevenue: revenue,
+        totalUsers: users,
+        totalProducts: products
+      });
+      
+      setOrderData(ordersByDate);
+      setRecentOrders(recentOrdersData);
+      setLowStockProducts(lowStockProductsData);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard data. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return 'N/A';
+    
+    // Handle Firestore Timestamp
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'delivered':
+        return 'bg-green-500';
+      case 'shipped':
+        return 'bg-blue-500';
+      case 'processing':
+        return 'bg-yellow-500';
+      case 'pending':
+        return 'bg-orange-500';
+      case 'cancelled':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-16 flex justify-center items-center">
+        <Loader2 className="w-8 h-8 animate-spin text-secondary mr-2" />
+        <span>Loading dashboard data...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       <h1 className="font-playfair text-3xl font-bold mb-8">Admin Dashboard</h1>
@@ -27,8 +124,8 @@ const AdminDashboard = () => {
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-secondary">248</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
+            <div className="text-2xl font-bold text-secondary">{stats.totalOrders}</div>
+            <p className="text-xs text-muted-foreground">All time orders</p>
           </CardContent>
         </Card>
         
@@ -38,19 +135,19 @@ const AdminDashboard = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-secondary">₹3,24,500</div>
-            <p className="text-xs text-muted-foreground">+18% from last month</p>
+            <div className="text-2xl font-bold text-secondary">₹{stats.totalRevenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Total revenue from sales</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Users</CardTitle>
+            <CardTitle className="text-sm font-medium">Users</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-secondary">142</div>
-            <p className="text-xs text-muted-foreground">+8% from last month</p>
+            <div className="text-2xl font-bold text-secondary">{stats.totalUsers}</div>
+            <p className="text-xs text-muted-foreground">Registered customers</p>
           </CardContent>
         </Card>
         
@@ -60,8 +157,8 @@ const AdminDashboard = () => {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-secondary">12</div>
-            <p className="text-xs text-muted-foreground">All products active</p>
+            <div className="text-2xl font-bold text-secondary">{stats.totalProducts}</div>
+            <p className="text-xs text-muted-foreground">Total products in inventory</p>
           </CardContent>
         </Card>
       </div>
@@ -72,7 +169,7 @@ const AdminDashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <BarChart3 className="h-5 w-5" />
-              <span>Orders Over Time</span>
+              <span>Orders Over Time (Last 7 Days)</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -100,26 +197,52 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-sm">New order #ORD123456789 received</span>
-                <span className="text-xs text-muted-foreground ml-auto">2 min ago</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span className="text-sm">Order #ORD123456788 shipped</span>
-                <span className="text-xs text-muted-foreground ml-auto">1 hour ago</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                <span className="text-sm">Low stock alert: Premium Almonds</span>
-                <span className="text-xs text-muted-foreground ml-auto">3 hours ago</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <span className="text-sm">New user registration</span>
-                <span className="text-xs text-muted-foreground ml-auto">5 hours ago</span>
-              </div>
+              {recentOrders.length > 0 ? (
+                recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center space-x-3">
+                    <Badge className={`${getStatusColor(order.orderStatus)} w-2 h-2 rounded-full p-0 border-0`} />
+                    <div className="flex-1">
+                      <p className="text-sm">
+                        New order <span className="font-mono">{order.id.slice(0, 8)}...</span>
+                        {order.orderStatus === 'pending' && ' received'}
+                        {order.orderStatus === 'processing' && ' processing'}
+                        {order.orderStatus === 'shipped' && ' shipped'}
+                        {order.orderStatus === 'delivered' && ' delivered'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {order.shippingAddress.name} • ₹{order.totalAmount}
+                      </p>
+                    </div>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {formatDate(order.createdAt)}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground">No recent orders</p>
+              )}
+
+              {lowStockProducts.length > 0 && (
+                <>
+                  <div className="border-t border-border pt-4 mt-4">
+                    <h3 className="font-medium text-sm mb-2">Low Stock Alerts</h3>
+                  </div>
+                  
+                  {lowStockProducts.map((product) => (
+                    <div key={product.id} className="flex items-center space-x-3">
+                      <Badge className="bg-yellow-500 w-2 h-2 rounded-full p-0 border-0" />
+                      <div className="flex-1">
+                        <p className="text-sm">
+                          Low stock alert: {product.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Only {product.stock} units remaining
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           </CardContent>
         </Card>

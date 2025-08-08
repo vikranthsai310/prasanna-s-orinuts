@@ -5,9 +5,12 @@ import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { initializeRazorpay, createRazorpayOrder, openRazorpayCheckout, verifyPayment } from '@/services/paymentService';
+import { createShipment, getOrderById } from '@/services/orderService';
 import { toast } from '@/components/ui/use-toast';
 import { getUserAddresses, type Address } from '@/services/addressService';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, Edit, Gift } from 'lucide-react';
+import { sampleStorage } from '@/utils/sampleStorage';
+import { ADDRESS_TYPES, AddressType, addAddress } from '@/services/addressService';
 import {
   Select,
   SelectContent,
@@ -28,7 +31,10 @@ const Checkout = () => {
     address: '',
     city: '',
     state: '',
-    pincode: ''
+    pincode: '',
+    addressType: 'Home' as AddressType,
+    customAddressType: '',
+    saveToProfile: true
   });
   
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
@@ -39,6 +45,7 @@ const Checkout = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isProcessing, setIsProcessing] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const [selectedSamples, setSelectedSamples] = useState(sampleStorage.getSelectedSamples());
 
   // Load Razorpay script on component mount
   useEffect(() => {
@@ -85,6 +92,11 @@ const Checkout = () => {
     
     fetchAddresses();
   }, [user?.id]);
+
+  // Update samples when returning from samples page
+  useEffect(() => {
+    setSelectedSamples(sampleStorage.getSelectedSamples());
+  }, []);
   
   // Update form data when selected address changes
   useEffect(() => {
@@ -114,6 +126,24 @@ const Checkout = () => {
     if (!formData.city.trim()) newErrors.city = 'City is required';
     if (!formData.state.trim()) newErrors.state = 'State is required';
     if (!formData.pincode.trim()) newErrors.pincode = 'Pincode is required';
+    if (!formData.addressType) newErrors.addressType = 'Address type is required';
+    
+    // Custom address type validation
+    if (formData.addressType === 'Other' && !formData.customAddressType.trim()) {
+      newErrors.customAddressType = 'Please specify the address type';
+    }
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email && !emailRegex.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+    
+    // Phone validation
+    const phoneRegex = /^[0-9]{10}$/;
+    if (formData.phone && !phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
+      newErrors.phone = 'Please enter a valid 10-digit phone number';
+    }
     
     if (formData.pincode && !/^\d{6}$/.test(formData.pincode)) {
       newErrors.pincode = 'Please enter a valid 6-digit pincode';
@@ -124,8 +154,14 @@ const Checkout = () => {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    
+    if (type === 'checkbox') {
+      setFormData(prev => ({ ...prev, [name]: checked }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+    
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -153,6 +189,39 @@ const Checkout = () => {
     setIsProcessing(true);
     
     try {
+      // Save address to profile if user wants to
+      if (user && formData.saveToProfile) {
+        try {
+          const addressType = formData.addressType === 'Other' ? formData.customAddressType : formData.addressType;
+          
+          await addAddress({
+            userId: user.id,
+            type: addressType as AddressType,
+            name: formData.name,
+            phone: formData.phone,
+            street: formData.address,
+            city: formData.city,
+            state: formData.state,
+            pincode: formData.pincode,
+            isDefault: savedAddresses.length === 0 // Set as default if it's the first address
+          });
+          
+          toast({
+            title: "Address Saved",
+            description: "Your address has been saved to your profile for future orders.",
+            variant: "default"
+          });
+        } catch (addressError) {
+          console.error('Error saving address:', addressError);
+          // Don't block the order if address saving fails
+          toast({
+            title: "Address Save Failed",
+            description: "Your order will continue, but we couldn't save your address.",
+            variant: "destructive"
+          });
+        }
+      }
+
       // Create a Razorpay order
       const orderId = await createRazorpayOrder(
         items,
@@ -187,11 +256,33 @@ const Checkout = () => {
             );
             
             if (isVerified) {
-              toast({
-                title: "Payment Successful",
-                description: "Your order has been placed successfully!",
-                variant: "default"
-              });
+              try {
+                // Try to create shipment automatically
+                const order = await getOrderById(response.razorpay_order_id);
+                if (order) {
+                  await createShipment(order);
+                  
+                  toast({
+                    title: "Order Placed & Shipped",
+                    description: "Your order has been placed and shipment has been created successfully!",
+                    variant: "default"
+                  });
+                } else {
+                  toast({
+                    title: "Payment Successful",
+                    description: "Your order has been placed successfully! Shipment will be created shortly.",
+                    variant: "default"
+                  });
+                }
+              } catch (shipmentError) {
+                console.error('Shipment creation failed:', shipmentError);
+                // Don't fail the entire order if shipment creation fails
+                toast({
+                  title: "Payment Successful",
+                  description: "Your order has been placed successfully! Shipment will be created manually.",
+                  variant: "default"
+                });
+              }
               
               // Clear cart and redirect to order confirmation
               clearCart();
@@ -397,6 +488,46 @@ const Checkout = () => {
                 {errors.email && <p className="text-destructive text-sm mt-1">{errors.email}</p>}
               </div>
               
+              {/* Address Type Selection */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Address Type *</label>
+                  <Select
+                    value={formData.addressType}
+                    onValueChange={(value: AddressType) => 
+                      setFormData(prev => ({ ...prev, addressType: value, customAddressType: '' }))
+                    }
+                  >
+                    <SelectTrigger className={`w-full ${errors.addressType ? 'border-destructive' : ''}`}>
+                      <SelectValue placeholder="Select address type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ADDRESS_TYPES.map(type => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.addressType && <p className="text-destructive text-sm mt-1">{errors.addressType}</p>}
+                </div>
+                
+                {formData.addressType === 'Other' && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Custom Address Type *</label>
+                    <input
+                      type="text"
+                      name="customAddressType"
+                      value={formData.customAddressType}
+                      onChange={handleInputChange}
+                      className={`input-field w-full ${errors.customAddressType ? 'border-destructive' : ''}`}
+                      placeholder="e.g., Business, Relative, etc."
+                    />
+                    {errors.customAddressType && <p className="text-destructive text-sm mt-1">{errors.customAddressType}</p>}
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className="block text-sm font-medium mb-1">Address *</label>
                 <input
@@ -453,15 +584,18 @@ const Checkout = () => {
               </div>
               
               {user && (
-                <div className="flex items-center mt-4">
-                  <Button 
-                    type="button" 
-                    variant="link" 
-                    className="p-0 h-auto text-secondary"
-                    onClick={() => navigate('/profile')}
-                  >
-                    Save this address to your account
-                  </Button>
+                <div className="flex items-center space-x-2 mt-4">
+                  <input
+                    type="checkbox"
+                    id="saveToProfile"
+                    name="saveToProfile"
+                    checked={formData.saveToProfile}
+                    onChange={handleInputChange}
+                    className="rounded border-gray-300 text-secondary focus:ring-secondary"
+                  />
+                  <label htmlFor="saveToProfile" className="text-sm font-medium">
+                    Save this address to my profile for future orders
+                  </label>
                 </div>
               )}
             </form>
@@ -472,6 +606,35 @@ const Checkout = () => {
         <div className="card-premium">
           <h2 className="font-semibold text-xl mb-6">Order Summary</h2>
           
+          {/* Selected Samples Section */}
+          {selectedSamples.length > 0 && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-green-800 flex items-center">
+                  <Gift className="w-4 h-4 mr-2" />
+                  Your Free Samples
+                </h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/samples')}
+                  className="text-green-700 border-green-300 hover:bg-green-100"
+                >
+                  <Edit className="w-3 h-3 mr-1" />
+                  Change
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {selectedSamples.map(sample => (
+                  <div key={sample.id} className="flex items-center text-sm">
+                    <Check className="w-3 h-3 text-green-600 mr-2" />
+                    <span>{sample.name} (50g sample) - FREE</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
           <div className="space-y-4 mb-6">
             {items.map((item) => (
               <div key={`${item.id}-${item.weight}`} className="flex justify-between items-center">
@@ -479,8 +642,13 @@ const Checkout = () => {
                   <span className="font-medium">{item.name}</span>
                   <span className="text-muted-foreground ml-2">({item.weight})</span>
                   <span className="text-muted-foreground ml-2">x {item.quantity}</span>
+                  {item.price === 0 && (
+                    <span className="ml-2 text-green-600 text-xs font-medium">FREE SAMPLE</span>
+                  )}
                 </div>
-                <span className="font-semibold">₹{(item.price * item.quantity).toLocaleString()}</span>
+                <span className="font-semibold">
+                  {item.price === 0 ? 'FREE' : `₹${(item.price * item.quantity).toLocaleString()}`}
+                </span>
               </div>
             ))}
           </div>

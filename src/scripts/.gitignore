@@ -1,0 +1,43 @@
+# Firebase Service Account Keys (NEVER commit these!)
+old-firebase-key.json
+new-firebase-key.json
+*-firebase-key.json
+serviceAccountKey*.json
+
+# Backup files with potentially sensitive data
+firebase-backup.json
+products-backup.json
+users-backup.json
+orders-backup.json
+*.backup.json
+
+# Node modules
+node_modules/
+package-lock.json
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db 

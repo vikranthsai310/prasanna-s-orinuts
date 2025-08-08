@@ -33,6 +33,13 @@ export interface Order {
   paymentStatus: 'pending' | 'paid' | 'failed';
   orderStatus: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   trackingId?: string;
+  // Shiprocket integration fields
+  shiprocketOrderId?: number;
+  shipmentId?: number;
+  awbCode?: string;
+  courierName?: string;
+  courierCompanyId?: number;
+  pickupScheduled?: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -149,4 +156,117 @@ export const getOrdersByStatus = async (status: Order['orderStatus']): Promise<O
     id: doc.id,
     ...doc.data()
   } as Order));
+};
+
+// Update Shiprocket details
+export const updateShiprocketDetails = async (
+  orderId: string,
+  shiprocketData: {
+    shiprocketOrderId?: number;
+    shipmentId?: number;
+    awbCode?: string;
+    courierName?: string;
+    courierCompanyId?: number;
+    pickupScheduled?: boolean;
+  }
+): Promise<void> => {
+  const docRef = doc(db, ORDERS_COLLECTION, orderId);
+  await updateDoc(docRef, {
+    ...shiprocketData,
+    updatedAt: serverTimestamp()
+  });
+};
+
+// Create shipment via Shiprocket
+export const createShipment = async (order: Order): Promise<void> => {
+  try {
+    const response = await fetch('/api/create-shipment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        order,
+        pickupLocation: 'Primary', // Default pickup location
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create shipment: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    
+    if (result.success) {
+      // Update order with Shiprocket details
+      await updateShiprocketDetails(order.id, {
+        shiprocketOrderId: result.order_id,
+        shipmentId: result.shipment_id,
+        awbCode: result.awb_code,
+        courierName: result.courier_name,
+        courierCompanyId: result.courier_company_id,
+        pickupScheduled: true,
+      });
+
+      // Update order status to processing
+      await updateOrderStatus(order.id, 'processing');
+    } else {
+      throw new Error('Shipment creation failed');
+    }
+  } catch (error) {
+    console.error('Error creating shipment:', error);
+    throw error;
+  }
+};
+
+// Calculate shipping rates
+export const calculateShippingRates = async (
+  deliveryPincode: string,
+  weight: number,
+  isCod: boolean = false,
+  pickupPincode: string = '110001' // Default pickup pincode, update with your actual pincode
+): Promise<any> => {
+  try {
+    const response = await fetch('/api/calculate-shipping', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        pickupPincode,
+        deliveryPincode,
+        weight,
+        isCod,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to calculate shipping: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error calculating shipping rates:', error);
+    throw error;
+  }
+};
+
+// Track shipment
+export const trackShipment = async (awbCode: string): Promise<any> => {
+  try {
+    const response = await fetch(`/api/track-shipment?awb=${awbCode}`, {
+      method: 'GET',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to track shipment: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error tracking shipment:', error);
+    throw error;
+  }
 }; 

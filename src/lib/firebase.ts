@@ -6,13 +6,13 @@ import { getStorage, connectStorageEmulator } from "firebase/storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyB-XnyhYJEnJKKgpu6XE7Ti58D7e9UoH0M",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "prassanas-orinut.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "prassanas-orinut",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "prassanas-orinut.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "352359366381",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:352359366381:web:1f95ed0eec665ab8bd96e4",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-JC8PCYHK65"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCFGNw-QaL0NeajxgjMcuOxCXzeeHX1nwY",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "orinut-494cc.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "orinut-494cc",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "orinut-494cc.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "369347130599",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:369347130599:web:79cd0316f8af76c0a2de42",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-MB52LLLTFD"
 };
 
 // Check if Firebase config is valid
