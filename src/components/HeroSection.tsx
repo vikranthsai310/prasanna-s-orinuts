@@ -17,7 +17,7 @@ const HeroSection = () => {
   const productYSpring = useSpring(productY, springConfig);
 
   return (
-    <section className="relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50" style={{ height: 'calc(100vh - 4rem)' }}>
+    <section className="relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50" style={{ height: 'calc(100vh - 3.5rem)' }}>
       {/* Animated Background Elements */}
       <motion.div
         className="absolute inset-0 opacity-30"
@@ -54,25 +54,25 @@ const HeroSection = () => {
       </div>
 
       <div className="container mx-auto px-4 z-10 max-w-7xl h-full flex items-center">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 xl:gap-12 items-center w-full py-8 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 xl:gap-12 items-center w-full py-4 sm:py-8 lg:py-12">
           {/* Left Content */}
-          <div className="text-left space-y-4 lg:space-y-6">
+          <div className="text-left space-y-3 sm:space-y-4 lg:space-y-6">
             {/* Badge */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             >
-              <div className="inline-flex items-center px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-amber-200 shadow-lg">
-                <Sparkles className="w-4 h-4 text-amber-500 mr-2" />
-                <span className="text-sm font-medium text-amber-800">Premium Quality Guaranteed</span>
+              <div className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 bg-white/80 backdrop-blur-sm rounded-full border border-amber-200 shadow-lg">
+                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-amber-500 mr-1.5 sm:mr-2" />
+                <span className="text-xs sm:text-sm font-medium text-amber-800">Premium Quality Guaranteed</span>
               </div>
             </motion.div>
 
             {/* Main Headline with Staggered Animation */}
             <div className="space-y-1 lg:space-y-2">
               <motion.h1
-                className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight"
+                className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
@@ -106,7 +106,7 @@ const HeroSection = () => {
 
             {/* Subtitle */}
             <motion.p
-              className="text-base sm:text-lg lg:text-xl text-amber-800/80 leading-relaxed max-w-lg"
+              className="text-sm xs:text-base sm:text-lg lg:text-xl text-amber-800/80 leading-relaxed max-w-lg"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
@@ -115,7 +115,7 @@ const HeroSection = () => {
             </motion.p>
 
             <motion.p
-              className="text-sm sm:text-base text-amber-700/70 leading-relaxed max-w-xl"
+              className="text-xs xs:text-sm sm:text-base text-amber-700/70 leading-relaxed max-w-xl"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 1, ease: [0.16, 1, 0.3, 1] }}
@@ -125,22 +125,22 @@ const HeroSection = () => {
 
             {/* Trust Badges */}
             <motion.div
-              className="flex flex-wrap gap-4 lg:gap-6 items-center"
+              className="flex flex-wrap gap-2 xs:gap-3 sm:gap-4 lg:gap-6 items-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 1.2, ease: [0.16, 1, 0.3, 1] }}
             >
-              <div className="flex items-center gap-2 text-amber-700">
-                <Shield className="w-4 h-4 lg:w-5 lg:h-5" />
-                <span className="text-xs sm:text-sm font-medium">100% Natural</span>
+              <div className="flex items-center gap-1.5 xs:gap-2 text-amber-700">
+                <Shield className="w-3 h-3 xs:w-4 xs:h-4 lg:w-5 lg:h-5" />
+                <span className="text-xs font-medium">100% Natural</span>
               </div>
-              <div className="flex items-center gap-2 text-amber-700">
-                <Award className="w-4 h-4 lg:w-5 lg:h-5" />
-                <span className="text-xs sm:text-sm font-medium">Premium Grade</span>
+              <div className="flex items-center gap-1.5 xs:gap-2 text-amber-700">
+                <Award className="w-3 h-3 xs:w-4 xs:h-4 lg:w-5 lg:h-5" />
+                <span className="text-xs font-medium">Premium Grade</span>
               </div>
-              <div className="flex items-center gap-2 text-amber-700">
-                <Sparkles className="w-4 h-4 lg:w-5 lg:h-5" />
-                <span className="text-xs sm:text-sm font-medium">Fresh Guarantee</span>
+              <div className="flex items-center gap-1.5 xs:gap-2 text-amber-700">
+                <Sparkles className="w-3 h-3 xs:w-4 xs:h-4 lg:w-5 lg:h-5" />
+                <span className="text-xs font-medium">Fresh Guarantee</span>
               </div>
             </motion.div>
 
@@ -158,10 +158,10 @@ const HeroSection = () => {
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
                   <Button 
-                    className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-semibold px-6 lg:px-8 py-3 lg:py-4 text-sm lg:text-base shadow-xl hover:shadow-2xl transition-all duration-300 w-full sm:w-auto"
+                    className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-semibold px-4 xs:px-6 lg:px-8 py-2.5 xs:py-3 lg:py-4 text-xs xs:text-sm lg:text-base shadow-xl hover:shadow-2xl transition-all duration-300 w-full sm:w-auto"
                   >
                     Shop Signature Mix
-                    <ArrowRight className="ml-2 h-4 w-4 lg:h-5 lg:w-5" />
+                    <ArrowRight className="ml-1.5 xs:ml-2 h-3 w-3 xs:h-4 xs:w-4 lg:h-5 lg:w-5" />
                   </Button>
                 </motion.div>
               </Link>
@@ -173,7 +173,7 @@ const HeroSection = () => {
                 >
                   <Button 
                     variant="outline"
-                    className="border-2 border-amber-600 text-amber-700 hover:bg-amber-50 font-semibold px-6 lg:px-8 py-3 lg:py-4 text-sm lg:text-base shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
+                    className="border-2 border-amber-600 text-amber-700 hover:bg-amber-50 font-semibold px-4 xs:px-6 lg:px-8 py-2.5 xs:py-3 lg:py-4 text-xs xs:text-sm lg:text-base shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
                   >
                     Try Samples First
                   </Button>

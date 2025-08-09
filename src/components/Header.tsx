@@ -30,15 +30,15 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <img 
               src="/Logo.png" 
               alt="Prasanna's Orinuts Logo" 
-              className="h-10 w-auto"
+              className="h-10 sm:h-12 lg:h-14 w-auto"
             />
-            <span className="font-playfair text-xl font-semibold text-foreground hidden sm:block">
+            <span className="font-playfair text-lg sm:text-xl font-semibold text-foreground hidden xs:block sm:block">
               Prasanna's Orinuts
             </span>
           </Link>
