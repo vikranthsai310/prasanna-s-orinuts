@@ -13,7 +13,7 @@ const TermsOfService = () => {
           <section className="mb-8">
             <h2 className="font-playfair text-2xl font-semibold mb-4">Acceptance of Terms</h2>
             <p className="mb-4">
-              By accessing and using Prasanna's Orinut website, you accept and agree to be bound by 
+              By accessing and using Prasanna's Orinuts website, you accept and agree to be bound by 
               the terms and provision of this agreement.
             </p>
           </section>

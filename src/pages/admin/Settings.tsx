@@ -8,10 +8,10 @@ import { useToast } from '@/hooks/use-toast';
 const AdminSettings = () => {
   const { toast } = useToast();
   const [businessInfo, setBusinessInfo] = useState({
-    businessName: "Prasanna's Orinut",
+    businessName: "Prasanna's Orinuts",
     address: '123 Business District, Mumbai, Maharashtra 400001',
     phone: '+91 9876543210',
-    email: 'support@prasannaorinut.com',
+    email: 'support@prasannaorinuts.com',
     gst: 'GST123456789'
   });
 

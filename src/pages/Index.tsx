@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Heart, ShoppingCart, Check, Shield, Award, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/ProductCard';
+import HeroSection from '@/components/HeroSection';
 import { mockProducts } from '@/data/mockProducts';
 import { useEffect, useRef, useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
@@ -91,30 +92,8 @@ const Index = () => {
 
   return (
     <div className="animate-fade-in">
-      {/* Hero Section */}
-      <section className="relative hero-fullscreen flex items-center justify-center">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary/60">
-          <img 
-            src="/placeholder.svg" 
-            alt="Premium dry fruits"
-            className="w-full h-full object-cover mix-blend-overlay"
-          />
-        </div>
-        <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
-          <h1 className="font-playfair text-5xl md:text-7xl font-bold mb-8">
-            Fresh Premium Dry Fruits
-          </h1>
-          <p className="text-xl md:text-3xl mb-12 text-white/90">
-            Handpicked, naturally dried, and delivered fresh to your doorstep
-          </p>
-          <Link to="/products">
-            <Button size="lg" className="btn-secondary text-lg px-10 py-6 text-xl">
-              Shop Now
-              <ArrowRight className="ml-3 h-6 w-6" />
-            </Button>
-          </Link>
-        </div>
-      </section>
+      {/* Premium Hero Section */}
+      <HeroSection />
 
       {/* Luxury Dry Fruits Section */}
       <section ref={luxurySectionRef} className="luxury-section">

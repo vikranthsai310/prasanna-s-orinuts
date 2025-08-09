@@ -14,7 +14,7 @@ const Footer = () => {
                 <span className="text-secondary-foreground font-bold">P</span>
               </div>
               <span className="font-playfair text-xl font-semibold">
-                Prasanna's Orinut
+                Prasanna's Orinuts
               </span>
             </div>
             <p className="text-primary-foreground/80 mb-4 max-w-md">
@@ -86,7 +86,7 @@ const Footer = () => {
 
         <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center">
           <p className="text-primary-foreground/60">
-            © 2024 Prasanna's Orinut. All rights reserved.
+            © 2024 Prasanna's Orinuts. All rights reserved.
           </p>
         </div>
       </div>

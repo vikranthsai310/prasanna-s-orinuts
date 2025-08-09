@@ -38,7 +38,7 @@ const ProductStructuredData = ({ product }: ProductStructuredDataProps) => {
       category: `Dry Fruits > ${product.category}`,
       brand: {
         '@type': 'Brand',
-        name: "Prasanna's Orinut"
+        name: "Prasanna's Orinuts"
       },
       offers: {
         '@type': 'Offer',
@@ -52,7 +52,7 @@ const ProductStructuredData = ({ product }: ProductStructuredDataProps) => {
           : 'https://schema.org/OutOfStock',
         seller: {
           '@type': 'Organization',
-          name: "Prasanna's Orinut - Premium Orchard"
+          name: "Prasanna's Orinuts - Premium Orchard"
         }
       },
       // Add nutritional information if available

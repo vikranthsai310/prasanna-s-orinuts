@@ -59,7 +59,7 @@ const Blog = () => {
     }
     
     return () => {
-      document.title = "Premium Dry Fruits & Nuts | Prasanna's Orinut | High-Quality Almonds, Cashews & Walnuts";
+      document.title = "Premium Dry Fruits & Nuts | Prasanna's Orinuts | High-Quality Almonds, Cashews & Walnuts";
       if (metaDescription) {
         metaDescription.setAttribute('content', "Buy premium quality dry fruits and nuts online. Fresh, nutritious and carefully selected almonds, cashews, walnuts and more. 100% natural with no additives.");
       }
@@ -79,11 +79,11 @@ const Blog = () => {
       'description': 'Articles about dry fruits, their health benefits, and usage tips',
       'author': {
         '@type': 'Organization',
-        'name': "Prasanna's Orinut - Premium Orchard"
+        'name': "Prasanna's Orinuts - Premium Orchard"
       },
       'publisher': {
         '@type': 'Organization',
-        'name': "Prasanna's Orinut",
+        'name': "Prasanna's Orinuts",
         'logo': {
           '@type': 'ImageObject',
           'url': 'https://premiumorchard.com/favicon.ico'
@@ -97,7 +97,7 @@ const Blog = () => {
         'datePublished': post.date,
         'author': {
           '@type': 'Organization',
-          'name': "Prasanna's Orinut"
+          'name': "Prasanna's Orinuts"
         },
         'keywords': post.tags.join(', ')
       }))

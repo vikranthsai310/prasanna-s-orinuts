@@ -37,7 +37,7 @@ const Header = () => {
               <span className="text-primary-foreground font-bold text-lg">P</span>
             </div>
             <span className="font-playfair text-xl font-semibold text-foreground hidden sm:block">
-              Prasanna's Orinut
+              Prasanna's Orinuts
             </span>
           </Link>
 
