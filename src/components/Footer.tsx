@@ -10,9 +10,11 @@ const Footer = () => {
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center">
-                <span className="text-secondary-foreground font-bold">P</span>
-              </div>
+              <img 
+                src="/Logo.png" 
+                alt="Prasanna's Orinuts Logo" 
+                className="h-8 w-auto"
+              />
               <span className="font-playfair text-xl font-semibold">
                 Prasanna's Orinuts
               </span>

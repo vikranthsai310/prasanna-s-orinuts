@@ -33,9 +33,11 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-secondary to-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">P</span>
-            </div>
+            <img 
+              src="/Logo.png" 
+              alt="Prasanna's Orinuts Logo" 
+              className="h-10 w-auto"
+            />
             <span className="font-playfair text-xl font-semibold text-foreground hidden sm:block">
               Prasanna's Orinuts
             </span>
