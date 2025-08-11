@@ -1,12 +1,13 @@
 
 import { Product } from '@/types/product';
+import { FIREBASE_IMAGE_URLS } from '@/services/imageService';
 
 export const mockProducts: Product[] = [
   {
     id: '1',
     name: 'Premium Almonds',
     description: 'California premium almonds, rich in vitamin E and healthy fats. Perfect for snacking or cooking.',
-    image: '/placeholder.svg',
+    image: FIREBASE_IMAGE_URLS.almond,
     prices: {
       '250g': 299,
       '500g': 589,
@@ -26,7 +27,7 @@ export const mockProducts: Product[] = [
     id: '2',
     name: 'Afghani Dates',
     description: 'Sweet, soft Afghani dates packed with natural sugars and essential minerals.',
-    image: '/placeholder.svg',
+    image: FIREBASE_IMAGE_URLS.dates,
     prices: {
       '250g': 199,
       '500g': 389,
@@ -46,7 +47,7 @@ export const mockProducts: Product[] = [
     id: '3',
     name: 'Kashmir Walnuts',
     description: 'Premium Kashmir walnuts, known for their superior quality and rich omega-3 content.',
-    image: '/placeholder.svg',
+    image: FIREBASE_IMAGE_URLS.walnut,
     prices: {
       '250g': 399,
       '500g': 789,
@@ -66,7 +67,7 @@ export const mockProducts: Product[] = [
     id: '4',
     name: 'Iranian Pistachios',
     description: 'Finest Iranian pistachios with a distinctive taste and perfect crunch.',
-    image: '/placeholder.svg',
+    image: FIREBASE_IMAGE_URLS.pista,
     prices: {
       '250g': 549,
       '500g': 1089,
@@ -106,7 +107,7 @@ export const mockProducts: Product[] = [
     id: '6',
     name: 'Golden Raisins',
     description: 'Premium golden raisins, naturally sweet and perfect for baking and snacking.',
-    image: '/placeholder.svg',
+    image: FIREBASE_IMAGE_URLS.rasins,
     prices: {
       '250g': 149,
       '500g': 289,
@@ -126,7 +127,7 @@ export const mockProducts: Product[] = [
     id: '7',
     name: 'Brazilian Cashews',
     description: 'Creamy Brazilian cashews, rich in healthy fats and minerals.',
-    image: '/placeholder.svg',
+    image: FIREBASE_IMAGE_URLS.cashew,
     prices: {
       '250g': 349,
       '500g': 689,
@@ -146,7 +147,7 @@ export const mockProducts: Product[] = [
     id: '8',
     name: 'Dried Apricots',
     description: 'Turkish dried apricots, naturally sweet and rich in beta-carotene.',
-    image: '/placeholder.svg',
+    image: FIREBASE_IMAGE_URLS.apricot,
     prices: {
       '250g': 199,
       '500g': 389,
@@ -166,7 +167,7 @@ export const mockProducts: Product[] = [
     id: '9',
     name: 'Medjool Dates',
     description: 'Premium Medjool dates, known as the king of dates for their size and sweetness.',
-    image: '/placeholder.svg',
+    image: FIREBASE_IMAGE_URLS.dates,
     prices: {
       '250g': 299,
       '500g': 589,

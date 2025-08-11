@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { FIREBASE_IMAGE_URLS } from '@/services/imageService';
 
 // Sample blog posts about dry fruits
 const blogPosts = [
@@ -9,7 +10,7 @@ const blogPosts = [
     id: 'benefits-of-almonds',
     title: 'Top 10 Health Benefits of Almonds You Need to Know',
     description: 'Discover why almonds are considered a superfood and how they can improve your health.',
-    image: '/public/almond.png',
+    image: FIREBASE_IMAGE_URLS.almond,
     date: 'June 15, 2023',
     readTime: '5 min read',
     tags: ['almonds', 'health benefits', 'nutrition', 'dry fruits'],
@@ -19,7 +20,7 @@ const blogPosts = [
     id: 'cashews-nutrition',
     title: 'Cashew Nutrition: Why These Kidney-Shaped Nuts Are Good For You',
     description: 'Learn about the nutritional profile of cashews and their impact on your health.',
-    image: '/public/cashew.png',
+    image: FIREBASE_IMAGE_URLS.cashew,
     date: 'July 22, 2023',
     readTime: '4 min read',
     tags: ['cashews', 'nutrition', 'healthy fats', 'dry fruits'],
@@ -29,7 +30,7 @@ const blogPosts = [
     id: 'walnuts-brain-health',
     title: 'Walnuts and Brain Health: The Science-Backed Connection',
     description: 'Explore the research behind walnuts and their positive effects on cognitive function.',
-    image: '/public/walnut.png',
+    image: FIREBASE_IMAGE_URLS.walnut,
     date: 'August 5, 2023',
     readTime: '6 min read',
     tags: ['walnuts', 'brain health', 'omega-3', 'dry fruits'],

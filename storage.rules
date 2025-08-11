@@ -1,0 +1,31 @@
+rules_version = '2';
+
+// Craft rules based on data in your Firestore database
+// allow write: if firestore.get(
+//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin == true
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Images and media
+    match /products/{imageId} {
+      // Allow anyone to read product images
+      allow read: if true;
+      // Only admins can upload/update/delete product images
+      allow write: if request.auth != null;
+    }
+    
+    match /branding/{imageId} {
+      // Allow anyone to read branding images (logo, etc)
+      allow read: if true;
+      // Only admins can upload/update/delete branding images
+      allow write: if request.auth != null;
+    }
+    
+    // Default rule for other files
+    match /{allPaths=**} {
+      // Allow anyone to read
+      allow read: if true;
+      // Only authenticated users can write
+      allow write: if request.auth != null;
+    }
+  }
+}

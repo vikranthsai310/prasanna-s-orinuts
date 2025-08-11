@@ -31,6 +31,7 @@ import AdminOrders from "./pages/admin/Orders";
 import AdminUsers from "./pages/admin/Users";
 import AdminSettings from "./pages/admin/Settings";
 import NotFound from "./pages/NotFound";
+import ImagePreloader from "./components/ImagePreloader";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,10 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <ScrollToTop />
+            <ImagePreloader 
+              preloadAll={false} 
+              onComplete={(stats) => console.log('🎯 Image preloading complete:', stats)}
+            />
             <Layout>
               <Routes>
                 <Route path="/" element={<Index />} />

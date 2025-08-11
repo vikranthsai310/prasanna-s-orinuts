@@ -3,16 +3,17 @@ import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, Shield, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { FIREBASE_IMAGE_URLS } from '@/services/imageService';
 
 const HeroSection = () => {
   const { scrollYProgress } = useScroll();
   
-  // Fruit data with 3D images
+  // Fruit data with Firebase Storage images
   const fruits = [
     { 
       id: 'almond', 
       name: 'Premium Almonds', 
-      image: '/almond.png',
+      image: FIREBASE_IMAGE_URLS.almond,
       description: 'California-sourced almonds with perfect crunch',
       benefits: ['Heart Health', 'Protein Rich'],
       colors: { primary: '#D2691E', secondary: '#F4A460' }
@@ -20,7 +21,7 @@ const HeroSection = () => {
     { 
       id: 'cashew', 
       name: 'Exotic Cashews', 
-      image: '/cashew.png',
+      image: FIREBASE_IMAGE_URLS.cashew,
       description: 'Creamy hand-selected cashews with subtle sweetness',
       benefits: ['Energy Boost', 'Premium Quality'],
       colors: { primary: '#DEB887', secondary: '#F5DEB3' }
@@ -28,7 +29,7 @@ const HeroSection = () => {
     { 
       id: 'walnut', 
       name: 'Organic Walnuts', 
-      image: '/walnut.png',
+      image: FIREBASE_IMAGE_URLS.walnut,
       description: 'Himalayan-grown walnuts rich in omega nutrition',
       benefits: ['Brain Health', 'Omega-3 Rich'],
       colors: { primary: '#8B4513', secondary: '#D2691E' }
@@ -36,7 +37,7 @@ const HeroSection = () => {
     { 
       id: 'pista', 
       name: 'Premium Pistachios', 
-      image: '/pista.png',
+      image: FIREBASE_IMAGE_URLS.pista,
       description: 'Finest Iranian pistachios with natural flavor',
       benefits: ['Antioxidants', 'Energy Dense'],
       colors: { primary: '#9ACD32', secondary: '#ADFF2F' }
@@ -44,7 +45,7 @@ const HeroSection = () => {
     { 
       id: 'dates', 
       name: 'Medjool Dates', 
-      image: '/dates.png',
+      image: FIREBASE_IMAGE_URLS.dates,
       description: 'Sweet and chewy premium dates from Morocco',
       benefits: ['Natural Sugar', 'Fiber Rich'],
       colors: { primary: '#8B4513', secondary: '#A0522D' }
@@ -52,7 +53,7 @@ const HeroSection = () => {
     { 
       id: 'apricot', 
       name: 'Dried Apricots', 
-      image: '/apricot.png',
+      image: FIREBASE_IMAGE_URLS.apricot,
       description: 'Sun-dried apricots bursting with vitamins',
       benefits: ['Vitamin A', 'Natural Glow'],
       colors: { primary: '#FF8C00', secondary: '#FFA500' }
@@ -60,7 +61,7 @@ const HeroSection = () => {
     { 
       id: 'rasins', 
       name: 'Golden Raisins', 
-      image: '/rasins.png',
+      image: FIREBASE_IMAGE_URLS.rasins,
       description: 'Sweet golden raisins packed with energy',
       benefits: ['Quick Energy', 'Natural Sweet'],
       colors: { primary: '#DAA520', secondary: '#FFD700' }
