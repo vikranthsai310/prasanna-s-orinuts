@@ -4,16 +4,16 @@ import { ref, getDownloadURL } from 'firebase/storage';
 // Image URL cache to avoid repeated Firebase calls
 const imageUrlCache = new Map<string, string>();
 
-// Using Firebase Storage URLs with access tokens
+// Using local images to avoid Firebase issues
 export const FIREBASE_IMAGE_URLS = {
-  almond: 'https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Falmond.png?alt=media&token=b170e0bf-b602-4211-8049-45f5a0b91b01',
-  apricot: 'https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Fapricot.png?alt=media&token=2071be84-fa26-491b-867a-8f0cc3041e31',
-  cashew: 'https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Fcashew.png?alt=media&token=6ea5e570-ee2c-46a2-888f-9cb7a540744c',
-  dates: 'https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Fdates.png?alt=media&token=6e7ae1e5-cf65-46e8-926f-fe3169bf53a0',
-  logo: 'https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/branding%2Flogo.png?alt=media',
-  pista: 'https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Fpista.png?alt=media&token=aca2b4cf-0083-4dab-b9e6-cf2b328f4385',
-  rasins: 'https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Frasins.png?alt=media&token=017e6c45-d8c8-4db8-9c4c-43bbd44389a7',
-  walnut: 'https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Fwalnut.png?alt=media&token=4336cad7-0a50-4762-bed7-1736cff605a0'
+  almond: '/almond.png',
+  apricot: '/apricot.png',
+  cashew: '/cashew.png',
+  dates: '/dates.png',
+  logo: '/Logo.png',
+  pista: '/pista.png',
+  rasins: '/rasins.png',
+  walnut: '/walnut.png'
 };
 
 // Firebase Storage URLs with access tokens (backup reference)
