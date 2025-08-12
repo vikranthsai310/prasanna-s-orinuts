@@ -9,7 +9,8 @@ import {
   query, 
   where, 
   orderBy, 
-  serverTimestamp 
+  serverTimestamp,
+  writeBatch
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -50,8 +51,16 @@ export const getUserAddresses = async (userId: string): Promise<Address[]> => {
       id: doc.id,
       ...doc.data()
     } as Address));
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching addresses:', error);
+    
+    // If it's a permissions error, provide helpful feedback
+    if (error.code === 'permission-denied') {
+      console.warn('Firestore permissions not configured for addresses collection. Please deploy updated rules.');
+      // Return empty array for now to prevent app from crashing
+      return [];
+    }
+    
     return [];
   }
 };
@@ -92,8 +101,13 @@ export const addAddress = async (address: Omit<Address, 'id' | 'createdAt' | 'up
     
     const docRef = await addDoc(collection(db, ADDRESSES_COLLECTION), addressWithTimestamps);
     return docRef.id;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error adding address:', error);
+    
+    if (error.code === 'permission-denied') {
+      throw new Error('Address permissions not configured. Please deploy updated Firestore rules.');
+    }
+    
     throw error;
   }
 };
@@ -166,7 +180,7 @@ const unsetDefaultAddresses = async (userId: string): Promise<void> => {
     
     const snapshot = await getDocs(q);
     
-    const batch = db.batch();
+    const batch = writeBatch(db);
     snapshot.docs.forEach(doc => {
       batch.update(doc.ref, { 
         isDefault: false,
