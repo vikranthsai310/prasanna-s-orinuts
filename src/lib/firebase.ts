@@ -29,6 +29,10 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
+// Add custom parameters to avoid COOP issues
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
+
 // Use emulators in development if needed
 if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
   connectAuthEmulator(auth, 'http://localhost:9099');

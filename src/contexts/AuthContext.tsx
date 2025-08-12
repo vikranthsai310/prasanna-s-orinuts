@@ -11,6 +11,8 @@ import {
   signInWithCredential,
   User as FirebaseUser,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   updateProfile
 } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
@@ -54,6 +56,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log('🔧 Development Mode: App verification disabled for testing');
       console.log('📱 You can now use test phone numbers from Firebase Console');
     }
+  }, []);
+
+  // Handle redirect result when user returns from Google OAuth
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          // User signed in via redirect
+          console.log('Google sign-in via redirect successful:', result.user);
+        }
+      } catch (error) {
+        console.error('Error handling redirect result:', error);
+      }
+    };
+
+    handleRedirectResult();
   }, []);
 
   // Listen for auth state changes
@@ -133,10 +152,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loginWithGoogle = async () => {
     setIsLoading(true);
     try {
+      // Try popup first (faster user experience)
       await signInWithPopup(auth, googleProvider);
       // Auth state listener will handle updating the user state
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google login error:', error);
+      
+      // If popup fails due to COOP or popup blocking, try redirect
+      if (error.code === 'auth/popup-blocked' || 
+          error.code === 'auth/popup-closed-by-user' ||
+          error.message?.includes('Cross-Origin-Opener-Policy')) {
+        console.log('Popup blocked or COOP issue, trying redirect method...');
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          // Redirect will reload the page, so no need to handle response here
+          return;
+        } catch (redirectError) {
+          console.error('Redirect also failed:', redirectError);
+          throw redirectError;
+        }
+      }
+      
       throw error;
     } finally {
       setIsLoading(false);

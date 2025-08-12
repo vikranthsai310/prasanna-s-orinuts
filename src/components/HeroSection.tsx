@@ -70,9 +70,6 @@ const HeroSection = () => {
 
   const [selectedFruit, setSelectedFruit] = useState(fruits[0]);
   const [isRotating, setIsRotating] = useState(true);
-  
-  // Debug: Log the selected fruit
-  console.log(`Selected fruit: ${selectedFruit.id} (${selectedFruit.name})`);
   const ringRef = useRef<HTMLDivElement>(null);
   const [ringRadius, setRingRadius] = useState<number>(420);
   
@@ -338,9 +335,6 @@ const HeroSection = () => {
                 onHoverEnd={() => setIsRotating(true)}
               >
                 {fruits.filter(fruit => fruit.id !== selectedFruit.id).map((fruit, index, arr) => {
-                  // Debug: Log which fruits are in the ring
-                  console.log(`Ring fruit ${index}: ${fruit.id} (${fruit.name})`);
-                  
                   const startAngle = -90; // place first item at top center
                   const angle = startAngle + (index * 360) / arr.length;
                   const radius = ringRadius || 140;
