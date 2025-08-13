@@ -23,10 +23,17 @@ match /addresses/{addressId} {
 ### Option 1: Firebase CLI (Recommended)
 If you have Firebase CLI installed and working:
 ```bash
+# Deploy both rules and indexes
+firebase deploy --only firestore
+
+# Or deploy separately
 firebase deploy --only firestore:rules
+firebase deploy --only firestore:indexes
 ```
 
 ### Option 2: Firebase Console (Manual)
+
+#### Deploy Rules:
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Select your project: `orinut-494cc`
 3. Go to **Firestore Database**
@@ -34,6 +41,17 @@ firebase deploy --only firestore:rules
 5. Copy the contents of `firestore.rules` file from this project
 6. Paste it into the rules editor
 7. Click **Publish**
+
+#### Deploy Indexes:
+1. In the same Firestore Database section
+2. Click on **Indexes** tab
+3. Click **Create Index** and add:
+   - Collection ID: `addresses`
+   - Fields: `userId` (Ascending), `createdAt` (Descending)
+   - Query scope: Collection
+4. Click **Create Index**
+
+Or click the direct link from the error message to auto-create the index.
 
 ### Option 3: PowerShell Execution Policy Fix
 If you're getting PowerShell execution policy errors:

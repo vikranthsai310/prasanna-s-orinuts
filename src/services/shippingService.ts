@@ -153,7 +153,7 @@ export const createShiprocketOrder = async (
       billing_pincode: order.shippingAddress.pincode,
       billing_state: order.shippingAddress.state,
       billing_country: 'India',
-      billing_email: order.userId, // Using userId as email
+      billing_email: 'orders@prasannaorinut.com', // Use business email for billing
       billing_phone: order.shippingAddress.phone,
       shipping_is_billing: true,
       order_items: order.items.map(item => ({

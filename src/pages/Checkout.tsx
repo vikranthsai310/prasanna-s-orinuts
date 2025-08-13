@@ -177,6 +177,16 @@ const Checkout = () => {
     
     if (!validateForm()) return;
     
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to complete your order.",
+        variant: "destructive"
+      });
+      navigate('/auth');
+      return;
+    }
+    
     if (!razorpayLoaded) {
       toast({
         title: "Payment Gateway Error",
@@ -234,7 +244,8 @@ const Checkout = () => {
           city: formData.city,
           state: formData.state,
           pincode: formData.pincode
-        }
+        },
+        user.id // Pass the authenticated user's Firebase UID
       );
       
       // Open Razorpay checkout
@@ -249,40 +260,20 @@ const Checkout = () => {
         // Success handler
         async (response) => {
           try {
-            const isVerified = await verifyPayment(
+            const result = await verifyPayment(
               response.razorpay_order_id,
               response.razorpay_payment_id,
               response.razorpay_signature
             );
             
-            if (isVerified) {
-              try {
-                // Try to create shipment automatically
-                const order = await getOrderById(response.razorpay_order_id);
-                if (order) {
-                  await createShipment(order);
-                  
-                  toast({
-                    title: "Order Placed & Shipped",
-                    description: "Your order has been placed and shipment has been created successfully!",
-                    variant: "default"
-                  });
-                } else {
-                  toast({
-                    title: "Payment Successful",
-                    description: "Your order has been placed successfully! Shipment will be created shortly.",
-                    variant: "default"
-                  });
-                }
-              } catch (shipmentError) {
-                console.error('Shipment creation failed:', shipmentError);
-                // Don't fail the entire order if shipment creation fails
-                toast({
-                  title: "Payment Successful",
-                  description: "Your order has been placed successfully! Shipment will be created manually.",
-                  variant: "default"
-                });
-              }
+            if (result.isVerified) {
+              // Don't try to create shipment immediately - let admin handle it
+              // This prevents permission issues and ensures proper order processing
+              toast({
+                title: "Payment Successful",
+                description: "Your order has been placed successfully! You will receive tracking details soon.",
+                variant: "default"
+              });
               
               // Clear cart and redirect to order confirmation
               clearCart();

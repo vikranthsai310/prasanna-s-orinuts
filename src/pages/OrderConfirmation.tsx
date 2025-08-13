@@ -33,23 +33,13 @@ const OrderConfirmation = () => {
           return;
         }
         
-        // Fetch order details from database
-        const order = await getOrderById(state.orderId);
-        
-        if (order) {
-          setOrderDetails({
-            id: order.id,
-            date: order.createdAt ? new Date(order.createdAt.toDate()).toLocaleDateString() : new Date().toLocaleDateString(),
-            paymentId: state.paymentId
-          });
-        } else {
-          // If order not found, use information from state
-          setOrderDetails({
-            id: state.orderId,
-            date: new Date().toLocaleDateString(),
-            paymentId: state.paymentId
-          });
-        }
+        // Note: state.orderId is the Razorpay order ID, not the Firebase order ID
+        // We'll display the Razorpay order ID to the user as it's what they'll reference
+        setOrderDetails({
+          id: state.orderId, // This is the Razorpay order ID
+          date: new Date().toLocaleDateString(),
+          paymentId: state.paymentId
+        });
       } catch (error) {
         console.error('Error fetching order details:', error);
       } finally {

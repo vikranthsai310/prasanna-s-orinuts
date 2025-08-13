@@ -43,10 +43,10 @@ export const createRazorpayOrderOnServer = async (
  * Verifies a Razorpay payment signature using Vercel serverless function
  */
 export const verifyRazorpayPaymentOnServer = async (
-  orderId: string,
+  razorpayOrderId: string,
   paymentId: string,
   signature: string,
-  receipt?: string
+  firebaseOrderId?: string
 ): Promise<boolean> => {
   try {
     // Call the Vercel serverless function
@@ -56,10 +56,10 @@ export const verifyRazorpayPaymentOnServer = async (
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ 
-        orderId, 
+        orderId: razorpayOrderId, 
         paymentId, 
         signature,
-        receipt // Pass receipt for order reference if available
+        receipt: firebaseOrderId // Pass Firebase order ID as receipt for database updates
       }),
     });
 

@@ -73,7 +73,8 @@ export const createRazorpayOrder = async (
     city: string;
     state: string;
     pincode: string;
-  }
+  },
+  userId: string // Add authenticated user ID parameter
 ): Promise<string> => {
   try {
     // Create a new order in your database first
@@ -87,7 +88,7 @@ export const createRazorpayOrder = async (
     };
 
     const newOrder: NewOrder = {
-      userId: userInfo.email, // Use email as userId if you don't have a proper userId
+      userId: userId, // Use the authenticated Firebase user ID
       items,
       totalAmount,
       shippingAddress,
@@ -97,19 +98,26 @@ export const createRazorpayOrder = async (
     };
 
     // Create order in your database
-    const orderId = await createOrder(newOrder);
+    const firebaseOrderId = await createOrder(newOrder);
     
     // Create a Razorpay order on the server
     const razorpayOrder = await createRazorpayOrderOnServer(
       totalAmount,
       'INR',
-      orderId,
+      firebaseOrderId, // Use Firebase order ID as receipt
       {
         customerName: userInfo.name,
         customerEmail: userInfo.email,
         customerPhone: userInfo.phone,
+        firebaseOrderId: firebaseOrderId, // Store for reference
       }
     );
+    
+    // Store the mapping for later use during payment verification
+    (window as any).orderIdMapping = {
+      razorpayOrderId: razorpayOrder.id,
+      firebaseOrderId: firebaseOrderId
+    };
     
     return razorpayOrder.id; // Return the Razorpay order ID, not your database order ID
   } catch (error) {
@@ -186,30 +194,34 @@ export const openRazorpayCheckout = (
 
 // Function to verify payment
 export const verifyPayment = async (
-  orderId: string,
+  razorpayOrderId: string,
   paymentId: string,
   signature: string
-): Promise<boolean> => {
+): Promise<{ isVerified: boolean; firebaseOrderId?: string }> => {
   try {
+    // Get the Firebase order ID from the stored mapping
+    const orderMapping = (window as any).orderIdMapping;
+    const firebaseOrderId = orderMapping?.firebaseOrderId;
+    
+    if (orderMapping?.razorpayOrderId !== razorpayOrderId) {
+      console.warn('Order ID mismatch detected');
+    }
+    
     // Verify the payment on the server
     const isVerified = await verifyRazorpayPaymentOnServer(
-      orderId,
+      razorpayOrderId,
       paymentId,
-      signature
+      signature,
+      firebaseOrderId // Pass the Firebase order ID for database updates
     );
     
     if (isVerified) {
-      // Update payment status in your database
-      // Note: This might already be done in the verify-payment API
-      try {
-        await updatePaymentStatus(orderId, 'paid');
-      } catch (err) {
-        console.error('Error updating payment status:', err);
-        // Continue even if this fails, as the payment is verified
-      }
+      console.log('Payment verified successfully for Razorpay order:', razorpayOrderId);
+      // Clean up the temporary mapping
+      delete (window as any).orderIdMapping;
     }
     
-    return isVerified;
+    return { isVerified, firebaseOrderId };
   } catch (error) {
     console.error('Error verifying payment:', error);
     throw error;

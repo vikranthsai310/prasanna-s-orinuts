@@ -1,20 +1,29 @@
 // Vercel Serverless Function for verifying Razorpay payments
 import crypto from 'crypto';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, updateDoc } from 'firebase/firestore';
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY || "AIzaSyB-XnyhYJEnJKKgpu6XE7Ti58D7e9UoH0M",
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN || "prassanas-orinut.firebaseapp.com",
-  projectId: process.env.FIREBASE_PROJECT_ID || "prassanas-orinut",
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "prassanas-orinut.firebasestorage.app",
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "352359366381",
-  appId: process.env.FIREBASE_APP_ID || "1:352359366381:web:1f95ed0eec665ab8bd96e4"
-};
+// Initialize Firebase Admin (bypasses security rules)
+let app;
+try {
+  // Try to get existing app instance
+  app = getFirestore().app;
+} catch (error) {
+  // Initialize new app if it doesn't exist
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+    app = initializeApp({
+      credential: cert(serviceAccount),
+      projectId: process.env.FIREBASE_PROJECT_ID || "orinut-494cc"
+    });
+  } else {
+    // Fallback for development
+    app = initializeApp({
+      projectId: process.env.FIREBASE_PROJECT_ID || "orinut-494cc"
+    });
+  }
+}
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 export default async function handler(req, res) {
@@ -45,16 +54,24 @@ export default async function handler(req, res) {
 
     if (isSignatureValid) {
       try {
-        // Update the order status in Firestore
-        const orderRef = doc(db, 'orders', req.body.receipt || orderId);
-        await updateDoc(orderRef, {
-          paymentStatus: 'paid',
-          paymentId: paymentId,
-          updatedAt: new Date().toISOString()
-        });
+        // Find the order by using the receipt field if provided, otherwise skip DB update
+        const receiptId = req.body.receipt;
+        if (receiptId) {
+          // Use the receipt (which should be the Firebase order ID) to update the order
+          const orderRef = db.collection('orders').doc(receiptId);
+          await orderRef.update({
+            paymentStatus: 'paid',
+            paymentId: paymentId,
+            razorpayOrderId: orderId,
+            updatedAt: new Date().toISOString()
+          });
+          console.log('Order payment status updated successfully:', receiptId);
+        } else {
+          console.log('No receipt provided, skipping database update');
+        }
       } catch (dbError) {
         console.error('Error updating order status in database:', dbError);
-        // Continue even if database update fails
+        // Continue even if database update fails - payment is still verified
       }
     }
 
