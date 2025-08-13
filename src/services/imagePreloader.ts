@@ -10,7 +10,36 @@ const preloadPromises = new Map<string, Promise<HTMLImageElement>>();
  * @param alt - Alt text for the image
  * @returns Promise<HTMLImageElement>
  */
+/**
+ * Validate if a URL is valid and safe to load
+ * @param url - URL to validate
+ * @returns boolean - true if valid
+ */
+const isValidImageUrl = (url: string): boolean => {
+  if (!url || url.trim() === '' || url === 'undefined' || url === 'null') {
+    return false;
+  }
+  
+  // Check for malformed data URLs
+  if (url.startsWith('data:') && (url.includes('base64,=:') || url === 'data:;base64,=')) {
+    return false;
+  }
+  
+  try {
+    new URL(url, window.location.origin);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export const preloadImage = (src: string, alt: string = ''): Promise<HTMLImageElement> => {
+  // Validate URL first
+  if (!isValidImageUrl(src)) {
+    console.warn(`Invalid image URL skipped: ${src}`);
+    return Promise.reject(new Error(`Invalid image URL: ${src}`));
+  }
+
   // Return cached image if already preloaded
   if (preloadedImages.has(src)) {
     return Promise.resolve(preloadedImages.get(src)!);

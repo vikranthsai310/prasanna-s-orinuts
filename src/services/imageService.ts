@@ -5,7 +5,7 @@ import { ref, getDownloadURL } from 'firebase/storage';
 const imageUrlCache = new Map<string, string>();
 
 // Using local images to avoid Firebase issues
-export const FIREBASE_IMAGE_URLS = {
+export const FIREBASE_IMAGE_URLS: Record<string, string> = {
   almond: '/almond.png',
   apricot: '/apricot.png',
   cashew: '/cashew.png',
@@ -29,21 +29,56 @@ export const FIREBASE_STORAGE_URLS = {
 };
 
 /**
+ * Validate if a URL is valid and not empty
+ * @param url - URL to validate
+ * @returns boolean - true if valid
+ */
+const isValidUrl = (url: string): boolean => {
+  if (!url || url.trim() === '' || url === 'undefined' || url === 'null') {
+    return false;
+  }
+  
+  // Check for malformed data URLs
+  if (url.startsWith('data:') && url.includes('base64,') && url.endsWith('=:1')) {
+    return false;
+  }
+  
+  try {
+    new URL(url, window.location.origin);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Get image URL from Firebase Storage
  * @param imageName - Name of the image (without extension)
  * @returns Promise<string> - Download URL
  */
 export const getImageUrl = async (imageName: string): Promise<string> => {
+  // Validate input
+  if (!imageName || imageName.trim() === '') {
+    console.warn('Empty or invalid image name provided');
+    return '/placeholder.svg';
+  }
+
   // Check cache first
   if (imageUrlCache.has(imageName)) {
-    return imageUrlCache.get(imageName)!;
+    const cachedUrl = imageUrlCache.get(imageName)!;
+    if (isValidUrl(cachedUrl)) {
+      return cachedUrl;
+    } else {
+      // Remove invalid cached URL
+      imageUrlCache.delete(imageName);
+    }
   }
 
   // Check preloaded URLs
-  if (FIREBASE_IMAGE_URLS[imageName as keyof typeof FIREBASE_IMAGE_URLS]) {
-    const url = FIREBASE_IMAGE_URLS[imageName as keyof typeof FIREBASE_IMAGE_URLS];
-    imageUrlCache.set(imageName, url);
-    return url;
+  const preloadedUrl = FIREBASE_IMAGE_URLS[imageName as keyof typeof FIREBASE_IMAGE_URLS];
+  if (preloadedUrl && isValidUrl(preloadedUrl)) {
+    imageUrlCache.set(imageName, preloadedUrl);
+    return preloadedUrl;
   }
 
   try {
@@ -52,13 +87,18 @@ export const getImageUrl = async (imageName: string): Promise<string> => {
     const imageRef = ref(storage, storagePath);
     const url = await getDownloadURL(imageRef);
     
-    // Cache the URL
-    imageUrlCache.set(imageName, url);
-    return url;
+    // Validate the URL before caching
+    if (isValidUrl(url)) {
+      imageUrlCache.set(imageName, url);
+      return url;
+    } else {
+      throw new Error('Invalid URL returned from Firebase');
+    }
   } catch (error) {
     console.error(`Error fetching image URL for ${imageName}:`, error);
     // Fallback to local image
-    return `/${imageName}.png`;
+    const fallbackUrl = `/${imageName}.png`;
+    return isValidUrl(fallbackUrl) ? fallbackUrl : '/placeholder.svg';
   }
 };
 

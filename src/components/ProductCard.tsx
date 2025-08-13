@@ -5,6 +5,7 @@ import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { Product } from '@/types/product';
+import { validateImageUrl } from '@/utils/imageErrorHandler';
 
 interface ProductCardProps {
   product: Product;
@@ -34,7 +35,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       <Link to={`/products/${product.id}`}>
         <div className="relative overflow-hidden rounded-lg mb-4">
           <img
-            src={product.image}
+            src={validateImageUrl(product.image)}
             alt={product.name}
             className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
           />
