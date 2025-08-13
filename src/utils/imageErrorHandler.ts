@@ -21,6 +21,7 @@ export const initializeImageErrorHandling = () => {
       if (src && (
         src.includes('data:;base64,=') ||
         src.endsWith('=:1') ||
+        src === 'data:;base64,=' ||
         src === '' ||
         src === 'undefined' ||
         src === 'null'
@@ -42,6 +43,16 @@ export const initializeImageErrorHandling = () => {
     }
   }, true); // Use capture phase
   
+  // Enhanced handler specifically for browser extension related errors
+  window.addEventListener('error', (event) => {
+    // Check if the error message contains the specific malformed data URL
+    if (event.message && event.message.includes('data:;base64,=')) {
+      console.warn('Browser extension data URL error suppressed:', event.message);
+      event.preventDefault();
+      return false;
+    }
+  });
+  
   // Also handle unhandled promise rejections that might be related to image loading
   window.addEventListener('unhandledrejection', (event) => {
     const reason = event.reason;
@@ -49,14 +60,59 @@ export const initializeImageErrorHandling = () => {
     // Check if it's an image-related network error
     if (reason instanceof Error && 
         (reason.message.includes('ERR_INVALID_URL') || 
-         reason.message.includes('net::ERR_INVALID_URL'))) {
+         reason.message.includes('net::ERR_INVALID_URL') ||
+         reason.message.includes('data:;base64,='))) {
       
       console.warn('Handled unhandled promise rejection for invalid URL:', reason.message);
       event.preventDefault(); // Prevent the error from being thrown
     }
   });
   
-  console.log('✅ Image error handling initialized');
+  // Intercept fetch calls that might be made with invalid data URLs
+  const originalFetch = window.fetch;
+  window.fetch = function(input: RequestInfo | URL, init?: RequestInit) {
+    const url = input instanceof Request ? input.url : input.toString();
+    
+    // Block invalid data URLs
+    if (url.includes('data:;base64,=') || url.endsWith('=:1')) {
+      console.warn('Blocked fetch request to invalid data URL:', url);
+      return Promise.reject(new Error('Invalid data URL blocked'));
+    }
+    
+    return originalFetch.call(this, input, init);
+  };
+  
+  // Override Image constructor to validate URLs
+  const OriginalImage = window.Image;
+  window.Image = function(width?: number, height?: number) {
+    const img = new OriginalImage(width, height);
+    
+    // Override the src setter
+    let _src = '';
+    Object.defineProperty(img, 'src', {
+      get() { return _src; },
+      set(value: string) {
+        // Validate the URL before setting
+        if (value && (
+          value.includes('data:;base64,=') ||
+          value.endsWith('=:1') ||
+          value === 'data:;base64,='
+        )) {
+          console.warn('Invalid image src blocked:', value);
+          _src = '/placeholder.svg';
+        } else {
+          _src = value;
+        }
+        // Set the actual src using the original property descriptor
+        Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src')?.set?.call(img, _src);
+      },
+      configurable: true
+    });
+    
+    return img;
+  } as any;
+  
+  console.log('✅ Comprehensive image error handling initialized');
 };
 
 /**

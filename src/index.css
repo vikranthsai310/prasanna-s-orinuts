@@ -6,6 +6,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent invalid data URLs from being processed */
+img[src*="data:;base64,="] {
+  display: none !important;
+}
+
+img[src="data:;base64,="] {
+  display: none !important;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
 
 @layer base {
