@@ -50,14 +50,19 @@ const Checkout = () => {
   // Load Razorpay script on component mount
   useEffect(() => {
     const loadRazorpay = async () => {
+      console.log('🔄 Loading Razorpay...');
       const result = await initializeRazorpay();
+      console.log('🔄 Razorpay load result:', result);
       setRazorpayLoaded(result);
       if (!result) {
+        console.error('❌ Failed to load Razorpay');
         toast({
           title: "Payment Gateway Error",
           description: "Failed to load payment gateway. Please try again later.",
           variant: "destructive"
         });
+      } else {
+        console.log('✅ Razorpay loaded successfully');
       }
     };
     
@@ -103,15 +108,19 @@ const Checkout = () => {
     if (!useNewAddress && selectedAddressId) {
       const selectedAddress = savedAddresses.find(addr => addr.id === selectedAddressId);
       if (selectedAddress) {
-        setFormData({
+        setFormData(prev => ({
+          ...prev,
           name: selectedAddress.name || user?.name || '',
           email: user?.email || '',
           phone: selectedAddress.phone || user?.phone || '',
           address: selectedAddress.street,
           city: selectedAddress.city,
           state: selectedAddress.state,
-          pincode: selectedAddress.pincode
-        });
+          pincode: selectedAddress.pincode,
+          addressType: selectedAddress.type as AddressType,
+          customAddressType: '',
+          saveToProfile: false // Don't save existing address again
+        }));
       }
     }
   }, [selectedAddressId, useNewAddress, savedAddresses, user]);
@@ -172,12 +181,21 @@ const Checkout = () => {
     setUseNewAddress(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    // Prevent default form submission if event is provided
+    if (e) {
+      e.preventDefault();
+    }
     
-    if (!validateForm()) return;
+    console.log('🔄 Starting checkout process...');
+    
+    if (!validateForm()) {
+      console.log('❌ Form validation failed');
+      return;
+    }
     
     if (!user) {
+      console.log('❌ User not authenticated');
       toast({
         title: "Authentication Required",
         description: "Please log in to complete your order.",
@@ -188,6 +206,7 @@ const Checkout = () => {
     }
     
     if (!razorpayLoaded) {
+      console.log('❌ Razorpay not loaded');
       toast({
         title: "Payment Gateway Error",
         description: "Payment gateway is not available. Please try again later.",
@@ -197,11 +216,13 @@ const Checkout = () => {
     }
     
     setIsProcessing(true);
+    console.log('🔄 Processing order...');
     
     try {
       // Save address to profile if user wants to
-      if (user && formData.saveToProfile) {
+      if (user && formData.saveToProfile && useNewAddress) {
         try {
+          console.log('💾 Saving address to profile...');
           const addressType = formData.addressType === 'Other' ? formData.customAddressType : formData.addressType;
           
           await addAddress({
@@ -222,7 +243,7 @@ const Checkout = () => {
             variant: "default"
           });
         } catch (addressError) {
-          console.error('Error saving address:', addressError);
+          console.error('❌ Error saving address:', addressError);
           // Don't block the order if address saving fails
           toast({
             title: "Address Save Failed",
@@ -232,6 +253,7 @@ const Checkout = () => {
         }
       }
 
+      console.log('💰 Creating Razorpay order...');
       // Create a Razorpay order
       const orderId = await createRazorpayOrder(
         items,
@@ -248,6 +270,7 @@ const Checkout = () => {
         user.id // Pass the authenticated user's Firebase UID
       );
       
+      console.log('🚀 Opening Razorpay checkout modal...');
       // Open Razorpay checkout
       openRazorpayCheckout(
         orderId,
@@ -259,6 +282,7 @@ const Checkout = () => {
         },
         // Success handler
         async (response) => {
+          console.log('✅ Payment successful, verifying...');
           try {
             const result = await verifyPayment(
               response.razorpay_order_id,
@@ -267,8 +291,7 @@ const Checkout = () => {
             );
             
             if (result.isVerified) {
-              // Don't try to create shipment immediately - let admin handle it
-              // This prevents permission issues and ensures proper order processing
+              console.log('✅ Payment verified successfully');
               toast({
                 title: "Payment Successful",
                 description: "Your order has been placed successfully! You will receive tracking details soon.",
@@ -284,6 +307,7 @@ const Checkout = () => {
                 } 
               });
             } else {
+              console.log('❌ Payment verification failed');
               toast({
                 title: "Payment Verification Failed",
                 description: "We couldn't verify your payment. Please contact support.",
@@ -291,7 +315,7 @@ const Checkout = () => {
               });
             }
           } catch (error) {
-            console.error('Payment verification failed:', error);
+            console.error('❌ Payment verification failed:', error);
             toast({
               title: "Payment Error",
               description: "There was an error processing your payment.",
@@ -303,17 +327,17 @@ const Checkout = () => {
         },
         // Failure handler
         (error) => {
-          console.error('Razorpay payment failed:', error);
+          console.error('❌ Razorpay payment failed:', error);
           toast({
             title: "Payment Failed",
-            description: error.error?.description || "Your payment was not successful. Please try again.",
+            description: error.error?.description || error.message || "Your payment was not successful. Please try again.",
             variant: "destructive"
           });
           setIsProcessing(false);
         }
       );
     } catch (error) {
-      console.error('Order creation failed:', error);
+      console.error('❌ Order creation failed:', error);
       toast({
         title: "Order Creation Failed",
         description: "We couldn't create your order. Please try again.",
@@ -343,6 +367,18 @@ const Checkout = () => {
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       <h1 className="font-playfair text-3xl font-bold mb-8">Checkout</h1>
       
+      {/* Debug Information - Remove in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mb-4 p-4 bg-gray-100 rounded-lg text-sm">
+          <p><strong>Debug Info:</strong></p>
+          <p>Razorpay Loaded: {razorpayLoaded ? '✅' : '❌'}</p>
+          <p>User: {user ? '✅ ' + user.name : '❌'}</p>
+          <p>Items in cart: {items.length}</p>
+          <p>Total: ₹{totalPrice}</p>
+          <p>Processing: {isProcessing ? '✅' : '❌'}</p>
+        </div>
+      )}
+      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Shipping Form */}
         <div className="card-premium">
@@ -368,15 +404,19 @@ const Checkout = () => {
                   onValueChange={(value) => {
                     if (value === 'new') {
                       setUseNewAddress(true);
-                      setFormData({
+                      setFormData(prev => ({
+                        ...prev,
                         name: user?.name || '',
                         email: user?.email || '',
                         phone: user?.phone || '',
                         address: '',
                         city: '',
                         state: '',
-                        pincode: ''
-                      });
+                        pincode: '',
+                        addressType: 'Home' as AddressType,
+                        customAddressType: '',
+                        saveToProfile: true
+                      }));
                     } else {
                       handleAddressChange(value);
                     }
@@ -661,12 +701,19 @@ const Checkout = () => {
           
           <div className="mt-6 space-y-3">
             <Button 
-              onClick={handleSubmit}
+              type="button"
+              onClick={() => handleSubmit()}
               disabled={isProcessing || !razorpayLoaded}
               className="w-full btn-secondary"
             >
               {isProcessing ? 'Processing...' : 'Pay with Razorpay'}
             </Button>
+            
+            {!razorpayLoaded && (
+              <p className="text-xs text-red-500 text-center">
+                Payment gateway is loading... Please wait.
+              </p>
+            )}
             
             <p className="text-xs text-muted-foreground text-center">
               By placing your order, you agree to our Terms of Service and Privacy Policy.

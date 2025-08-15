@@ -32,6 +32,7 @@ import AdminUsers from "./pages/admin/Users";
 import AdminSettings from "./pages/admin/Settings";
 import NotFound from "./pages/NotFound";
 import ImagePreloader from "./components/ImagePreloader";
+import TestRazorpay from "./pages/TestRazorpay";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +68,9 @@ const App = () => (
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/shipping-policy" element={<ShippingPolicy />} />
                 <Route path="/return-policy" element={<ReturnPolicy />} />
+                
+                {/* Test Route - Remove in production */}
+                <Route path="/test-razorpay" element={<TestRazorpay />} />
                 
                 {/* Admin Routes - Protected with AdminRoute */}
                 <Route path="/admin" element={

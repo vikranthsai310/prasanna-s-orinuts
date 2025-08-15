@@ -11,6 +11,11 @@ export const createRazorpayOrderOnServer = async (
   notes: Record<string, string> = {}
 ): Promise<{ id: string }> => {
   try {
+    console.log('🌐 Creating Razorpay order on server...');
+    console.log('💰 Amount:', amount);
+    console.log('💳 Currency:', currency);
+    console.log('🧾 Receipt:', receipt);
+    
     // Call the Vercel serverless function
     const response = await fetch('/api/create-order', {
       method: 'POST',
@@ -20,8 +25,11 @@ export const createRazorpayOrderOnServer = async (
       body: JSON.stringify({ amount, currency, receipt, notes }),
     });
 
+    console.log('📡 API Response status:', response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('❌ API Error response:', errorText);
       let errorData;
       try {
         errorData = JSON.parse(errorText);
@@ -32,9 +40,10 @@ export const createRazorpayOrderOnServer = async (
     }
 
     const result = await response.json();
+    console.log('✅ Razorpay order created successfully:', result);
     return result;
   } catch (error) {
-    console.error('Error creating Razorpay order:', error);
+    console.error('❌ Error creating Razorpay order:', error);
     throw error;
   }
 };
