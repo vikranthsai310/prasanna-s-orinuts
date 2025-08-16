@@ -1,0 +1,4 @@
+# SPA routing - redirect all non-API and non-asset requests to index.html
+/api/* /api/:splat 200
+/assets/* /assets/:splat 200
+/* /index.html 200

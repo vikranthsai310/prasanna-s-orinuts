@@ -5,20 +5,47 @@
     { "src": "package.json", "use": "@vercel/static-build", "config": { "distDir": "dist" } }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1.js" },
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1.js",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization"
+      }
+    },
     { "handle": "filesystem" },
-    { "src": "/assets/(.*)", "dest": "/assets/$1" },
-    { "src": "/(.*\\.[a-z0-9]+)$", "dest": "/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
+    {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot))$",
+      "dest": "/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      }
+    }
   ],
   "env": {
     "RAZORPAY_KEY_ID": "rzp_live_DBSSTbBMD0V8N9",
     "RAZORPAY_KEY_SECRET": "PSAZ07MfVPmBeux0JqpX7aEl",
-    "FIREBASE_API_KEY": "AIzaSyB-XnyhYJEnJKKgpu6XE7Ti58D7e9UoH0M",
-    "FIREBASE_AUTH_DOMAIN": "prassanas-orinut.firebaseapp.com",
-    "FIREBASE_PROJECT_ID": "prassanas-orinut",
-    "FIREBASE_STORAGE_BUCKET": "prassanas-orinut.firebasestorage.app",
-    "FIREBASE_MESSAGING_SENDER_ID": "352359366381",
-    "FIREBASE_APP_ID": "1:352359366381:web:1f95ed0eec665ab8bd96e4"
+    "FIREBASE_API_KEY": "AIzaSyCFGNw-QaL0NeajxgjMcuOxCXzeeHX1nwY",
+    "FIREBASE_AUTH_DOMAIN": "orinut-494cc.firebaseapp.com",
+    "FIREBASE_PROJECT_ID": "orinut-494cc",
+    "FIREBASE_STORAGE_BUCKET": "orinut-494cc.firebasestorage.app",
+    "FIREBASE_MESSAGING_SENDER_ID": "369347130599",
+    "FIREBASE_APP_ID": "1:369347130599:web:79cd0316f8af76c0a2de42",
+    "FIREBASE_MEASUREMENT_ID": "G-MB52LLLTFD"
   }
 } 
