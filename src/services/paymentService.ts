@@ -24,6 +24,17 @@ interface RazorpayOptions {
   theme: {
     color: string;
   };
+  modal?: {
+    ondismiss?: () => void;
+    escape?: boolean;
+    focus?: boolean;
+  };
+  retry?: {
+    enabled: boolean;
+    max_count: number;
+  };
+  timeout?: number;
+  remember_customer?: boolean;
 }
 
 interface RazorpayResponse {
@@ -52,6 +63,24 @@ export const initializeRazorpay = async (): Promise<boolean> => {
     console.log('🔄 Initializing Razorpay SDK...');
     console.log('🔑 Razorpay Key ID:', RAZORPAY_KEY_ID);
     
+    // Mobile-specific checks
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+      console.log('📱 Mobile device detected, optimizing for mobile payments');
+      
+      // Check if it's a WebView (which might have payment restrictions)
+      const isWebView = /wv|WebView/i.test(navigator.userAgent);
+      if (isWebView) {
+        console.warn('⚠️ WebView detected - some payment methods might not work');
+      }
+      
+      // Check for iOS specific handling
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) {
+        console.log('🍎 iOS device detected');
+      }
+    }
+    
     const loaded = await loadScript('https://checkout.razorpay.com/v1/checkout.js');
     if (!loaded) {
       console.error('❌ Razorpay SDK failed to load');
@@ -65,6 +94,12 @@ export const initializeRazorpay = async (): Promise<boolean> => {
     }
     
     console.log('✅ Razorpay SDK loaded successfully');
+    
+    // Mobile-specific initialization
+    if (isMobile) {
+      console.log('📱 Razorpay mobile payments ready');
+    }
+    
     return true;
   } catch (error) {
     console.error('❌ Error loading Razorpay SDK:', error);
@@ -184,6 +219,10 @@ export const openRazorpayCheckout = (
     const amountInPaise = amount * 100;
     console.log('💰 Amount in paise:', amountInPaise);
 
+    // Detect if user is on mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    console.log('📱 Is mobile device:', isMobile);
+
     const options: RazorpayOptions = {
       key: RAZORPAY_KEY_ID,
       amount: amountInPaise,
@@ -206,6 +245,25 @@ export const openRazorpayCheckout = (
       theme: {
         color: '#8B5A2B', // Brown color to match the orchard theme
       },
+      // Mobile-specific configurations
+      modal: {
+        ondismiss: () => {
+          console.log('💸 Payment modal dismissed by user');
+          onFailure(new Error('Payment was cancelled by user'));
+        },
+        // Prevent escape key on mobile
+        escape: !isMobile,
+        // Auto-focus on mobile
+        focus: isMobile
+      },
+      // Enable retry on mobile
+      retry: {
+        enabled: true,
+        max_count: 3
+      },
+      // Mobile UX improvements
+      timeout: 300, // 5 minutes timeout
+      remember_customer: false, // Don't save customer details for security
     };
 
     console.log('🔧 Razorpay options:', options);
@@ -215,6 +273,21 @@ export const openRazorpayCheckout = (
     // Handle payment failures
     razorpayInstance.on('payment.failed', (error) => {
       console.error('❌ Payment failed:', error);
+      
+      // Mobile-specific error handling
+      if (isMobile && error.error?.code) {
+        console.log('📱 Mobile payment error detected:', error.error.code);
+        
+        // Common mobile payment issues
+        if (error.error.code === 'PAYMENT_CANCELLED') {
+          console.log('📱 User cancelled payment on mobile');
+        } else if (error.error.code === 'NETWORK_ERROR') {
+          console.log('📱 Network error on mobile payment');
+        } else if (error.error.description?.toLowerCase().includes('upi')) {
+          console.log('📱 UPI related error on mobile');
+        }
+      }
+      
       onFailure(error);
     });
 

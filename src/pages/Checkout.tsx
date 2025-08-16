@@ -46,28 +46,57 @@ const Checkout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [selectedSamples, setSelectedSamples] = useState(sampleStorage.getSelectedSamples());
+  
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      setIsMobile(mobile);
+      console.log('📱 Mobile device detected:', mobile);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Load Razorpay script on component mount
   useEffect(() => {
     const loadRazorpay = async () => {
       console.log('🔄 Loading Razorpay...');
+      
+      // Show loading message for mobile users
+      if (isMobile) {
+        console.log('📱 Mobile device detected, initializing payment gateway...');
+      }
+      
       const result = await initializeRazorpay();
       console.log('🔄 Razorpay load result:', result);
       setRazorpayLoaded(result);
       if (!result) {
         console.error('❌ Failed to load Razorpay');
+        const errorMessage = isMobile 
+          ? "Payment gateway failed to load. Please check your internet connection and refresh the page."
+          : "Failed to load payment gateway. Please try again later.";
+        
         toast({
           title: "Payment Gateway Error",
-          description: "Failed to load payment gateway. Please try again later.",
+          description: errorMessage,
           variant: "destructive"
         });
       } else {
         console.log('✅ Razorpay loaded successfully');
+        if (isMobile) {
+          console.log('📱 Payment gateway ready for mobile payments');
+        }
       }
     };
     
     loadRazorpay();
-  }, []);
+  }, [isMobile]); // Add isMobile as dependency
   
   // Load saved addresses if user is logged in
   useEffect(() => {
@@ -207,9 +236,13 @@ const Checkout = () => {
     
     if (!razorpayLoaded) {
       console.log('❌ Razorpay not loaded');
+      const errorMessage = isMobile 
+        ? "Payment gateway is loading. Please wait a moment and try again."
+        : "Payment gateway is not available. Please refresh the page and try again.";
+      
       toast({
         title: "Payment Gateway Error",
-        description: "Payment gateway is not available. Please try again later.",
+        description: errorMessage,
         variant: "destructive"
       });
       return;
@@ -346,9 +379,22 @@ const Checkout = () => {
         // Failure handler
         (error) => {
           console.error('❌ Razorpay payment failed:', error);
+          
+          // Mobile-specific error messages
+          let errorMessage = "Your payment was not successful. Please try again.";
+          if (isMobile) {
+            if (error.error?.code === 'PAYMENT_CANCELLED') {
+              errorMessage = "Payment was cancelled. You can try again anytime.";
+            } else if (error.error?.code === 'NETWORK_ERROR') {
+              errorMessage = "Network connection issue. Please check your internet and try again.";
+            } else if (error.error?.description?.includes('app')) {
+              errorMessage = "Please ensure your banking app is updated and try again.";
+            }
+          }
+          
           toast({
             title: "Payment Failed",
-            description: error.error?.description || error.message || "Your payment was not successful. Please try again.",
+            description: error.error?.description || error.message || errorMessage,
             variant: "destructive"
           });
           setIsProcessing(false);
@@ -731,6 +777,17 @@ const Checkout = () => {
               <p className="text-xs text-red-500 text-center">
                 Payment gateway is loading... Please wait.
               </p>
+            )}
+            
+            {isMobile && razorpayLoaded && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-xs text-blue-800 text-center">
+                  📱 <strong>Mobile Payment Tips:</strong><br />
+                  • Ensure you have a stable internet connection<br />
+                  • Keep your banking app updated for UPI payments<br />
+                  • For card payments, ensure 3D Secure is enabled
+                </p>
+              </div>
             )}
             
             <p className="text-xs text-muted-foreground text-center">
