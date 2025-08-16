@@ -62,6 +62,8 @@ export const createOrder = async (orderData: NewOrder): Promise<string> => {
 
 // Get all orders for a user
 export const getUserOrders = async (userId: string): Promise<Order[]> => {
+  console.log('🔍 getUserOrders called with userId:', userId);
+  
   const ordersRef = collection(db, ORDERS_COLLECTION);
   const q = query(
     ordersRef, 
@@ -69,12 +71,25 @@ export const getUserOrders = async (userId: string): Promise<Order[]> => {
     orderBy('createdAt', 'desc')
   );
   
+  console.log('📋 Executing Firestore query for userId:', userId);
   const snapshot = await getDocs(q);
+  console.log('📊 Query returned', snapshot.docs.length, 'documents');
   
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  } as Order));
+  const orders = snapshot.docs.map(doc => {
+    const data = doc.data();
+    console.log('📄 Order document:', {
+      id: doc.id,
+      userId: data.userId,
+      totalAmount: data.totalAmount,
+      createdAt: data.createdAt
+    });
+    return {
+      id: doc.id,
+      ...data
+    } as Order;
+  });
+  
+  return orders;
 };
 
 // Get a single order by ID

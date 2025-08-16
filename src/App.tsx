@@ -30,6 +30,7 @@ import AdminProducts from "./pages/admin/Products";
 import AdminOrders from "./pages/admin/Orders";
 import AdminUsers from "./pages/admin/Users";
 import AdminSettings from "./pages/admin/Settings";
+import DebugOrders from "./pages/DebugOrders";
 import NotFound from "./pages/NotFound";
 import ImagePreloader from "./components/ImagePreloader";
 import TestRazorpay from "./pages/TestRazorpay";
@@ -101,6 +102,11 @@ const App = () => (
                 <Route path="/admin/settings" element={
                   <AdminRoute>
                     <AdminSettings />
+                  </AdminRoute>
+                } />
+                <Route path="/debug-orders" element={
+                  <AdminRoute>
+                    <DebugOrders />
                   </AdminRoute>
                 } />
                 

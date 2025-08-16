@@ -78,24 +78,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Listen for auth state changes
   useEffect(() => {
+    console.log('🔧 Setting up auth state listener...');
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('👤 Auth state changed:', firebaseUser ? `User ${firebaseUser.uid}` : 'No user');
+      
       if (firebaseUser) {
         // User is signed in
         try {
+          console.log('📋 Getting user data from Firestore for UID:', firebaseUser.uid);
           // Get user data from Firestore
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           
           if (userDoc.exists()) {
             // User exists in Firestore, use that data
             const userData = userDoc.data();
-            setUser({
+            const userObject = {
               id: firebaseUser.uid,
               email: firebaseUser.email || userData.email || '',
               phone: firebaseUser.phoneNumber || userData.phone || '',
               name: userData.name || firebaseUser.displayName || 'User',
               isAdmin: userData.isAdmin || ADMIN_EMAILS.includes(firebaseUser.email || ''),
               phoneVerified: userData.phoneVerified || false
-            });
+            };
+            console.log('✅ User object created:', userObject);
+            setUser(userObject);
           } else {
             // User doesn't exist in Firestore yet, create a new document
             const newUser = {
@@ -129,6 +135,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } else {
         // User is signed out
+        console.log('🚪 User signed out, clearing user state');
         setUser(null);
       }
       setIsLoading(false);

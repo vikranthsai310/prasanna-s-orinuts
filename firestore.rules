@@ -30,9 +30,9 @@ service cloud.firestore {
       allow update: if isAdmin();
     }
     
-    // Allow admins to query the entire orders collection
+    // Allow collection queries - but individual document rules still apply
     match /orders {
-      allow list: if isAdmin();
+      allow list: if request.auth != null;
     }
     
     // Admin-only collections

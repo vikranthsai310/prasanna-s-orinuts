@@ -16,17 +16,25 @@ const Orders = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       if (!user?.id) {
+        console.log('❌ No user ID available, user:', user);
         setLoading(false);
         return;
       }
 
       try {
-        console.log('Fetching orders for user:', user.id);
+        console.log('🔍 Fetching orders for user ID:', user.id);
+        console.log('👤 Full user object:', user);
         const userOrders = await getUserOrders(user.id);
-        console.log('Fetched orders:', userOrders);
+        console.log('📦 Fetched orders count:', userOrders.length);
+        console.log('📦 Order details:', userOrders.map(order => ({
+          id: order.id,
+          userId: order.userId,
+          totalAmount: order.totalAmount,
+          createdAt: order.createdAt
+        })));
         setOrders(userOrders);
       } catch (error) {
-        console.error('Error fetching orders:', error);
+        console.error('❌ Error fetching orders:', error);
         toast({
           title: "Error",
           description: "Failed to load your orders. Please try again.",

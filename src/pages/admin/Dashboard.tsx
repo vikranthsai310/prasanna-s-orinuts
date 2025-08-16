@@ -37,6 +37,8 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
+      console.log('🚀 Starting dashboard data fetch...');
+      
       // Fetch all data in parallel
       const [
         revenue, 
@@ -56,6 +58,13 @@ const AdminDashboard = () => {
         getLowStockProducts(20)
       ]);
 
+      console.log('📊 Dashboard data fetched:', {
+        revenue,
+        orders,
+        users,
+        products
+      });
+
       setStats({
         totalOrders: orders,
         totalRevenue: revenue,
@@ -67,7 +76,7 @@ const AdminDashboard = () => {
       setRecentOrders(recentOrdersData);
       setLowStockProducts(lowStockProductsData);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('❌ Error fetching dashboard data:', error);
       toast({
         title: "Error",
         description: "Failed to load dashboard data. Please try again.",

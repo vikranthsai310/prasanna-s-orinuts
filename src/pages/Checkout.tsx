@@ -296,6 +296,7 @@ const Checkout = () => {
               // Update order status on client side (in case server couldn't do it)
               if (result.firebaseOrderId) {
                 try {
+                  console.log('🔄 Updating order payment status for:', result.firebaseOrderId);
                   await updatePaymentStatus(result.firebaseOrderId, 'paid');
                   await updateOrderStatus(result.firebaseOrderId, 'processing');
                   console.log('✅ Order status updated on client side');

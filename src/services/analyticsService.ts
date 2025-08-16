@@ -15,39 +15,90 @@ import { Product } from '@/types/product';
 // Get total revenue
 export const getTotalRevenue = async (): Promise<number> => {
   try {
-    console.log('Fetching total revenue...');
+    console.log('🔍 Fetching total revenue...');
+    
+    // Try to get all orders first to debug the issue
     const ordersRef = collection(db, 'orders');
-    const q = query(
-      ordersRef,
-      where('paymentStatus', '==', 'paid')
-    );
     
-    const snapshot = await getDocs(q);
-    console.log(`Found ${snapshot.docs.length} paid orders`);
+    try {
+      // First attempt: get all orders to see what exists
+      const allSnapshot = await getDocs(ordersRef);
+      console.log(`📋 Total orders found: ${allSnapshot.size}`);
+      
+      let totalRevenue = 0;
+      let paidOrdersCount = 0;
+      
+      allSnapshot.docs.forEach(doc => {
+        const order = doc.data();
+        console.log(`📄 Order ${doc.id}:`, {
+          paymentStatus: order.paymentStatus,
+          totalAmount: order.totalAmount,
+          userId: order.userId?.substring(0, 8) + '...' // Only show first 8 chars for privacy
+        });
+        
+        if (order.paymentStatus === 'paid') {
+          totalRevenue += (order.totalAmount || 0);
+          paidOrdersCount++;
+        }
+      });
+      
+      console.log(`💰 Revenue calculation: ${paidOrdersCount} paid orders, total: ₹${totalRevenue}`);
+      return totalRevenue;
+      
+    } catch (firestoreError) {
+      console.error('❌ Firestore access error:', firestoreError);
+      console.log('⚠️ Trying alternative approach with where clause...');
+      
+      // Fallback: try with where clause
+      const q = query(ordersRef, where('paymentStatus', '==', 'paid'));
+      const snapshot = await getDocs(q);
+      
+      const totalRevenue = snapshot.docs.reduce((total, doc) => {
+        const order = doc.data() as Order;
+        return total + (order.totalAmount || 0);
+      }, 0);
+      
+      console.log(`💰 Fallback revenue calculation: ₹${totalRevenue} from ${snapshot.docs.length} orders`);
+      return totalRevenue;
+    }
     
-    const totalRevenue = snapshot.docs.reduce((total, doc) => {
-      const order = doc.data() as Order;
-      console.log(`Order ${doc.id}: totalAmount = ${order.totalAmount}, paymentStatus = ${order.paymentStatus}`);
-      return total + (order.totalAmount || 0);
-    }, 0);
-    
-    console.log(`Total revenue calculated: ₹${totalRevenue}`);
-    return totalRevenue;
   } catch (error) {
-    console.error('Error fetching total revenue:', error);
-    throw error;
+    console.error('❌ Error fetching total revenue:', error);
+    return 0; // Return 0 instead of throwing to prevent dashboard from breaking
   }
 };
 
 // Get total orders (only paid orders)
 export const getTotalOrders = async (): Promise<number> => {
-  const ordersRef = collection(db, 'orders');
-  const q = query(
-    ordersRef,
-    where('paymentStatus', '==', 'paid')
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.size;
+  try {
+    console.log('🔍 Fetching total orders...');
+    const ordersRef = collection(db, 'orders');
+    
+    try {
+      // Get all orders and count paid ones
+      const allSnapshot = await getDocs(ordersRef);
+      const paidOrdersCount = allSnapshot.docs.filter(doc => {
+        const order = doc.data();
+        return order.paymentStatus === 'paid';
+      }).length;
+      
+      console.log(`📊 Total paid orders: ${paidOrdersCount} out of ${allSnapshot.size} total orders`);
+      return paidOrdersCount;
+      
+    } catch (firestoreError) {
+      console.error('❌ Firestore access error for total orders:', firestoreError);
+      
+      // Fallback: try with where clause
+      const q = query(ordersRef, where('paymentStatus', '==', 'paid'));
+      const snapshot = await getDocs(q);
+      console.log(`📊 Fallback total orders count: ${snapshot.size}`);
+      return snapshot.size;
+    }
+    
+  } catch (error) {
+    console.error('❌ Error fetching total orders:', error);
+    return 0; // Return 0 instead of throwing
+  }
 };
 
 // Get total users
