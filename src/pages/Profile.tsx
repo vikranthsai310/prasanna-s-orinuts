@@ -59,6 +59,18 @@ const Profile = () => {
   const isPhoneVerified = user?.phoneVerified || false;
   const hasPhone = user?.phone && user.phone.length > 0;
   
+  // Update profile data when user data changes
+  useEffect(() => {
+    if (user) {
+      console.log('Profile: User data loaded:', user);
+      setProfileData({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || ''
+      });
+    }
+  }, [user]);
+  
   // Fetch user addresses
   useEffect(() => {
     const fetchAddresses = async () => {

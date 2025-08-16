@@ -243,20 +243,23 @@ export const verifyPayment = async (
     }
     
     // Verify the payment on the server
-    const isVerified = await verifyRazorpayPaymentOnServer(
+    const verificationResult = await verifyRazorpayPaymentOnServer(
       razorpayOrderId,
       paymentId,
       signature,
       firebaseOrderId // Pass the Firebase order ID for database updates
     );
     
-    if (isVerified) {
+    if (verificationResult.isValid) {
       console.log('Payment verified successfully for Razorpay order:', razorpayOrderId);
       // Clean up the temporary mapping
       delete (window as any).orderIdMapping;
     }
     
-    return { isVerified, firebaseOrderId };
+    return { 
+      isVerified: verificationResult.isValid, 
+      firebaseOrderId: verificationResult.firebaseOrderId || firebaseOrderId 
+    };
   } catch (error) {
     console.error('Error verifying payment:', error);
     throw error;

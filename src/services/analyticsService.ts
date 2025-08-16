@@ -14,24 +14,39 @@ import { Product } from '@/types/product';
 
 // Get total revenue
 export const getTotalRevenue = async (): Promise<number> => {
+  try {
+    console.log('Fetching total revenue...');
+    const ordersRef = collection(db, 'orders');
+    const q = query(
+      ordersRef,
+      where('paymentStatus', '==', 'paid')
+    );
+    
+    const snapshot = await getDocs(q);
+    console.log(`Found ${snapshot.docs.length} paid orders`);
+    
+    const totalRevenue = snapshot.docs.reduce((total, doc) => {
+      const order = doc.data() as Order;
+      console.log(`Order ${doc.id}: totalAmount = ${order.totalAmount}, paymentStatus = ${order.paymentStatus}`);
+      return total + (order.totalAmount || 0);
+    }, 0);
+    
+    console.log(`Total revenue calculated: ₹${totalRevenue}`);
+    return totalRevenue;
+  } catch (error) {
+    console.error('Error fetching total revenue:', error);
+    throw error;
+  }
+};
+
+// Get total orders (only paid orders)
+export const getTotalOrders = async (): Promise<number> => {
   const ordersRef = collection(db, 'orders');
   const q = query(
     ordersRef,
     where('paymentStatus', '==', 'paid')
   );
-  
   const snapshot = await getDocs(q);
-  
-  return snapshot.docs.reduce((total, doc) => {
-    const order = doc.data() as Order;
-    return total + (order.totalAmount || 0);
-  }, 0);
-};
-
-// Get total orders
-export const getTotalOrders = async (): Promise<number> => {
-  const ordersRef = collection(db, 'orders');
-  const snapshot = await getDocs(ordersRef);
   return snapshot.size;
 };
 
@@ -49,7 +64,7 @@ export const getTotalProducts = async (): Promise<number> => {
   return snapshot.size;
 };
 
-// Get orders by date range for chart
+// Get orders by date range for chart (only paid orders)
 export const getOrdersByDateRange = async (days: number = 7): Promise<{ date: string; orders: number }[]> => {
   const ordersRef = collection(db, 'orders');
   
@@ -60,6 +75,7 @@ export const getOrdersByDateRange = async (days: number = 7): Promise<{ date: st
   
   const q = query(
     ordersRef,
+    where('paymentStatus', '==', 'paid'),
     where('createdAt', '>=', startDate),
     orderBy('createdAt', 'asc')
   );
@@ -77,7 +93,7 @@ export const getOrdersByDateRange = async (days: number = 7): Promise<{ date: st
     ordersByDate.set(dateStr, 0);
   }
   
-  // Count orders by date
+  // Count orders by date (only paid orders)
   snapshot.docs.forEach(doc => {
     const order = doc.data();
     const orderDate = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt);
@@ -91,11 +107,12 @@ export const getOrdersByDateRange = async (days: number = 7): Promise<{ date: st
   return Array.from(ordersByDate).map(([date, orders]) => ({ date, orders }));
 };
 
-// Get recent orders
+// Get recent orders (only paid orders)
 export const getRecentOrders = async (limitCount: number = 5): Promise<Order[]> => {
   const ordersRef = collection(db, 'orders');
   const q = query(
     ordersRef,
+    where('paymentStatus', '==', 'paid'),
     orderBy('createdAt', 'desc'),
     firestoreLimit(limitCount)
   );

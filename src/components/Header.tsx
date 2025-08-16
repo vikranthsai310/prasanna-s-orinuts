@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Menu, X, LogOut, Settings, Package } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, LogOut, Settings, Package, Shield, BarChart3 } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -123,7 +123,14 @@ const Header = () => {
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.name}</p>
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium leading-none">{user.name}</p>
+                        {user.isAdmin && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
+                            Admin
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user.email}
                       </p>
@@ -138,6 +145,33 @@ const Header = () => {
                     <Package className="mr-2 h-4 w-4" />
                     <span>My Orders</span>
                   </DropdownMenuItem>
+                  
+                  {/* Admin Section - Only show for admin users */}
+                  {user.isAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">
+                        Admin Panel
+                      </DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => navigate('/admin/dashboard')}>
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        <span>Dashboard</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin/orders')}>
+                        <Package className="mr-2 h-4 w-4" />
+                        <span>Manage Orders</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin/products')}>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Manage Products</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin/users')}>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Manage Users</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={handleLogout}
@@ -208,6 +242,59 @@ const Header = () => {
                     <Package className="mr-2 h-4 w-4" />
                     My Orders
                   </button>
+                  
+                  {/* Admin Section for Mobile - Only show for admin users */}
+                  {user.isAdmin && (
+                    <>
+                      <hr className="border-border" />
+                      <div className="px-2 py-1">
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                          Admin Panel
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          navigate('/admin/dashboard');
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="text-foreground hover:text-secondary transition-colors font-medium px-2 py-1 text-left flex items-center"
+                      >
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        Dashboard
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/admin/orders');
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="text-foreground hover:text-secondary transition-colors font-medium px-2 py-1 text-left flex items-center"
+                      >
+                        <Package className="mr-2 h-4 w-4" />
+                        Manage Orders
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/admin/products');
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="text-foreground hover:text-secondary transition-colors font-medium px-2 py-1 text-left flex items-center"
+                      >
+                        <Settings className="mr-2 h-4 w-4" />
+                        Manage Products
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/admin/users');
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="text-foreground hover:text-secondary transition-colors font-medium px-2 py-1 text-left flex items-center"
+                      >
+                        <User className="mr-2 h-4 w-4" />
+                        Manage Users
+                      </button>
+                    </>
+                  )}
+                  
                   <hr className="border-border" />
                   <button
                     onClick={() => {

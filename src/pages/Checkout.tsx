@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { initializeRazorpay, createRazorpayOrder, openRazorpayCheckout, verifyPayment } from '@/services/paymentService';
-import { createShipment, getOrderById } from '@/services/orderService';
+import { createShipment, getOrderById, updateOrderStatus, updatePaymentStatus } from '@/services/orderService';
 import { toast } from '@/components/ui/use-toast';
 import { getUserAddresses, type Address } from '@/services/addressService';
 import { Check, ChevronDown, Edit, Gift } from 'lucide-react';
@@ -292,6 +292,19 @@ const Checkout = () => {
             
             if (result.isVerified) {
               console.log('✅ Payment verified successfully');
+              
+              // Update order status on client side (in case server couldn't do it)
+              if (result.firebaseOrderId) {
+                try {
+                  await updatePaymentStatus(result.firebaseOrderId, 'paid');
+                  await updateOrderStatus(result.firebaseOrderId, 'processing');
+                  console.log('✅ Order status updated on client side');
+                } catch (orderUpdateError) {
+                  console.warn('⚠️ Could not update order status on client side:', orderUpdateError);
+                  // Don't fail the entire process if this fails
+                }
+              }
+              
               toast({
                 title: "Payment Successful",
                 description: "Your order has been placed successfully! You will receive tracking details soon.",
@@ -303,7 +316,8 @@ const Checkout = () => {
               navigate(`/order-confirmation`, { 
                 state: { 
                   orderId: response.razorpay_order_id,
-                  paymentId: response.razorpay_payment_id
+                  paymentId: response.razorpay_payment_id,
+                  firebaseOrderId: result.firebaseOrderId
                 } 
               });
             } else {

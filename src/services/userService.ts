@@ -1,0 +1,209 @@
+import { 
+  collection, 
+  doc, 
+  getDoc, 
+  getDocs, 
+  query, 
+  where,
+  orderBy, 
+  Timestamp
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { getUserOrders } from './orderService';
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  isAdmin: boolean;
+  phoneVerified: boolean;
+  joinDate: Timestamp | Date;
+  totalOrders: number;
+  totalSpent: number;
+  lastOrderDate?: Timestamp | Date;
+}
+
+export interface UserStats {
+  totalOrders: number;
+  totalSpent: number;
+  lastOrderDate?: Timestamp | Date;
+}
+
+const USERS_COLLECTION = 'users';
+
+// Get all users with optimized stats fetching (admin only)
+export const getAllUsers = async (): Promise<AdminUser[]> => {
+  try {
+    console.log('Fetching all users from Firestore...');
+    const usersRef = collection(db, USERS_COLLECTION);
+    const usersQuery = query(usersRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(usersQuery);
+    
+    console.log(`Found ${snapshot.docs.length} users`);
+    
+    // First, get all users without stats
+    const users: AdminUser[] = [];
+    const userIds: string[] = [];
+    
+    snapshot.docs.forEach(doc => {
+      const userData = doc.data();
+      userIds.push(doc.id);
+      
+      users.push({
+        id: doc.id,
+        name: userData.name || 'User',
+        email: userData.email || '',
+        phone: userData.phone || '',
+        isAdmin: userData.isAdmin || false,
+        phoneVerified: userData.phoneVerified || false,
+        joinDate: userData.createdAt || new Date(),
+        totalOrders: 0,
+        totalSpent: 0,
+        lastOrderDate: undefined
+      });
+    });
+    
+    // Then fetch all orders at once and calculate stats (only paid orders)
+    console.log('Fetching order statistics...');
+    const ordersRef = collection(db, 'orders');
+    const ordersQuery = query(ordersRef, where('paymentStatus', '==', 'paid'));
+    const ordersSnapshot = await getDocs(ordersQuery);
+    
+    // Group orders by userId
+    const ordersByUser: { [userId: string]: any[] } = {};
+    
+    ordersSnapshot.docs.forEach(doc => {
+      const orderData = doc.data();
+      const userId = orderData.userId;
+      
+      if (!ordersByUser[userId]) {
+        ordersByUser[userId] = [];
+      }
+      
+      ordersByUser[userId].push(orderData);
+    });
+    
+    // Update user stats (only count paid orders)
+    users.forEach(user => {
+      const userOrders = ordersByUser[user.id] || [];
+      
+      user.totalOrders = userOrders.length;
+      user.totalSpent = userOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+      
+      if (userOrders.length > 0) {
+        // Find the most recent order
+        const sortedOrders = userOrders.sort((a, b) => {
+          const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
+          const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
+          return timeB - timeA;
+        });
+        
+        user.lastOrderDate = sortedOrders[0].createdAt;
+      }
+    });
+    
+    console.log('User statistics calculated successfully');
+    return users;
+    
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    throw error;
+  }
+};
+
+// Get user statistics (orders and spending - only paid orders)
+export const getUserStats = async (userId: string): Promise<UserStats> => {
+  try {
+    // Get all orders for the user
+    const allOrders = await getUserOrders(userId);
+    
+    // Filter only paid orders
+    const paidOrders = allOrders.filter(order => order.paymentStatus === 'paid');
+    
+    const totalOrders = paidOrders.length;
+    const totalSpent = paidOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+    
+    // Find the most recent paid order
+    const lastOrderDate = paidOrders.length > 0 
+      ? paidOrders.sort((a, b) => {
+          const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt as any);
+          const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : (b.createdAt as any);
+          const timeA = dateA instanceof Date ? dateA.getTime() : new Date(dateA).getTime();
+          const timeB = dateB instanceof Date ? dateB.getTime() : new Date(dateB).getTime();
+          return timeB - timeA;
+        })[0].createdAt
+      : undefined;
+    
+    return {
+      totalOrders,
+      totalSpent,
+      lastOrderDate
+    };
+  } catch (error) {
+    console.error(`Error fetching stats for user ${userId}:`, error);
+    return {
+      totalOrders: 0,
+      totalSpent: 0
+    };
+  }
+};
+
+// Get a single user by ID (admin only)
+export const getUserById = async (userId: string): Promise<AdminUser | null> => {
+  try {
+    const docRef = doc(db, USERS_COLLECTION, userId);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      const userData = docSnap.data();
+      const stats = await getUserStats(userId);
+      
+      return {
+        id: docSnap.id,
+        name: userData.name || 'User',
+        email: userData.email || '',
+        phone: userData.phone || '',
+        isAdmin: userData.isAdmin || false,
+        phoneVerified: userData.phoneVerified || false,
+        joinDate: userData.createdAt || new Date(),
+        totalOrders: stats.totalOrders,
+        totalSpent: stats.totalSpent,
+        lastOrderDate: stats.lastOrderDate
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    throw error;
+  }
+};
+
+// Search users by name or email
+export const searchUsers = async (searchTerm: string): Promise<AdminUser[]> => {
+  try {
+    const allUsers = await getAllUsers();
+    
+    return allUsers.filter(user =>
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  } catch (error) {
+    console.error('Error searching users:', error);
+    throw error;
+  }
+};
+
+// Format timestamp for display
+export const formatTimestamp = (timestamp: any): string => {
+  if (!timestamp) return 'N/A';
+  
+  // Handle Firestore Timestamp
+  if (timestamp.toDate) {
+    return timestamp.toDate().toLocaleDateString();
+  }
+  
+  // Handle regular Date or string
+  return new Date(timestamp).toLocaleDateString();
+};

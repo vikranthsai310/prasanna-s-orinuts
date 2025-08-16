@@ -56,7 +56,7 @@ export const verifyRazorpayPaymentOnServer = async (
   paymentId: string,
   signature: string,
   firebaseOrderId?: string
-): Promise<boolean> => {
+): Promise<{ isValid: boolean; firebaseOrderId?: string }> => {
   try {
     // Call the Vercel serverless function
     const response = await fetch('/api/verify-payment', {
@@ -84,7 +84,7 @@ export const verifyRazorpayPaymentOnServer = async (
     }
 
     const result = await response.json();
-    return result.isValid;
+    return { isValid: result.isValid, firebaseOrderId: result.firebaseOrderId };
   } catch (error) {
     console.error('Error verifying Razorpay payment:', error);
     throw error;
