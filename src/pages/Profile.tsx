@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { User, MapPin, Phone, Mail, Edit, Trash2, Plus, Check, Shield, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { User, MapPin, Phone, Mail, Edit, Trash2, Plus, Check, Shield, AlertCircle, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -29,7 +30,8 @@ import {
 } from '@/components/ui/dialog';
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -42,6 +44,7 @@ const Profile = () => {
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [showPhoneVerification, setShowPhoneVerification] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   
   const [addressForm, setAddressForm] = useState({
     type: 'Home' as AddressType,
@@ -290,6 +293,27 @@ const Profile = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+        variant: "default"
+      });
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Logout Failed",
+        description: "There was an error logging out. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setShowLogoutConfirm(false);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       <h1 className="font-playfair text-3xl font-bold mb-8">My Profile</h1>
@@ -427,6 +451,24 @@ const Profile = () => {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+            
+            {/* Logout Section */}
+            <div className="border-t pt-6 mt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-lg">Account Actions</h3>
+                  <p className="text-sm text-muted-foreground">Manage your account settings</p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowLogoutConfirm(true)}
+                  className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
               </div>
             </div>
           </div>
@@ -626,6 +668,40 @@ const Profile = () => {
         onClose={() => setShowPhoneVerification(false)}
         onComplete={handlePhoneVerificationComplete}
       />
+
+      {/* Logout Confirmation Dialog */}
+      <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <LogOut className="w-5 h-5 text-red-500" />
+              <span>Confirm Logout</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-muted-foreground">
+              Are you sure you want to logout? You'll need to sign in again to access your account.
+            </p>
+          </div>
+          
+          <DialogFooter className="sm:justify-start">
+            <DialogClose asChild>
+              <Button variant="outline">
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button 
+              variant="destructive" 
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Yes, Logout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

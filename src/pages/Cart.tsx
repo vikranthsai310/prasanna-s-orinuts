@@ -13,7 +13,7 @@ import { toast } from '@/components/ui/use-toast';
 
 const Cart = () => {
   const { items, updateQuantity, removeItem, totalPrice, addItem } = useCart();
-  const { user } = useAuth();
+  const { user, isProfileComplete } = useAuth();
   const navigate = useNavigate();
   const [showSignInDialog, setShowSignInDialog] = useState(false);
   const [showProfileCompletion, setShowProfileCompletion] = useState(false);
@@ -46,8 +46,8 @@ const Cart = () => {
 
   const handleProceedToCheckout = () => {
     if (user) {
-      // Check if user has verified phone number
-      if (user.phone && user.phone.startsWith('+91')) {
+      // Use the optimized profile completion check
+      if (isProfileComplete()) {
         // Check if samples are already selected
         if (sampleStorage.hasSamplesSelected()) {
           // Add samples to cart and proceed to checkout
@@ -73,8 +73,16 @@ const Cart = () => {
   };
 
   const handleGoogleSignInSuccess = () => {
-    // After Google sign-in, show profile completion for mobile verification
-    setShowProfileCompletion(true);
+    // Check if user already has verified phone after Google sign-in
+    setTimeout(() => {
+      if (user && isProfileComplete()) {
+        // User already has verified phone, proceed directly
+        handleProceedToCheckout();
+      } else {
+        // User needs phone verification
+        setShowProfileCompletion(true);
+      }
+    }, 1000); // Small delay to allow user state to update
   };
 
   const handleProfileCompletion = () => {

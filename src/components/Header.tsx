@@ -1,11 +1,20 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Menu, X } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, LogOut, Settings, Package } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import SearchBar from '@/components/SearchBar';
+import { toast } from '@/hooks/use-toast';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -18,6 +27,25 @@ const Header = () => {
       navigate('/profile');
     } else {
       navigate('/auth');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+        variant: "default"
+      });
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Logout Failed",
+        description: "There was an error logging out. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -81,14 +109,55 @@ const Header = () => {
             </Link>
 
             {/* Auth */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleAuthClick}
-              className="hidden sm:flex"
-            >
-              <User className="h-5 w-5" />
-            </Button>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hidden sm:flex"
+                  >
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user.name}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Profile & Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/orders')}>
+                    <Package className="mr-2 h-4 w-4" />
+                    <span>My Orders</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={handleLogout}
+                    className="text-red-600 focus:text-red-600"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleAuthClick}
+                className="hidden sm:flex"
+              >
+                <User className="h-5 w-5" />
+              </Button>
+            )}
 
             {/* Mobile menu button */}
             <Button
@@ -116,15 +185,52 @@ const Header = () => {
                   {item.name}
                 </Link>
               ))}
-              <button
-                onClick={() => {
-                  handleAuthClick();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="text-foreground hover:text-secondary transition-colors font-medium px-2 py-1 text-left"
-              >
-                {user ? 'Profile' : 'Login'}
-              </button>
+              
+              {user ? (
+                <>
+                  <button
+                    onClick={() => {
+                      navigate('/profile');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="text-foreground hover:text-secondary transition-colors font-medium px-2 py-1 text-left flex items-center"
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Profile & Settings
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigate('/orders');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="text-foreground hover:text-secondary transition-colors font-medium px-2 py-1 text-left flex items-center"
+                  >
+                    <Package className="mr-2 h-4 w-4" />
+                    My Orders
+                  </button>
+                  <hr className="border-border" />
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="text-red-600 hover:text-red-700 transition-colors font-medium px-2 py-1 text-left flex items-center"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    handleAuthClick();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-foreground hover:text-secondary transition-colors font-medium px-2 py-1 text-left"
+                >
+                  {user ? 'Profile' : 'Login'}
+                </button>
+              )}
             </div>
           </div>
         )}

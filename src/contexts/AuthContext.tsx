@@ -35,6 +35,7 @@ interface AuthContextType {
   sendOTP: (phone: string) => Promise<string>;
   logout: () => Promise<void>;
   isLoading: boolean;
+  isProfileComplete: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -102,7 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               phone: firebaseUser.phoneNumber || '',
               name: firebaseUser.displayName || 'User',
               isAdmin: ADMIN_EMAILS.includes(firebaseUser.email || ''),
-              phoneVerified: false,
+              phoneVerified: firebaseUser.phoneNumber ? true : false, // If phone from provider, consider verified
               createdAt: new Date()
             };
             
@@ -123,7 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             phone: firebaseUser.phoneNumber || '',
             name: firebaseUser.displayName || 'User',
             isAdmin: ADMIN_EMAILS.includes(firebaseUser.email || ''),
-            phoneVerified: false
+            phoneVerified: firebaseUser.phoneNumber ? true : false // If phone from provider, consider verified
           });
         }
       } else {
@@ -153,7 +154,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     try {
       // Try popup first (faster user experience)
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      
+      // After successful Google login, check if user exists in Firestore
+      const firebaseUser = result.user;
+      const userDocRef = doc(db, 'users', firebaseUser.uid);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        // User exists, merge any missing data from Google
+        const existingData = userDoc.data();
+        const updatedData = {
+          ...existingData,
+          email: firebaseUser.email || existingData.email,
+          name: firebaseUser.displayName || existingData.name,
+          updatedAt: new Date()
+        };
+        
+        // Only update if there are actual changes
+        await setDoc(userDocRef, updatedData, { merge: true });
+        console.log('✅ Existing user data updated with Google info');
+      } else {
+        // New user, create with Google data
+        const newUserData = {
+          email: firebaseUser.email || '',
+          phone: firebaseUser.phoneNumber || '',
+          name: firebaseUser.displayName || 'User',
+          isAdmin: ADMIN_EMAILS.includes(firebaseUser.email || ''),
+          phoneVerified: firebaseUser.phoneNumber ? true : false,
+          createdAt: new Date()
+        };
+        
+        await setDoc(userDocRef, newUserData);
+        console.log('✅ New user created with Google data');
+      }
+      
       // Auth state listener will handle updating the user state
     } catch (error: any) {
       console.error('Google login error:', error);
@@ -363,6 +398,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const isProfileComplete = () => {
+    if (!user) return false;
+    return user.phoneVerified || (user.phone && user.phone.length > 0);
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -371,7 +411,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       loginWithPhone,
       sendOTP,
       logout,
-      isLoading
+      isLoading,
+      isProfileComplete
     }}>
       <div id="recaptcha-container"></div>
       {children}
