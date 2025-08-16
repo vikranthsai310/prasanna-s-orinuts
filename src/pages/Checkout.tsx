@@ -311,8 +311,11 @@ const Checkout = () => {
                 variant: "default"
               });
               
+              console.log('🛒 About to clear cart...');
               // Clear cart and redirect to order confirmation
               clearCart();
+              console.log('✅ Cart clearing initiated');
+              
               navigate(`/order-confirmation`, { 
                 state: { 
                   orderId: response.razorpay_order_id,
