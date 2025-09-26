@@ -1,0 +1,192 @@
+/* Animation Performance and Accessibility Styles */
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  /* Hide floating animations completely for motion-sensitive users */
+  .floating-fruit {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* Optimize animations for performance */
+.hero-section,
+.product-card-animated,
+.page-content {
+  will-change: transform, opacity;
+}
+
+/* GPU acceleration for smooth animations */
+.floating-fruit,
+.fruit-ring-item,
+.hero-title-line,
+.hero-badge,
+.hero-subtitle,
+.hero-buttons {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Smooth transitions for interactive elements */
+.product-card-animated {
+  transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+}
+
+.product-card-animated:hover {
+  will-change: transform;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  /* Reduce animation complexity on mobile */
+  .floating-fruit {
+    font-size: 2rem !important;
+  }
+  
+  /* Faster animations on mobile for better performance */
+  .product-card-animated {
+    transition-duration: 0.2s;
+  }
+  
+  /* Reduce motion on touch devices */
+  @media (hover: none) {
+    .product-card-animated:hover {
+      transform: none;
+    }
+  }
+}
+
+/* Loading states */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Cart notification styles */
+.cart-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  padding: 16px 24px;
+  background: rgba(16, 185, 129, 0.95);
+  backdrop-filter: blur(10px);
+  color: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(-20px) scale(0.3);
+  pointer-events: none;
+}
+
+/* Intersection Observer optimization */
+.fade-in-section {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.fade-in-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Button animation states */
+.animated-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.animated-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.animated-button:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Stagger animation classes */
+.stagger-item {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.stagger-item.animated {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.6s ease-out;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .floating-fruit {
+    opacity: 0.9 !important;
+  }
+  
+  .product-card-animated {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Focus visible for accessibility */
+.animated-button:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+/* Improved hover states for better UX */
+@media (hover: hover) {
+  .product-card-animated:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  }
+  
+  .fruit-ring-item:hover {
+    z-index: 10;
+  }
+}
+
+/* Print styles - disable animations */
+@media print {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+  
+  .floating-fruit {
+    display: none !important;
+  }
+}
