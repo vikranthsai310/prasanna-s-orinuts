@@ -7,6 +7,7 @@
 // API Base URLs
 // ============================================================================
 
+// API base URL is handled by apiService, don't include it in endpoint paths
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 // ============================================================================
@@ -16,31 +17,31 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 export const API_ENDPOINTS = {
   // Payment endpoints
   PAYMENT: {
-    CREATE_ORDER: `${API_BASE_URL}/create-order`,
-    VERIFY_PAYMENT: `${API_BASE_URL}/verify-payment`,
+    CREATE_ORDER: '/create-order',
+    VERIFY_PAYMENT: '/verify-payment',
   },
   
   // Shipping endpoints
   SHIPPING: {
-    CALCULATE: `${API_BASE_URL}/calculate-shipping`,
-    CREATE_SHIPMENT: `${API_BASE_URL}/create-shipment`,
-    TRACK_SHIPMENT: `${API_BASE_URL}/track-shipment`,
+    CALCULATE: '/calculate-shipping',
+    CREATE_SHIPMENT: '/create-shipment',
+    TRACK_SHIPMENT: '/track-shipment',
   },
   
   // Order endpoints (future)
   ORDERS: {
-    CREATE: `${API_BASE_URL}/orders`,
-    GET: (orderId: string) => `${API_BASE_URL}/orders/${orderId}`,
-    LIST: `${API_BASE_URL}/orders`,
-    UPDATE: (orderId: string) => `${API_BASE_URL}/orders/${orderId}`,
-    CANCEL: (orderId: string) => `${API_BASE_URL}/orders/${orderId}/cancel`,
+    CREATE: '/orders',
+    GET: (orderId: string) => `/orders/${orderId}`,
+    LIST: '/orders',
+    UPDATE: (orderId: string) => `/orders/${orderId}`,
+    CANCEL: (orderId: string) => `/orders/${orderId}/cancel`,
   },
   
   // Product endpoints (future)
   PRODUCTS: {
-    LIST: `${API_BASE_URL}/products`,
-    GET: (productId: string) => `${API_BASE_URL}/products/${productId}`,
-    SEARCH: `${API_BASE_URL}/products/search`,
+    LIST: '/products',
+    GET: (productId: string) => `/products/${productId}`,
+    SEARCH: '/products/search',
   },
 } as const;
 
