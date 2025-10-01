@@ -14,34 +14,65 @@ let adminAuth = null;
  * Uses service account credentials from environment variable
  */
 function initializeFirebaseAdmin() {
+  console.log('🔥 [FIREBASE-ADMIN] initializeFirebaseAdmin called');
+  
   if (adminAuth) {
+    console.log('✅ [FIREBASE-ADMIN] Already initialized, returning cached instance');
     return adminAuth;
   }
 
   try {
     // Check if app is already initialized
-    if (getApps().length === 0) {
+    const existingApps = getApps();
+    console.log('🔥 [FIREBASE-ADMIN] Existing Firebase apps:', existingApps.length);
+    
+    if (existingApps.length === 0) {
+      console.log('🔥 [FIREBASE-ADMIN] No existing apps, initializing new app...');
+      
       const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
       
+      console.log('🔑 [FIREBASE-ADMIN] FIREBASE_SERVICE_ACCOUNT_KEY exists:', !!serviceAccountKey);
+      console.log('🔑 [FIREBASE-ADMIN] Key length:', serviceAccountKey?.length);
+      
       if (!serviceAccountKey) {
-        console.error('❌ FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set');
+        console.error('❌ [FIREBASE-ADMIN] FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set');
+        console.error('❌ [FIREBASE-ADMIN] Available env vars:', Object.keys(process.env).filter(k => k.includes('FIREBASE')));
         return null;
       }
 
-      const serviceAccount = JSON.parse(serviceAccountKey);
-      
-      initializeApp({
-        credential: cert(serviceAccount),
-        projectId: serviceAccount.project_id,
-      });
-      
-      console.log('✅ Firebase Admin initialized successfully');
+      try {
+        console.log('🔥 [FIREBASE-ADMIN] Parsing service account JSON...');
+        const serviceAccount = JSON.parse(serviceAccountKey);
+        
+        console.log('✅ [FIREBASE-ADMIN] Service account parsed:', {
+          project_id: serviceAccount.project_id,
+          client_email: serviceAccount.client_email,
+          hasPrivateKey: !!serviceAccount.private_key
+        });
+        
+        console.log('🔥 [FIREBASE-ADMIN] Initializing Firebase app...');
+        initializeApp({
+          credential: cert(serviceAccount),
+          projectId: serviceAccount.project_id,
+        });
+        
+        console.log('✅ [FIREBASE-ADMIN] Firebase Admin initialized successfully');
+      } catch (parseError) {
+        console.error('❌ [FIREBASE-ADMIN] Failed to parse service account:', parseError.message);
+        console.error('❌ [FIREBASE-ADMIN] First 100 chars of key:', serviceAccountKey?.substring(0, 100));
+        return null;
+      }
+    } else {
+      console.log('✅ [FIREBASE-ADMIN] Using existing Firebase app');
     }
     
+    console.log('🔥 [FIREBASE-ADMIN] Getting Auth instance...');
     adminAuth = getAuth();
+    console.log('✅ [FIREBASE-ADMIN] Auth instance obtained');
     return adminAuth;
   } catch (error) {
-    console.error('❌ Firebase Admin initialization failed:', error.message);
+    console.error('❌ [FIREBASE-ADMIN] Firebase Admin initialization failed:', error.message);
+    console.error('❌ [FIREBASE-ADMIN] Error stack:', error.stack);
     return null;
   }
 }
@@ -53,37 +84,51 @@ function initializeFirebaseAdmin() {
  * @throws {Error} If token is missing, invalid, or expired
  */
 export async function verifyAuthToken(req) {
+  console.log('🔍 [VERIFY-TOKEN] Starting token verification...');
+  
   const authHeader = req.headers.authorization;
+  
+  console.log('🔍 [VERIFY-TOKEN] Authorization header:', authHeader ? `${authHeader.substring(0, 20)}...` : 'MISSING');
   
   // Check if Authorization header exists
   if (!authHeader) {
+    console.log('❌ [VERIFY-TOKEN] Missing authorization header');
     throw new Error('Missing authorization header');
   }
   
   // Check if it's a Bearer token
   if (!authHeader.startsWith('Bearer ')) {
+    console.log('❌ [VERIFY-TOKEN] Invalid authorization format');
     throw new Error('Invalid authorization format. Expected: Bearer <token>');
   }
   
   // Extract the token
   const token = authHeader.split('Bearer ')[1];
   
+  console.log('🔍 [VERIFY-TOKEN] Token extracted, length:', token?.length);
+  
   if (!token || token.trim() === '') {
+    console.log('❌ [VERIFY-TOKEN] Empty authorization token');
     throw new Error('Empty authorization token');
   }
   
   // Initialize Firebase Admin if not already done
+  console.log('🔥 [VERIFY-TOKEN] Initializing Firebase Admin...');
   const auth = initializeFirebaseAdmin();
   
   if (!auth) {
+    console.log('❌ [VERIFY-TOKEN] Firebase Admin initialization failed');
     throw new Error('Firebase Admin is not configured. Check server logs.');
   }
   
+  console.log('✅ [VERIFY-TOKEN] Firebase Admin ready');
+  
   try {
+    console.log('🔍 [VERIFY-TOKEN] Verifying ID token with Firebase...');
     // Verify the ID token
     const decodedToken = await auth.verifyIdToken(token);
     
-    console.log(`✅ Authenticated user: ${decodedToken.uid} (${decodedToken.email})`);
+    console.log(`✅ [VERIFY-TOKEN] Token verified successfully: ${decodedToken.uid} (${decodedToken.email})`);
     
     return {
       uid: decodedToken.uid,
@@ -97,7 +142,9 @@ export async function verifyAuthToken(req) {
       exp: decodedToken.exp,
     };
   } catch (error) {
-    console.error('❌ Token verification failed:', error.message);
+    console.error('❌ [VERIFY-TOKEN] Token verification failed:', error.message);
+    console.error('❌ [VERIFY-TOKEN] Error code:', error.code);
+    console.error('❌ [VERIFY-TOKEN] Error stack:', error.stack);
     
     if (error.code === 'auth/id-token-expired') {
       throw new Error('Token has expired. Please refresh and try again.');
@@ -128,18 +175,33 @@ export async function verifyAuthToken(req) {
  */
 export function requireAuth(handler, options = {}) {
   return async (req, res) => {
+    console.log('🔐 [AUTH] requireAuth middleware invoked');
+    console.log('🔐 [AUTH] Request method:', req.method);
+    console.log('🔐 [AUTH] Request URL:', req.url);
+    console.log('🔐 [AUTH] Authorization header exists:', !!req.headers.authorization);
+    
     try {
       // 🔐 Configure CORS first
+      console.log('🌐 [AUTH] Configuring CORS...');
       const optionsHandled = configureCors(req, res);
       if (optionsHandled) {
+        console.log('✅ [AUTH] OPTIONS request handled by CORS');
         return; // OPTIONS request handled
       }
 
+      console.log('🔍 [AUTH] Verifying authentication token...');
       // Verify authentication token
       const user = await verifyAuthToken(req);
       
+      console.log('✅ [AUTH] User authenticated successfully:', {
+        uid: user.uid,
+        email: user.email,
+        isAdmin: user.isAdmin
+      });
+      
       // Check admin requirement
       if (options.requireAdmin && !user.isAdmin) {
+        console.log('❌ [AUTH] Admin required but user is not admin');
         return res.status(403).json({ 
           error: 'Forbidden',
           message: 'Admin privileges required for this operation'
@@ -149,17 +211,21 @@ export function requireAuth(handler, options = {}) {
       // Attach user to request object
       req.user = user;
       
+      console.log('✅ [AUTH] Calling handler...');
       // Call the original handler
       return await handler(req, res);
       
     } catch (error) {
-      console.error('Authentication error:', error.message);
+      console.error('❌ [AUTH] Authentication error:', error.message);
+      console.error('❌ [AUTH] Error stack:', error.stack);
+      console.error('❌ [AUTH] Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
       
       // Return appropriate HTTP status
       return res.status(401).json({ 
         error: 'Unauthorized',
         message: error.message,
-        code: 'AUTH_REQUIRED'
+        code: 'AUTH_REQUIRED',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   };
