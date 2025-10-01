@@ -35,17 +35,29 @@ import DebugOrders from "./pages/DebugOrders";
 import NotFound from "./pages/NotFound";
 import ImagePreloader from "./components/ImagePreloader";
 import TestRazorpay from "./pages/TestRazorpay";
+import { initializeMalformedUrlProtection } from "./utils/malformedUrlFixer";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <CartProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+const App = () => {
+  // Initialize malformed URL protection
+  useEffect(() => {
+    const protection = initializeMalformedUrlProtection();
+    
+    return () => {
+      protection.cleanup();
+    };
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <CartProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
             <ScrollToTop />
             <ImagePreloader 
               preloadAll={false} 
@@ -119,6 +131,7 @@ const App = () => (
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

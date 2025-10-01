@@ -382,38 +382,7 @@ const Index = () => {
       </section>
 
       {/* Newsletter Section */}
-      <section className="py-16 bg-accent/20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="font-playfair text-3xl font-bold mb-4">
-              Stay Updated
-            </h2>
-            <p className="text-muted-foreground mb-8">
-              Get the latest updates on new products, special offers, and health tips
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="input-field flex-1"
-              />
-              <Button className="btn-primary">
-                Subscribe
-              </Button>
-            </div>
-            
-            <div className="mt-6">
-              <p className="text-sm text-muted-foreground mb-4">
-                Or connect with us on WhatsApp for instant updates
-              </p>
-              <Button variant="outline" className="bg-green-500 text-white hover:bg-green-600 border-green-500">
-                WhatsApp Updates
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+
     </div>
   );
 };

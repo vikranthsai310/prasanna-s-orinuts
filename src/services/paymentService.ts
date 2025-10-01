@@ -55,7 +55,9 @@ declare global {
 }
 
 // Replace with your actual Razorpay key ID
-const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_DBSSTbBMD0V8N9';
+import { paymentConfig } from '@/config';
+
+const RAZORPAY_KEY_ID = paymentConfig.razorpay.keyId;
 
 // Function to initialize Razorpay SDK
 export const initializeRazorpay = async (): Promise<boolean> => {
@@ -81,7 +83,7 @@ export const initializeRazorpay = async (): Promise<boolean> => {
       }
     }
     
-    const loaded = await loadScript('https://checkout.razorpay.com/v1/checkout.js');
+    const loaded = await loadScript(paymentConfig.razorpay.scriptUrl);
     if (!loaded) {
       console.error('❌ Razorpay SDK failed to load');
       return false;

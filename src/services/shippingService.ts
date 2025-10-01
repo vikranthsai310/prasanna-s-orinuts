@@ -1,9 +1,11 @@
 import { Order, Address } from './orderService';
 
+import { shippingConfig } from '@/config';
+
 // Shiprocket API Configuration
-const SHIPROCKET_BASE_URL = 'https://apiv2.shiprocket.in/v1/external';
-const SHIPROCKET_USERNAME = process.env.VITE_SHIPROCKET_USERNAME || 'your_shiprocket_username';
-const SHIPROCKET_PASSWORD = process.env.VITE_SHIPROCKET_PASSWORD || 'your_shiprocket_password';
+const SHIPROCKET_BASE_URL = shippingConfig.shiprocket.baseUrl;
+const SHIPROCKET_USERNAME = shippingConfig.shiprocket.username;
+const SHIPROCKET_PASSWORD = shippingConfig.shiprocket.password;
 
 // Types for Shiprocket API
 export interface ShiprocketAuth {

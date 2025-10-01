@@ -105,6 +105,18 @@ img[src="data:;base64,="] {
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Playfair Display', serif;
   }
+  
+  .font-cormorant {
+    font-family: 'Cormorant Garamond', serif;
+  }
+  
+  .font-baskerville {
+    font-family: 'Libre Baskerville', serif;
+  }
+  
+  .font-crimson {
+    font-family: 'Crimson Text', serif;
+  }
 }
 
 @layer components {

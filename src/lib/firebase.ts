@@ -3,17 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyCFGNw-QaL0NeajxgjMcuOxCXzeeHX1nwY",
-  authDomain: "orinut-494cc.firebaseapp.com",
-  projectId: "orinut-494cc",
-  storageBucket: "orinut-494cc.firebasestorage.app",
-  messagingSenderId: "369347130599",
-  appId: "1:369347130599:web:79cd0316f8af76c0a2de42",
-  measurementId: "G-MB52LLLTFD"
-};
+import { firebaseConfig, firebaseOptions, authConfig } from '@/config';
 
 
 
@@ -25,19 +15,17 @@ const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
 // Configure Google Auth Provider
-googleProvider.setCustomParameters({
-  prompt: 'select_account'
-});
+googleProvider.setCustomParameters(authConfig.google.customParameters);
 
 // Add custom parameters to avoid COOP issues
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
 
 // Use emulators in development if needed
-if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
-  connectAuthEmulator(auth, 'http://localhost:9099');
-  connectFirestoreEmulator(db, 'localhost', 8080);
-  connectStorageEmulator(storage, 'localhost', 9199);
+if (firebaseOptions.useEmulators) {
+  connectAuthEmulator(auth, `http://localhost:${firebaseOptions.emulatorPorts.auth}`);
+  connectFirestoreEmulator(db, 'localhost', firebaseOptions.emulatorPorts.firestore);
+  connectStorageEmulator(storage, 'localhost', firebaseOptions.emulatorPorts.storage);
 }
 
 export { auth, db, storage, googleProvider };

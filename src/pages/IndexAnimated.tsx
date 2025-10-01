@@ -102,33 +102,7 @@ const IndexAnimated = () => {
           </div>
         </section>
 
-        {/* Newsletter Section */}
-        <section className="py-16 bg-gradient-to-r from-amber-100 to-orange-100">
-          <div className="container mx-auto px-4 text-center">
-            <div className="max-w-2xl mx-auto stagger-item">
-              <h2 className="text-3xl font-bold text-amber-900 mb-4">
-                Stay Updated with Premium Offers
-              </h2>
-              <p className="text-amber-800/70 mb-8">
-                Get exclusive access to new arrivals and special discounts
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="flex-1 px-4 py-3 rounded-lg border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-                <AnimatedButton
-                  animationType="pulse"
-                  className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3"
-                >
-                  Subscribe
-                </AnimatedButton>
-              </div>
-            </div>
-          </div>
-        </section>
+
       </div>
     </PageTransition>
   );

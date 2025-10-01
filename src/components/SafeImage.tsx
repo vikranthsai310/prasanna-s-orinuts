@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { cleanImageUrl } from '@/services/imageService';
 
 interface SafeImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
@@ -17,8 +18,15 @@ const isValidImageUrl = (url: string): boolean => {
     return false;
   }
   
-  // Check for malformed data URLs
-  if (url.startsWith('data:') && (url.includes('base64,=:') || url === 'data:;base64,=' || url.endsWith('=:1'))) {
+  // Check for malformed data URLs (comprehensive check)
+  if (url.startsWith('data:') && (
+    url.includes('base64,=:') || 
+    url === 'data:;base64,=' || 
+    url.endsWith('=:1') ||
+    url === 'data:;base64,=:1' ||
+    url.includes('data:;base64,=')
+  )) {
+    console.warn('SafeImage: Detected malformed data URL:', url);
     return false;
   }
   
@@ -41,11 +49,12 @@ export const SafeImage: React.FC<SafeImageProps> = ({
   ...props 
 }) => {
   const [imageSrc, setImageSrc] = useState<string>(() => {
-    // Validate the initial src
-    if (isValidImageUrl(src)) {
-      return src;
+    // Clean and validate the initial src
+    const cleanedSrc = cleanImageUrl(src);
+    if (cleanedSrc !== '/placeholder.svg' && isValidImageUrl(cleanedSrc)) {
+      return cleanedSrc;
     } else {
-      console.warn(`Invalid image URL provided: ${src}, using fallback`);
+      console.warn(`SafeImage: Invalid or malformed image URL provided: ${src}, using fallback: ${fallback}`);
       onLoadError?.(`Invalid URL: ${src}`);
       return fallback;
     }

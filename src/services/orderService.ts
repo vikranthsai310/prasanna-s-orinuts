@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { CartItem } from '@/types/product';
+import { shippingConfig } from '@/config';
 
 export interface Address {
   name: string;
@@ -239,7 +240,7 @@ export const calculateShippingRates = async (
   deliveryPincode: string,
   weight: number,
   isCod: boolean = false,
-  pickupPincode: string = '110001' // Default pickup pincode, update with your actual pincode
+  pickupPincode: string = shippingConfig.shiprocket.pickupPincode
 ): Promise<any> => {
   try {
     const response = await fetch('/api/calculate-shipping', {

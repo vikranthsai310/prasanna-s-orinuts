@@ -52,7 +52,6 @@ const Header = () => {
   const navigation = [
     { name: 'Home', href: '/' },
     { name: 'Products', href: '/products' },
-    { name: 'Contact', href: '/contact' },
   ];
 
   return (
@@ -66,7 +65,7 @@ const Header = () => {
               alt="Prasanna's Orinuts Logo" 
               className="h-10 sm:h-12 lg:h-14 w-auto"
             />
-            <span className="font-playfair text-lg sm:text-xl font-semibold text-foreground hidden xs:block sm:block">
+            <span className="font-cormorant text-lg sm:text-xl lg:text-2xl font-bold text-amber-900 hidden xs:block sm:block tracking-wider drop-shadow-sm">
               Prasanna's Orinuts
             </span>
           </Link>

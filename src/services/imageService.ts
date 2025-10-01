@@ -1,32 +1,18 @@
 import { storage } from '../lib/firebase';
 import { ref, getDownloadURL } from 'firebase/storage';
+import { firebaseStorageUrls, localImageUrls } from '@/config';
 
 // Image URL cache to avoid repeated Firebase calls
 const imageUrlCache = new Map<string, string>();
 
-// Using local images to avoid Firebase issues
-export const FIREBASE_IMAGE_URLS: Record<string, string> = {
-  almond: '/almond.png',
-  apricot: '/apricot.png',
-  cashew: '/cashew.png',
-  dates: '/dates.png',
-  logo: '/Logo.png',
-  pista: '/pista.png',
-  rasins: '/rasins.png',
-  walnut: '/walnut.png'
-};
+// Primary Firebase Storage URLs (use Firebase URLs for better performance)
+export const FIREBASE_IMAGE_URLS: Record<string, string> = firebaseStorageUrls;
 
-// Firebase Storage URLs with access tokens (backup reference)
-export const FIREBASE_STORAGE_URLS = {
-  almond: 'https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Falmond.png?alt=media&token=b170e0bf-b602-4211-8049-45f5a0b91b01',
-  apricot: 'https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Fapricot.png?alt=media&token=2071be84-fa26-491b-867a-8f0cc3041e31',
-  cashew: 'https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Fcashew.png?alt=media&token=6ea5e570-ee2c-46a2-888f-9cb7a540744c',
-  dates: 'https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Fdates.png?alt=media&token=6e7ae1e5-cf65-46e8-926f-fe3169bf53a0',
-  logo: 'https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/branding%2Flogo.png?alt=media',
-  pista: 'https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Fpista.png?alt=media&token=aca2b4cf-0083-4dab-b9e6-cf2b328f4385',
-  rasins: 'https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Frasins.png?alt=media&token=017e6c45-d8c8-4db8-9c4c-43bbd44389a7',
-  walnut: 'https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Fwalnut.png?alt=media&token=4336cad7-0a50-4762-bed7-1736cff605a0'
-};
+// Firebase Storage URLs with access tokens (primary source)
+export const FIREBASE_STORAGE_URLS = firebaseStorageUrls;
+
+// Local image fallbacks
+export const LOCAL_IMAGE_URLS = localImageUrls;
 
 /**
  * Validate if a URL is valid and not empty
@@ -38,8 +24,14 @@ const isValidUrl = (url: string): boolean => {
     return false;
   }
   
-  // Check for malformed data URLs
-  if (url.startsWith('data:') && url.includes('base64,') && url.endsWith('=:1')) {
+  // Check for malformed data URLs (common issue with extensions/plugins)
+  if (url.startsWith('data:') && (
+    url.includes('base64,=:') || 
+    url === 'data:;base64,=' || 
+    url.endsWith('=:1') ||
+    url === 'data:;base64,=:1'
+  )) {
+    console.warn('Detected malformed data URL:', url);
     return false;
   }
   
@@ -49,6 +41,18 @@ const isValidUrl = (url: string): boolean => {
   } catch {
     return false;
   }
+};
+
+/**
+ * Clean and fix potentially malformed URLs
+ * @param url - URL to clean
+ * @returns string - cleaned URL or placeholder
+ */
+export const cleanImageUrl = (url: string): string => {
+  if (!url || !isValidUrl(url)) {
+    return '/placeholder.svg';
+  }
+  return url;
 };
 
 /**
@@ -96,9 +100,16 @@ export const getImageUrl = async (imageName: string): Promise<string> => {
     }
   } catch (error) {
     console.error(`Error fetching image URL for ${imageName}:`, error);
-    // Fallback to local image
-    const fallbackUrl = `/${imageName}.png`;
-    return isValidUrl(fallbackUrl) ? fallbackUrl : '/placeholder.svg';
+    
+    // Fallback to local image from centralized config
+    const localFallback = localImageUrls[imageName as keyof typeof localImageUrls];
+    if (localFallback && isValidUrl(localFallback)) {
+      console.log(`Using local fallback for ${imageName}: ${localFallback}`);
+      return localFallback;
+    }
+    
+    // Final fallback to placeholder
+    return '/placeholder.svg';
   }
 };
 

@@ -57,17 +57,56 @@ npm run dev
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
+## 🏗️ **Architecture & Configuration System**
+
+This project features a **centralized configuration system** for better maintainability and scalability:
+
+### **Configuration Structure**
+```
+src/config/
+├── index.ts          # Main configuration hub
+├── firebase.ts       # Firebase & storage settings
+├── payment.ts        # Razorpay payment configuration
+├── shipping.ts       # Shiprocket logistics settings
+├── auth.ts          # Authentication & admin settings
+├── business.ts      # Business rules & pricing
+├── ui.ts           # Theme & UI settings
+└── app.ts          # App metadata & feature flags
+```
+
+### **Usage Examples**
+```typescript
+// Import specific configurations
+import { firebaseConfig, paymentConfig } from '@/config';
+
+// Import commonly used constants
+import { ADMIN_EMAILS, ADDRESS_TYPES } from '@/config';
+
+// Validate configuration
+import { validateConfig } from '@/config';
+if (!validateConfig()) {
+  console.error('Configuration validation failed');
+}
+```
+
+### **Benefits**
+- ✅ **Single Source of Truth** - All settings in one place
+- ✅ **Type Safety** - Full TypeScript support
+- ✅ **Environment Support** - Automatic env variable handling
+- ✅ **Easy Maintenance** - Change once, update everywhere
+- ✅ **Better Organization** - Logical separation by concern
+
+For detailed configuration documentation, see: `src/config/README.md`
+
 ## What technologies are used for this project?
 
 This project is built with:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-- Firebase (Authentication, Firestore, Storage)
-- Razorpay Payment Gateway
+- **Frontend**: Vite, TypeScript, React, shadcn-ui, Tailwind CSS
+- **Backend**: Firebase (Authentication, Firestore, Storage), Vercel Serverless Functions
+- **Payment**: Razorpay Payment Gateway
+- **Shipping**: Shiprocket Logistics API
+- **Architecture**: Centralized Configuration System
 
 ## How can I deploy this project?
 

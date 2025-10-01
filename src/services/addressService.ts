@@ -15,7 +15,8 @@ import {
 import { db } from '@/lib/firebase';
 
 // Predefined address types
-export const ADDRESS_TYPES = ['Home', 'Work', 'Business', 'Other'] as const;
+import { ADDRESS_TYPES } from '@/config';
+export { ADDRESS_TYPES };
 export type AddressType = typeof ADDRESS_TYPES[number];
 
 export interface Address {
