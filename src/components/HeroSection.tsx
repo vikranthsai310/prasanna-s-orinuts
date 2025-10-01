@@ -137,9 +137,9 @@ const HeroSection = () => {
       </div>
 
       <div className="container mx-auto px-4 z-10 max-w-7xl h-full flex items-center">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 xl:gap-12 items-center w-full py-4 sm:py-8 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 xl:gap-12 items-center w-full py-4 sm:py-8 lg:py-12 relative">
           {/* Left Content */}
-          <div className="text-left space-y-3 sm:space-y-4 lg:space-y-6">
+          <div className="text-left space-y-3 sm:space-y-4 lg:space-y-6 relative z-30">
             {/* Badge */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -279,9 +279,9 @@ const HeroSection = () => {
             </motion.div>
           </div>
 
-          {/* Right Rotating Ring Visual */}
-          <div className="relative lg:pl-4 xl:pl-8 flex items-center justify-center">
-            <div ref={ringRef} className="relative w-[60rem] h-[60rem] lg:w-[72rem] lg:h-[72rem] overflow-visible">
+          {/* Right Rotating Ring Visual - Background on Mobile, Prominent on Desktop */}
+          <div className="absolute lg:relative inset-0 lg:inset-auto lg:pl-4 xl:pl-8 flex items-center justify-center opacity-20 lg:opacity-100 z-0 lg:z-auto">
+            <div ref={ringRef} className="relative w-[30rem] h-[30rem] sm:w-[40rem] sm:h-[40rem] lg:w-[72rem] lg:h-[72rem] overflow-visible">
               
               {/* Central Selected Fruit */}
               <motion.div
@@ -293,7 +293,7 @@ const HeroSection = () => {
               >
                 {/* Background Glow with Dynamic Color */}
                 <div 
-                  className="absolute inset-0 rounded-full blur-3xl opacity-20 scale-75"
+                  className="absolute inset-0 rounded-full blur-xl lg:blur-3xl opacity-20 scale-50 sm:scale-60 lg:scale-75"
                   style={{ 
                     background: `linear-gradient(135deg, ${selectedFruit.colors.primary}40, ${selectedFruit.colors.secondary}40)` 
                   }}
@@ -302,7 +302,7 @@ const HeroSection = () => {
                 <motion.img
                   src={selectedFruit.image}
                   alt={selectedFruit.name}
-                  className="w-48 h-48 lg:w-64 lg:h-64 object-contain drop-shadow-2xl z-10"
+                  className="w-20 h-20 sm:w-32 sm:h-32 lg:w-64 lg:h-64 object-contain drop-shadow-2xl z-10"
                   whileHover={{ scale: 1.1, rotateY: 10 }}
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
@@ -381,8 +381,8 @@ const HeroSection = () => {
                           alt={fruit.name}
                           className={`object-contain filter drop-shadow-lg ${
                             fruit.id === 'pista' || fruit.id === 'walnut' 
-                              ? 'w-48 h-48 lg:w-56 lg:h-56' 
-                              : 'w-28 h-28 lg:w-32 lg:h-32'
+                              ? 'w-16 h-16 sm:w-24 sm:h-24 lg:w-56 lg:h-56' 
+                              : 'w-12 h-12 sm:w-16 sm:h-16 lg:w-32 lg:h-32'
                           }`}
 
                         />
@@ -402,9 +402,9 @@ const HeroSection = () => {
                 })}
               </motion.div>
 
-              {/* Dynamic Quality Badges for Selected Fruit */}
+              {/* Dynamic Quality Badges for Selected Fruit - Hidden on mobile since animation is background */}
               <motion.div
-                className="absolute -top-8 lg:-top-12 -right-4 lg:-right-6 bg-white/90 backdrop-blur-sm rounded-full px-3 lg:px-4 py-1.5 lg:py-2 shadow-lg border-2"
+                className="hidden lg:block absolute lg:-top-12 lg:-right-6 bg-white/90 backdrop-blur-sm rounded-full lg:px-4 lg:py-2 shadow-lg border-2"
                 style={{ borderColor: selectedFruit.colors.primary }}
                 key={`fresh-${selectedFruit.id}`}
                 initial={{ opacity: 0, scale: 0 }}
@@ -412,17 +412,17 @@ const HeroSection = () => {
                 transition={{ duration: 0.5, delay: 0.2, type: "spring" }}
                 whileHover={{ scale: 1.1 }}
               >
-                <div className="flex items-center gap-1.5 lg:gap-2">
+                <div className="flex items-center lg:gap-2">
                   <div 
-                    className="w-2 h-2 lg:w-3 lg:h-3 rounded-full animate-pulse"
+                    className="lg:w-3 lg:h-3 rounded-full animate-pulse"
                     style={{ backgroundColor: selectedFruit.colors.primary }}
                   />
-                  <span className="text-xs lg:text-sm font-semibold text-amber-800">Fresh</span>
+                  <span className="lg:text-sm font-semibold text-amber-800">Fresh</span>
                 </div>
               </motion.div>
 
               <motion.div
-                className="absolute -bottom-12 lg:-bottom-16 -left-6 lg:-left-8 bg-white/90 backdrop-blur-sm rounded-full px-3 lg:px-4 py-1.5 lg:py-2 shadow-lg border-2"
+                className="hidden lg:block absolute lg:-bottom-16 lg:-left-8 bg-white/90 backdrop-blur-sm rounded-full lg:px-4 lg:py-2 shadow-lg border-2"
                 style={{ borderColor: selectedFruit.colors.primary }}
                 key={`premium-${selectedFruit.id}`}
                 initial={{ opacity: 0, scale: 0 }}
@@ -430,12 +430,12 @@ const HeroSection = () => {
                 transition={{ duration: 0.5, delay: 0.4, type: "spring" }}
                 whileHover={{ scale: 1.1 }}
               >
-                <div className="flex items-center gap-1.5 lg:gap-2">
+                <div className="flex items-center lg:gap-2">
                   <Award 
-                    className="w-3 h-3 lg:w-4 lg:h-4"
+                    className="lg:w-4 lg:h-4"
                     style={{ color: selectedFruit.colors.primary }}
                   />
-                  <span className="text-xs lg:text-sm font-semibold text-amber-800">Premium</span>
+                  <span className="lg:text-sm font-semibold text-amber-800">Premium</span>
                 </div>
               </motion.div>
             </div>
