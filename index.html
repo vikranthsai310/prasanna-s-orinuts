@@ -9,6 +9,27 @@
     <meta name="author" content="Prasanna's Orinuts" />
     <meta name="keywords" content="dry fruits, premium nuts, almonds, cashews, walnuts, healthy snacks, premium orchard, natural nuts, organic dry fruits, buy dry fruits online" />
     
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://www.googletagmanager.com https://www.google-analytics.com https://apis.google.com https://accounts.google.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: https: blob: https://firebasestorage.googleapis.com https://www.google-analytics.com https://*.googleusercontent.com;
+      connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://checkout.razorpay.com https://api.razorpay.com https://www.google-analytics.com https://accounts.google.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com wss://*.firebaseio.com;
+      frame-src https://api.razorpay.com https://checkout.razorpay.com https://accounts.google.com https://*.firebaseapp.com;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self' https://checkout.razorpay.com https://accounts.google.com;
+      manifest-src 'self';
+      media-src 'self' https://firebasestorage.googleapis.com;
+    ">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(self)">
+    
     <!-- Canonical URL -->
     <link rel="canonical" href="https://premiumorchard.com" />
 

@@ -1,50 +1,80 @@
 // Vercel Serverless Function for verifying Razorpay payments
 import crypto from 'crypto';
+import { requireAuth, verifyOwnership } from './_middleware/auth.js';
 
-// For development, we'll skip Firebase Admin and just verify payment signature
-// In production, you should set up proper Firebase Admin with service account
+// Initialize Firebase Firestore for order updates
 let db = null;
 
 // Only try to initialize Firebase Admin if service account is provided
 if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
   try {
-    const { initializeApp, cert } = await import('firebase-admin/app');
+    const { initializeApp, cert, getApps } = await import('firebase-admin/app');
     const { getFirestore } = await import('firebase-admin/firestore');
     
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-    const app = initializeApp({
-      credential: cert(serviceAccount),
-      projectId: process.env.FIREBASE_PROJECT_ID || "orinut-494cc"
-    });
-    db = getFirestore(app);
-    console.log('Firebase Admin initialized successfully');
+    if (getApps().length === 0) {
+      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+      const app = initializeApp({
+        credential: cert(serviceAccount),
+        projectId: process.env.FIREBASE_PROJECT_ID || "orinut-494cc"
+      });
+      db = getFirestore(app);
+      console.log('✅ Firebase Admin initialized successfully');
+    } else {
+      const { getFirestore } = await import('firebase-admin/firestore');
+      db = getFirestore();
+    }
   } catch (error) {
-    console.error('Firebase Admin initialization failed:', error);
+    console.error('❌ Firebase Admin initialization failed:', error);
   }
 } else {
-  console.log('No Firebase service account key provided, skipping Firebase Admin initialization');
+  console.log('⚠️ No Firebase service account key provided');
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    console.log('Payment verification request received:', req.body);
+    console.log('🔐 Payment verification request from user:', req.user.uid);
     
-    const { orderId, paymentId, signature } = req.body;
+    const { orderId, paymentId, signature, receipt } = req.body;
 
     // Validate the data
     if (!orderId || !paymentId || !signature) {
-      console.error('Missing required parameters:', { orderId, paymentId, signature });
+      console.error('❌ Missing required parameters:', { orderId, paymentId, signature });
       return res.status(400).json({ error: 'Missing required payment verification parameters' });
     }
 
-    // Get the Razorpay secret key
-    const secret = process.env.RAZORPAY_KEY_SECRET || 'PSAZ07MfVPmBeux0JqpX7aEl';
-    console.log('Using Razorpay secret (length):', secret.length);
+    // 🔐 Verify user owns the order (if receipt/orderId provided)
+    if (receipt && db) {
+      try {
+        const orderDoc = await db.collection('orders').doc(receipt).get();
+        if (orderDoc.exists) {
+          const orderData = orderDoc.data();
+          verifyOwnership(req.user, orderData.userId);
+          console.log('✅ User ownership verified for order:', receipt);
+        }
+      } catch (ownershipError) {
+        console.error('❌ Ownership verification failed:', ownershipError.message);
+        return res.status(403).json({ 
+          error: 'Forbidden',
+          message: 'You do not have permission to verify this payment'
+        });
+      }
+    }
+
+    // Get the Razorpay secret key - must be configured in environment
+    const secret = process.env.RAZORPAY_KEY_SECRET;
+    
+    if (!secret) {
+      console.error('CRITICAL: RAZORPAY_KEY_SECRET not configured');
+      return res.status(500).json({ 
+        error: 'Server configuration error. Please contact support.',
+        isValid: false 
+      });
+    }
     
     // Create a signature using the orderId and paymentId
     const expectedSignature = crypto
@@ -97,7 +127,23 @@ export default async function handler(req, res) {
       firebaseOrderId: req.body.receipt || null
     });
   } catch (error) {
-    console.error('Error verifying Razorpay payment:', error);
-    return res.status(500).json({ error: error.message });
+    console.error('❌ Error verifying payment:', error);
+    
+    // Handle different error types
+    if (error.message.includes('permission') || error.message.includes('Forbidden')) {
+      return res.status(403).json({ 
+        error: 'Forbidden',
+        message: error.message
+      });
+    }
+    
+    return res.status(500).json({ 
+      error: 'Payment verification failed',
+      message: error.message,
+      isValid: false 
+    });
   }
-} 
+}
+
+// 🔐 Wrap handler with authentication middleware
+export default requireAuth(handler); 

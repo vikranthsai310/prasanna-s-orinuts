@@ -1,11 +1,17 @@
 /**
  * Payment Service Configuration Options
  * Centralized payment-related configurations
+ * 
+ * SECURITY WARNING:
+ * - ONLY the Razorpay Key ID (public key) should be in the frontend
+ * - NEVER expose the Key Secret in frontend code
+ * - Key Secret must ONLY exist in backend/server environment
+ * - Payment verification must be done server-side
  */
 
 export const paymentConfig = {
   razorpay: {
-    keyId: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_DBSSTbBMD0V8N9',
+    keyId: import.meta.env.VITE_RAZORPAY_KEY_ID,
     scriptUrl: 'https://checkout.razorpay.com/v1/checkout.js',
     currency: 'INR',
     defaultTimeout: 300000, // 5 minutes
@@ -33,6 +39,27 @@ export const paymentConfig = {
   }
 };
 
+// Validation: Ensure Razorpay Key ID is present
+const validatePaymentConfig = () => {
+  if (!paymentConfig.razorpay.keyId) {
+    throw new Error(
+      'Missing Razorpay Key ID. Please set VITE_RAZORPAY_KEY_ID in your .env file.'
+    );
+  }
+  
+  if (import.meta.env.VITE_RAZORPAY_KEY_SECRET) {
+    console.error(
+      '⚠️ SECURITY WARNING: Razorpay Key Secret detected in frontend environment! ' +
+      'This is a critical security issue. Key Secret should ONLY be on the backend.'
+    );
+  }
+};
+
+// Run validation immediately
+if (import.meta.env.MODE !== 'test') {
+  validatePaymentConfig();
+}
+
 export const paymentOptions = {
   // Minimum and maximum order amounts
   limits: {
@@ -40,12 +67,6 @@ export const paymentOptions = {
     maxAmount: 500000 // Rs. 5000.00
   },
 
-  // Test credentials for development
-  test: {
-    keyId: 'rzp_test_YOUR_KEY_ID',
-    cards: {
-      success: '4111 1111 1111 1111',
-      failure: '4000 0000 0000 0002'
-    }
-  }
+  // Test mode detection
+  isTestMode: import.meta.env.VITE_RAZORPAY_KEY_ID?.startsWith('rzp_test_') || false
 };

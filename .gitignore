@@ -22,9 +22,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.env
-.env.*
+
+
 functions/.runtimeconfig.json
+
+# Environment variables (CRITICAL - NEVER commit!)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
 
 # Firebase Migration - Service Account Keys (NEVER commit!)
 src/scripts/*-firebase-key.json
@@ -32,4 +39,8 @@ src/scripts/serviceAccountKey*.json
 src/scripts/firebase-backup.json
 src/scripts/products-backup.json
 src/scripts/example-config.txt
+
+# Firebase Admin SDK Service Account (CRITICAL - NEVER commit!)
+*-firebase-adminsdk-*.json
+orinut-494cc-firebase-adminsdk-fbsvc-7b087e3184.json
 

@@ -3,6 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
+import { getAnalytics, Analytics } from "firebase/analytics";
 import { firebaseConfig, firebaseOptions, authConfig } from '@/config';
 
 
@@ -13,6 +14,16 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
+
+// Initialize Analytics (only in browser and production)
+let analytics: Analytics | null = null;
+if (typeof window !== 'undefined' && firebaseConfig.measurementId) {
+  try {
+    analytics = getAnalytics(app);
+  } catch (error) {
+    console.warn('Firebase Analytics initialization failed:', error);
+  }
+}
 
 // Configure Google Auth Provider
 googleProvider.setCustomParameters(authConfig.google.customParameters);
@@ -28,5 +39,5 @@ if (firebaseOptions.useEmulators) {
   connectStorageEmulator(storage, 'localhost', firebaseOptions.emulatorPorts.storage);
 }
 
-export { auth, db, storage, googleProvider };
+export { auth, db, storage, googleProvider, analytics };
 export default app; 

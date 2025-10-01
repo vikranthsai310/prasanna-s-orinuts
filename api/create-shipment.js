@@ -1,4 +1,6 @@
 // Vercel Serverless Function for creating Shiprocket shipments
+import { requireAuth } from './_middleware/auth.js';
+
 const SHIPROCKET_BASE_URL = 'https://apiv2.shiprocket.in/v1/external';
 
 // Store auth token globally (in production, use proper token management like Redis)
@@ -82,18 +84,28 @@ const calculatePackageDimensions = (items) => {
   }
 };
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
+    console.log('🔐 Create shipment request from user:', req.user.uid);
+    
     const { order, pickupLocation = 'Primary' } = req.body;
 
     // Validate the data
     if (!order || !order.id || !order.items || !order.shippingAddress) {
       return res.status(400).json({ error: 'Invalid order data' });
+    }
+
+    // 🔐 Verify user owns the order
+    if (order.userId && order.userId !== req.user.uid && !req.user.isAdmin) {
+      return res.status(403).json({ 
+        error: 'Forbidden',
+        message: 'You do not have permission to create shipment for this order'
+      });
     }
 
     // Authenticate with Shiprocket
@@ -163,10 +175,23 @@ export default async function handler(req, res) {
       courier_name: result.courier_name,
     });
   } catch (error) {
-    console.error('Error creating Shiprocket shipment:', error);
+    console.error('❌ Error creating Shiprocket shipment:', error);
+    
+    if (error.message.includes('permission') || error.message.includes('Forbidden')) {
+      return res.status(403).json({ 
+        error: 'Forbidden',
+        message: error.message,
+        success: false
+      });
+    }
+    
     return res.status(500).json({ 
-      error: error.message,
+      error: 'Failed to create shipment',
+      message: error.message,
       success: false 
     });
   }
 }
+
+// 🔐 Wrap handler with authentication middleware
+export default requireAuth(handler);

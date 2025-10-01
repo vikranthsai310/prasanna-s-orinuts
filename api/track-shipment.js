@@ -1,4 +1,6 @@
 // Vercel Serverless Function for tracking Shiprocket shipments
+import { requireAuth } from './_middleware/auth.js';
+
 const SHIPROCKET_BASE_URL = 'https://apiv2.shiprocket.in/v1/external';
 
 // Store auth token globally (in production, use proper token management like Redis)
@@ -43,13 +45,15 @@ const authenticateShiprocket = async () => {
   }
 };
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   // Allow both GET and POST requests
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
+    console.log('🔐 Track shipment request from user:', req.user.uid);
+    
     let awbCode;
     
     if (req.method === 'GET') {
@@ -108,10 +112,14 @@ export default async function handler(req, res) {
       track_url: `https://shiprocket.co/tracking/${awbCode}`,
     });
   } catch (error) {
-    console.error('Error tracking shipment:', error);
+    console.error('❌ Error tracking shipment:', error);
     return res.status(500).json({ 
-      error: error.message,
+      error: 'Failed to track shipment',
+      message: error.message,
       success: false 
     });
   }
 }
+
+// 🔐 Wrap handler with authentication middleware
+export default requireAuth(handler);

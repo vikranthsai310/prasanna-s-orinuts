@@ -1,17 +1,38 @@
 /**
  * Firebase Configuration Options
  * Centralized Firebase-related configurations
+ * 
+ * SECURITY: All sensitive credentials must be in environment variables
+ * Never commit .env file to version control
  */
 
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCFGNw-QaL0NeajxgjMcuOxCXzeeHX1nwY",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "orinut-494cc.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "orinut-494cc",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "orinut-494cc.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "369347130599",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:369347130599:web:79cd0316f8af76c0a2de42",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-MB52LLLTFD"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
+
+// Validation: Ensure all required Firebase config values are present
+const validateFirebaseConfig = () => {
+  const requiredKeys = ['apiKey', 'authDomain', 'projectId', 'storageBucket'];
+  const missing = requiredKeys.filter(key => !firebaseConfig[key as keyof typeof firebaseConfig]);
+  
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required Firebase configuration: ${missing.join(', ')}. ` +
+      `Please check your .env file and ensure all VITE_FIREBASE_* variables are set.`
+    );
+  }
+};
+
+// Run validation immediately
+if (import.meta.env.MODE !== 'test') {
+  validateFirebaseConfig();
+}
 
 export const firebaseOptions = {
   useEmulators: import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true',

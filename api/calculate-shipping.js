@@ -1,4 +1,6 @@
 // Vercel Serverless Function for calculating shipping rates via Shiprocket
+import { requireAuth } from './_middleware/auth.js';
+
 const SHIPROCKET_BASE_URL = 'https://apiv2.shiprocket.in/v1/external';
 
 // Store auth token globally (in production, use proper token management like Redis)
@@ -43,13 +45,15 @@ const authenticateShiprocket = async () => {
   }
 };
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
+    console.log('🔐 Calculate shipping request from user:', req.user.uid);
+    
     const { 
       pickupPincode, 
       deliveryPincode, 
@@ -120,10 +124,14 @@ export default async function handler(req, res) {
       recommended: shippingOptions.length > 0 ? shippingOptions[0] : null,
     });
   } catch (error) {
-    console.error('Error calculating shipping rates:', error);
+    console.error('❌ Error calculating shipping rates:', error);
     return res.status(500).json({ 
-      error: error.message,
+      error: 'Failed to calculate shipping',
+      message: error.message,
       success: false 
     });
   }
 }
+
+// 🔐 Wrap handler with authentication middleware
+export default requireAuth(handler);
