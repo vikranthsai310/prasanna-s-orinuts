@@ -41,7 +41,7 @@ interface StructuredDataProps {
 const DEFAULT_TITLE = 'Prasanna Premium Orchard - Premium Quality Dry Fruits & Nuts';
 const DEFAULT_DESCRIPTION = 'Shop premium quality dry fruits, nuts, and healthy snacks. Fresh almonds, cashews, walnuts, dates, and more delivered to your doorstep.';
 const DEFAULT_IMAGE = '/Logo.png';
-const DEFAULT_URL = 'https://prasanna-premium-orchard.vercel.app';
+const DEFAULT_URL = 'https://prasannasorinuts.com';
 const SITE_NAME = 'Prasanna Premium Orchard';
 const TWITTER_HANDLE = '@prasannaorchard';
 

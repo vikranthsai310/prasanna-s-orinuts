@@ -8,7 +8,7 @@ import { mockProducts } from '@/data/mockProducts';
 import { useCart } from '@/contexts/CartContext';
 import ProductCard from '@/components/ProductCard';
 import ProductStructuredData from '@/components/ProductStructuredData';
-import ProductFAQ from '@/components/ProductFAQ';
+import SEO from '@/components/SEO';
 import { getProductById, getAllProducts } from '@/services/productService';
 import { Product } from '@/types/product';
 
@@ -78,6 +78,32 @@ const ProductDetail = () => {
     
     fetchProduct();
   }, [id]);
+
+  // SEO for product detail page
+  useEffect(() => {
+    if (product) {
+      SEO({
+        title: `Buy ${product.name} Online | Premium Quality | Best Price in India`,
+        description: `${product.description} ✓ 100% Natural ✓ Fresh & Hygienic ✓ Free Shipping ✓ Starting from ₹${product.prices['250g']} for 250g | Order Premium ${product.name} Today!`,
+        keywords: [
+          `buy ${product.name.toLowerCase()} online`,
+          `${product.name.toLowerCase()} price`,
+          `${product.name.toLowerCase()} online india`,
+          `fresh ${product.name.toLowerCase()}`,
+          `premium ${product.name.toLowerCase()}`,
+          `${product.name.toLowerCase()} nutrition`,
+          `${product.name.toLowerCase()} benefits`,
+          `${product.name.toLowerCase()} wholesale`
+        ],
+        image: product.image,
+        canonicalUrl: `https://prasannasorinuts.com/products/${product.id}`,
+        type: 'product',
+        price: product.prices[selectedWeight],
+        currency: 'INR',
+        availability: product.stock > 0 ? 'instock' : 'outofstock'
+      });
+    }
+  }, [product, selectedWeight]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -227,10 +253,9 @@ const ProductDetail = () => {
       {/* Product Details Tabs */}
       <div className="mb-16">
         <Tabs defaultValue="description">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="description">Description</TabsTrigger>
             <TabsTrigger value="nutrition">Nutrition Facts</TabsTrigger>
-            <TabsTrigger value="faq">FAQs</TabsTrigger>
           </TabsList>
           
           <TabsContent value="description" className="mt-6">
@@ -253,10 +278,6 @@ const ProductDetail = () => {
                 <li><strong>Fiber:</strong> {product.nutritionalInfo.fiber}g</li>
               </ul>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="faq" className="mt-6">
-            <ProductFAQ productName={product.name} />
           </TabsContent>
         </Tabs>
       </div>

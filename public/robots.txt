@@ -1,5 +1,37 @@
+# Robots.txt for Prasanna's Orinuts - Premium Dry Fruits Store
+# Allow all search engines to crawl all pages
+
 User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /checkout
+Disallow: /api/
+Disallow: /*.json$
+Disallow: /*?*sort=
+Disallow: /*?*filter=
+
+# Crawl-delay for better server performance
+Crawl-delay: 1
+
+# Specific rules for major search engines
+User-agent: Googlebot
+Allow: /
+Disallow: /admin
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+
+User-agent: Slurp
 Allow: /
 
 # Sitemaps
-Sitemap: https://premiumorchard.com/sitemap.xml
+Sitemap: https://prasannasorinuts.com/sitemap.xml
+Sitemap: https://prasannasorinuts.com/sitemap-products.xml
+Sitemap: https://prasannasorinuts.com/sitemap-categories.xml
+
+# Host (preferred domain)
+Host: https://prasannasorinuts.com

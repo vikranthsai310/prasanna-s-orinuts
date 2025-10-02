@@ -1,76 +1,139 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+  
+  <!-- Homepage -->
   <url>
-    <loc>https://premiumorchard.com/</loc>
-    <lastmod>2023-10-20</lastmod>
-    <changefreq>weekly</changefreq>
+    <loc>https://prasannasorinuts.com/</loc>
+    <lastmod>2025-10-02</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
+  
+  <!-- Main Pages -->
   <url>
-    <loc>https://premiumorchard.com/products</loc>
-    <lastmod>2023-10-20</lastmod>
+    <loc>https://prasannasorinuts.com/products</loc>
+    <lastmod>2025-10-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://premiumorchard.com/blog</loc>
-    <lastmod>2023-10-20</lastmod>
+    <loc>https://prasannasorinuts.com/cart</loc>
+    <lastmod>2025-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://prasannasorinuts.com/samples</loc>
+    <lastmod>2025-10-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://premiumorchard.com/blog/benefits-of-almonds</loc>
-    <lastmod>2023-06-15</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://premiumorchard.com/blog/cashews-nutrition</loc>
-    <lastmod>2023-07-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://premiumorchard.com/blog/walnuts-brain-health</loc>
-    <lastmod>2023-08-05</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://premiumorchard.com/blog/dry-fruits-weight-loss</loc>
-    <lastmod>2023-09-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://premiumorchard.com/contact</loc>
-    <lastmod>2023-10-20</lastmod>
+    <loc>https://prasannasorinuts.com/about</loc>
+    <lastmod>2025-10-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://premiumorchard.com/about</loc>
-    <lastmod>2023-10-20</lastmod>
+    <loc>https://prasannasorinuts.com/contact</loc>
+    <lastmod>2025-10-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
-  <!-- Product URLs -->
+  
+  <!-- Product Detail Pages -->
   <url>
-    <loc>https://premiumorchard.com/products/almonds</loc>
-    <lastmod>2023-10-20</lastmod>
+    <loc>https://prasannasorinuts.com/products/1</loc>
+    <lastmod>2025-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Falmond.png</image:loc>
+      <image:title>Premium Almonds - California Quality</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://prasannasorinuts.com/products/2</loc>
+    <lastmod>2025-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Fdates.png</image:loc>
+      <image:title>Afghani Dates - Sweet and Natural</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://prasannasorinuts.com/products/3</loc>
+    <lastmod>2025-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Fwalnut.png</image:loc>
+      <image:title>Kashmir Walnuts - Premium Quality</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://prasannasorinuts.com/products/4</loc>
+    <lastmod>2025-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Fcashew.png</image:loc>
+      <image:title>Jumbo Cashews - Creamy and Fresh</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://prasannasorinuts.com/products/5</loc>
+    <lastmod>2025-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Fpista.png</image:loc>
+      <image:title>Iranian Pistachios - Green Perfection</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://prasannasorinuts.com/products/6</loc>
+    <lastmod>2025-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/orinut-494cc.firebasestorage.app/o/products%2Fraisins.png</image:loc>
+      <image:title>Golden Raisins - Sweet and Juicy</image:title>
+    </image:image>
+  </url>
+  
+  <!-- Blog Pages -->
+  <url>
+    <loc>https://prasannasorinuts.com/blog</loc>
+    <lastmod>2025-10-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://premiumorchard.com/products/cashews</loc>
-    <lastmod>2023-10-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://prasannasorinuts.com/blog/benefits-of-almonds</loc>
+    <lastmod>2025-10-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://premiumorchard.com/products/walnuts</loc>
-    <lastmod>2023-10-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://prasannasorinuts.com/blog/cashews-nutrition</loc>
+    <lastmod>2025-10-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://prasannasorinuts.com/blog/walnuts-brain-health</loc>
+    <lastmod>2025-10-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://prasannasorinuts.com/blog/dry-fruits-weight-loss</loc>
+    <lastmod>2025-10-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset> 
