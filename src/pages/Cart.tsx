@@ -115,44 +115,50 @@ const Cart = () => {
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
             <div key={`${item.id}-${item.weight}`} className="card-premium">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-start gap-4">
+                {/* Product Image */}
                 <img
                   src={item.image}
                   alt={item.name}
-                  className="w-20 h-20 object-cover rounded-lg"
+                  className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
                 />
                 
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{item.name}</h3>
-                  <p className="text-muted-foreground">{item.weight}</p>
-                  <p className="text-secondary font-semibold">₹{item.price}</p>
+                {/* Product Details */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-lg mb-1">{item.name}</h3>
+                  <p className="text-sm text-muted-foreground mb-2">{item.weight}</p>
+                  <p className="text-secondary font-semibold text-base">₹{item.price}</p>
                 </div>
                 
-                <div className="flex items-center space-x-2">
+                {/* Quantity Controls */}
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => updateQuantity(item.id, item.weight, item.quantity - 1)}
+                    className="h-8 w-8 p-0"
                   >
                     <Minus className="w-4 h-4" />
                   </Button>
-                  <span className="px-3 py-1 min-w-12 text-center">{item.quantity}</span>
+                  <span className="w-8 text-center font-medium">{item.quantity}</span>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => updateQuantity(item.id, item.weight, item.quantity + 1)}
+                    className="h-8 w-8 p-0"
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
                 
-                <div className="text-right">
-                  <p className="font-semibold text-lg">₹{(item.price * item.quantity).toLocaleString()}</p>
+                {/* Price and Delete */}
+                <div className="flex flex-col items-end gap-2 min-w-[100px] flex-shrink-0">
+                  <p className="font-semibold text-lg text-right">₹{(item.price * item.quantity).toLocaleString()}</p>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => removeItem(item.id, item.weight)}
-                    className="text-destructive hover:text-destructive mt-1"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
