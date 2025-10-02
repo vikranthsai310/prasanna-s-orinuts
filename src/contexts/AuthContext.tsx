@@ -121,32 +121,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isOTPBeingSent = true;
       setIsLoading(true);
 
-      // Clean up any existing reCAPTCHA more thoroughly
-      const container = document.getElementById('recaptcha-container');
-      if (!container) {
-        throw new Error('reCAPTCHA container not found');
-      }
-
-      // Clear previous reCAPTCHA instance
+      // AGGRESSIVE CLEANUP - Clear everything
+      console.log('🧹 Starting aggressive cleanup...');
+      
+      // 1. Clear any existing verifier
       if ((window as any).recaptchaVerifier) {
         try {
-          console.log('🧹 Clearing existing reCAPTCHA...');
+          console.log('Clearing existing verifier...');
           (window as any).recaptchaVerifier.clear();
-          (window as any).recaptchaVerifier = null;
         } catch (e) {
-          console.log('⚠️ Error clearing reCAPTCHA:', e);
+          console.log('Verifier clear error (ignored):', e);
         }
+        (window as any).recaptchaVerifier = null;
       }
 
-      // Clear the DOM completely
-      container.innerHTML = '';
-      
-      // Remove any existing reCAPTCHA widgets from DOM
-      const existingWidgets = document.querySelectorAll('.grecaptcha-badge');
-      existingWidgets.forEach(widget => widget.remove());
+      // 2. Get or create container
+      let container = document.getElementById('recaptcha-container');
+      if (!container) {
+        console.error('❌ reCAPTCHA container not found in DOM!');
+        throw new Error('reCAPTCHA container not found. Please refresh the page.');
+      }
 
-      // Wait a bit for cleanup
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // 3. Completely clear the container and remove it
+      container.innerHTML = '';
+      container.remove();
+      
+      // 4. Remove all reCAPTCHA widgets and badges from entire document
+      console.log('Removing all reCAPTCHA elements...');
+      const badges = document.querySelectorAll('.grecaptcha-badge');
+      badges.forEach(badge => badge.remove());
+      
+      const iframes = document.querySelectorAll('iframe[src*="recaptcha"]');
+      iframes.forEach(iframe => iframe.remove());
+      
+      // 5. Wait for DOM to stabilize
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 6. Create a fresh container
+      console.log('Creating fresh container...');
+      const newContainer = document.createElement('div');
+      newContainer.id = 'recaptcha-container';
+      document.body.appendChild(newContainer);
+      
+      // 7. Wait a bit more
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       console.log('🔐 Creating new reCAPTCHA verifier...');
       
