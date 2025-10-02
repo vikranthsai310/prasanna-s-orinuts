@@ -123,8 +123,12 @@ async function handler(req, res) {
     }
 
     return res.status(200).json({ 
-      isValid: isSignatureValid,
-      firebaseOrderId: req.body.receipt || null
+      success: true,
+      verified: isSignatureValid,
+      isValid: isSignatureValid, // Keep for backwards compatibility
+      orderId: req.body.receipt || null,
+      firebaseOrderId: req.body.receipt || null, // Keep for backwards compatibility
+      paymentId: paymentId
     });
   } catch (error) {
     console.error('❌ Error verifying payment:', error);

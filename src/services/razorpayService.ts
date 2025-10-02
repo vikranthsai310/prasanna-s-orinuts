@@ -72,6 +72,12 @@ export const verifyRazorpayPaymentOnServer = async (
 ): Promise<{ isValid: boolean; firebaseOrderId?: string }> => {
   try {
     console.log('🔐 Verifying payment with authentication...');
+    console.log('📋 Verification details:', {
+      razorpayOrderId,
+      paymentId,
+      signature: signature.substring(0, 20) + '...',
+      firebaseOrderId
+    });
     
     const response = await apiService.post<VerifyPaymentResponse>(
       API_ENDPOINTS.PAYMENT.VERIFY_PAYMENT,
@@ -83,13 +89,37 @@ export const verifyRazorpayPaymentOnServer = async (
       }
     );
 
+    console.log('✅ Verification response:', response);
+    
     const result = response.data as VerifyPaymentResponse;
+    
+    // Handle both 'verified' and 'isValid' field names for backwards compatibility
+    const isValid = result.verified !== undefined ? result.verified : (result as any).isValid || false;
+    const orderId = result.orderId || (result as any).firebaseOrderId;
+    
+    console.log('✅ Payment verification result:', { isValid, orderId });
+    
     return { 
-      isValid: result.verified || false, 
-      firebaseOrderId: result.orderId 
+      isValid, 
+      firebaseOrderId: orderId 
     };
-  } catch (error) {
-    console.error('Error verifying Razorpay payment:', error);
+  } catch (error: any) {
+    console.error('❌ Error verifying Razorpay payment:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      statusCode: error.statusCode,
+      response: error.response
+    });
+    
+    // Provide specific error messages
+    if (error.statusCode === 400) {
+      throw new Error('Invalid payment verification request. Please try again.');
+    } else if (error.statusCode === 401) {
+      throw new Error('Please log in to verify payment.');
+    } else if (error.statusCode === 403) {
+      throw new Error('You do not have permission to verify this payment.');
+    }
+    
     throw error;
   }
 }; 
