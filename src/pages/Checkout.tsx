@@ -27,7 +27,7 @@ const Checkout = () => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    phone: user?.phone || '',
+    phone: user?.phone ? (user.phone.startsWith('+91') ? user.phone : '+91' + user.phone.replace(/\D/g, '')) : '+91',
     address: '',
     city: '',
     state: '',
@@ -137,11 +137,14 @@ const Checkout = () => {
     if (!useNewAddress && selectedAddressId) {
       const selectedAddress = savedAddresses.find(addr => addr.id === selectedAddressId);
       if (selectedAddress) {
+        const phone = selectedAddress.phone || user?.phone || '';
+        const formattedPhone = phone.startsWith('+91') ? phone : '+91' + phone.replace(/\D/g, '');
+        
         setFormData(prev => ({
           ...prev,
           name: selectedAddress.name || user?.name || '',
           email: selectedAddress.email || user?.email || '',
-          phone: selectedAddress.phone || user?.phone || '',
+          phone: formattedPhone,
           address: selectedAddress.street,
           city: selectedAddress.city,
           state: selectedAddress.state,
@@ -178,8 +181,8 @@ const Checkout = () => {
     }
     
     // Phone validation
-    const phoneRegex = /^[0-9]{10}$/;
-    if (formData.phone && !phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
+    const phoneDigits = formData.phone.replace(/\D/g, '');
+    if (formData.phone && (phoneDigits.length !== 10 && phoneDigits.length !== 12)) {
       newErrors.phone = 'Please enter a valid 10-digit phone number';
     }
     
@@ -188,6 +191,22 @@ const Checkout = () => {
     }
     
     setErrors(newErrors);
+    
+    // Log validation errors for debugging
+    if (Object.keys(newErrors).length > 0) {
+      console.log('❌ Form validation errors:', newErrors);
+      console.log('📋 Current form data:', {
+        name: formData.name ? '✓' : '✗',
+        email: formData.email ? '✓' : '✗',
+        phone: formData.phone ? '✓' : '✗',
+        address: formData.address ? '✓' : '✗',
+        city: formData.city ? '✓' : '✗',
+        state: formData.state ? '✓' : '✗',
+        pincode: formData.pincode ? '✓' : '✗',
+        addressType: formData.addressType ? '✓' : '✗'
+      });
+    }
+    
     return Object.keys(newErrors).length === 0;
   };
 
@@ -220,6 +239,17 @@ const Checkout = () => {
     
     if (!validateForm()) {
       console.log('❌ Form validation failed');
+      
+      // Show toast with the first error
+      const firstError = Object.values(errors)[0];
+      if (firstError) {
+        toast({
+          title: "Please Complete the Form",
+          description: firstError,
+          variant: "destructive"
+        });
+      }
+      
       return;
     }
     
@@ -559,14 +589,26 @@ const Checkout = () => {
                 
                 <div>
                   <label className="block text-sm font-medium mb-1">Phone Number *</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className={`input-field w-full ${errors.phone ? 'border-destructive' : ''}`}
-                    placeholder="Enter your phone number"
-                  />
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
+                      +91
+                    </div>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone.replace('+91', '').replace(/\D/g, '')}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        handleInputChange({
+                          ...e,
+                          target: { ...e.target, name: 'phone', value: '+91' + value }
+                        } as React.ChangeEvent<HTMLInputElement>);
+                      }}
+                      className={`input-field w-full pl-14 ${errors.phone ? 'border-destructive' : ''}`}
+                      placeholder="9876543210"
+                      maxLength={10}
+                    />
+                  </div>
                   {errors.phone && <p className="text-destructive text-sm mt-1">{errors.phone}</p>}
                 </div>
               </div>
