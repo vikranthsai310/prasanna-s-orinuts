@@ -115,7 +115,64 @@ const Cart = () => {
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
             <div key={`${item.id}-${item.weight}`} className="card-premium">
-              <div className="flex items-start gap-4">
+              {/* Mobile Layout */}
+              <div className="flex flex-col sm:hidden gap-3">
+                <div className="flex items-start gap-3">
+                  {/* Product Image */}
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                  />
+                  
+                  {/* Product Details */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-base mb-1 leading-tight">{item.name}</h3>
+                    <p className="text-xs text-muted-foreground mb-1">{item.weight}</p>
+                    <p className="text-secondary font-semibold text-sm">₹{item.price}</p>
+                  </div>
+                  
+                  {/* Delete Button - Top Right */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeItem(item.id, item.weight)}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 flex-shrink-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+                
+                {/* Quantity and Price Row */}
+                <div className="flex items-center justify-between">
+                  {/* Quantity Controls */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateQuantity(item.id, item.weight, item.quantity - 1)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Minus className="w-3 h-3" />
+                    </Button>
+                    <span className="w-8 text-center font-medium text-sm">{item.quantity}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateQuantity(item.id, item.weight, item.quantity + 1)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </Button>
+                  </div>
+                  
+                  {/* Total Price */}
+                  <p className="font-bold text-base">₹{(item.price * item.quantity).toLocaleString()}</p>
+                </div>
+              </div>
+
+              {/* Desktop/Tablet Layout */}
+              <div className="hidden sm:flex items-start gap-4">
                 {/* Product Image */}
                 <img
                   src={item.image}
