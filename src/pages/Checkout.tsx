@@ -140,7 +140,7 @@ const Checkout = () => {
         setFormData(prev => ({
           ...prev,
           name: selectedAddress.name || user?.name || '',
-          email: user?.email || '',
+          email: selectedAddress.email || user?.email || '',
           phone: selectedAddress.phone || user?.phone || '',
           address: selectedAddress.street,
           city: selectedAddress.city,
@@ -263,6 +263,7 @@ const Checkout = () => {
             type: addressType as AddressType,
             name: formData.name,
             phone: formData.phone,
+            email: formData.email,
             street: formData.address,
             city: formData.city,
             state: formData.state,

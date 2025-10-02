@@ -48,6 +48,7 @@ const Profile = () => {
   
   const [addressForm, setAddressForm] = useState({
     type: 'Home' as AddressType,
+    email: '',
     street: '',
     city: '',
     state: '',
@@ -141,6 +142,7 @@ const Profile = () => {
       setEditingAddressId(address.id);
       setAddressForm({
         type: address.type,
+        email: address.email || user?.email || '',
         street: address.street,
         city: address.city,
         state: address.state,
@@ -151,6 +153,7 @@ const Profile = () => {
       setEditingAddressId(null);
       setAddressForm({
         type: 'Home' as AddressType,
+        email: user?.email || '',
         street: '',
         city: '',
         state: '',
@@ -591,6 +594,18 @@ const Profile = () => {
                   <option key={type} value={type}>{type}</option>
                 ))}
               </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Email Address</label>
+              <input
+                type="email"
+                name="email"
+                value={addressForm.email}
+                onChange={handleAddressInputChange}
+                className="input-field w-full"
+                placeholder="Enter your email address"
+              />
             </div>
             
             <div>

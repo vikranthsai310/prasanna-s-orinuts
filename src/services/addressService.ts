@@ -25,6 +25,7 @@ export interface Address {
   type: AddressType;
   name: string;
   phone: string;
+  email?: string;
   street: string;
   city: string;
   state: string;
