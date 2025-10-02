@@ -152,14 +152,14 @@ const Header = () => {
                 </Button>
               </Link>
 
-              {/* Auth */}
+              {/* Auth - Hidden on mobile, visible on desktop */}
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="hover:bg-amber-50 transition-colors"
+                      className="hidden md:flex hover:bg-amber-50 transition-colors"
                     >
                       <User className="h-5 w-5 text-amber-900" />
                     </Button>
@@ -248,7 +248,7 @@ const Header = () => {
                   variant="ghost"
                   size="icon"
                   onClick={handleAuthClick}
-                  className="hover:bg-amber-50 transition-colors"
+                  className="hidden md:flex hover:bg-amber-50 transition-colors"
                 >
                   <User className="h-5 w-5 text-amber-900" />
                 </Button>
