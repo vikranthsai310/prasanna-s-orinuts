@@ -8,7 +8,7 @@ import { mockProducts } from '@/data/mockProducts';
 import { useCart } from '@/contexts/CartContext';
 import ProductCard from '@/components/ProductCard';
 import ProductStructuredData from '@/components/ProductStructuredData';
-import SEO from '@/components/SEO';
+import { SEO } from '@/components/SEO';
 import { getProductById, getAllProducts } from '@/services/productService';
 import { Product } from '@/types/product';
 
@@ -79,32 +79,6 @@ const ProductDetail = () => {
     fetchProduct();
   }, [id]);
 
-  // SEO for product detail page
-  useEffect(() => {
-    if (product) {
-      SEO({
-        title: `Buy ${product.name} Online | Premium Quality | Best Price in India`,
-        description: `${product.description} ✓ 100% Natural ✓ Fresh & Hygienic ✓ Free Shipping ✓ Starting from ₹${product.prices['250g']} for 250g | Order Premium ${product.name} Today!`,
-        keywords: [
-          `buy ${product.name.toLowerCase()} online`,
-          `${product.name.toLowerCase()} price`,
-          `${product.name.toLowerCase()} online india`,
-          `fresh ${product.name.toLowerCase()}`,
-          `premium ${product.name.toLowerCase()}`,
-          `${product.name.toLowerCase()} nutrition`,
-          `${product.name.toLowerCase()} benefits`,
-          `${product.name.toLowerCase()} wholesale`
-        ],
-        image: product.image,
-        canonicalUrl: `https://prasannasorinuts.com/products/${product.id}`,
-        type: 'product',
-        price: product.prices[selectedWeight],
-        currency: 'INR',
-        availability: product.stock > 0 ? 'instock' : 'outofstock'
-      });
-    }
-  }, [product, selectedWeight]);
-
   const handleAddToCart = () => {
     if (!product) return;
     
@@ -142,6 +116,30 @@ const ProductDetail = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
+      {/* SEO */}
+      {product && (
+        <SEO
+          title={`Buy ${product.name} Online | Premium Quality | Best Price in India`}
+          description={`${product.description} ✓ 100% Natural ✓ Fresh & Hygienic ✓ Free Shipping ✓ Starting from ₹${product.prices['250g']} for 250g | Order Premium ${product.name} Today!`}
+          keywords={[
+            `buy ${product.name.toLowerCase()} online`,
+            `${product.name.toLowerCase()} price`,
+            `${product.name.toLowerCase()} online india`,
+            `fresh ${product.name.toLowerCase()}`,
+            `premium ${product.name.toLowerCase()}`,
+            `${product.name.toLowerCase()} nutrition`,
+            `${product.name.toLowerCase()} benefits`,
+            `${product.name.toLowerCase()} wholesale`
+          ]}
+          image={product.image}
+          canonicalUrl={`https://prasannasorinuts.com/products/${product.id}`}
+          type="product"
+          price={product.prices[selectedWeight]}
+          currency="INR"
+          availability={product.stock > 0 ? 'instock' : 'outofstock'}
+        />
+      )}
+      
       {/* Add structured data for this product */}
       <ProductStructuredData product={{
         id: product.id,

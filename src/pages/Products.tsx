@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '@/components/ProductCard';
-import SEO from '@/components/SEO';
+import { SEO } from '@/components/SEO';
 import { mockProducts } from '@/data/mockProducts';
 import { Button } from '@/components/ui/button';
 import { getAllProducts, searchProducts } from '@/services/productService';
@@ -16,17 +16,6 @@ const Products = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const searchQuery = searchParams.get('search');
-
-  // SEO for products page
-  useEffect(() => {
-    SEO({
-      title: 'Premium Dry Fruits & Nuts Online - Almonds, Cashews, Walnuts, Dates | Best Prices',
-      description: 'Shop Premium Quality Dry Fruits Online ✓ California Almonds ✓ Jumbo Cashews ✓ Kashmir Walnuts ✓ Afghani Dates ✓ Iranian Pistachios ✓ Golden Raisins ✓ 100% Natural ✓ Free Shipping ✓ Best Wholesale Prices in India',
-      keywords: ['dry fruits online shopping', 'buy almonds online', 'buy cashews online', 'buy walnuts online', 'buy dates online', 'buy pistachios online', 'dry fruits shop near me', 'online dry fruits store', 'fresh dry fruits', 'premium nuts online'],
-      canonicalUrl: 'https://prasannasorinuts.com/products',
-      type: 'website'
-    });
-  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -86,6 +75,15 @@ const Products = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
+      {/* SEO */}
+      <SEO
+        title="Premium Dry Fruits & Nuts Online - Almonds, Cashews, Walnuts, Dates | Best Prices"
+        description="Shop Premium Quality Dry Fruits Online ✓ California Almonds ✓ Jumbo Cashews ✓ Kashmir Walnuts ✓ Afghani Dates ✓ Iranian Pistachios ✓ Golden Raisins ✓ 100% Natural ✓ Free Shipping ✓ Best Wholesale Prices in India"
+        keywords={['dry fruits online shopping', 'buy almonds online', 'buy cashews online', 'buy walnuts online', 'buy dates online', 'buy pistachios online', 'dry fruits shop near me', 'online dry fruits store', 'fresh dry fruits', 'premium nuts online']}
+        canonicalUrl="https://prasannasorinuts.com/products"
+        type="website"
+      />
+      
       <div className="text-center mb-8">
         {searchQuery ? (
           <>
