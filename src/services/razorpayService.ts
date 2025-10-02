@@ -38,8 +38,24 @@ export const createRazorpayOrderOnServer = async (
 
     console.log('✅ Razorpay order created successfully:', response.data);
     return response.data as { id: string };
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error creating Razorpay order:', error);
+    
+    // Provide more specific error messages
+    if (error.statusCode === 400) {
+      console.error('❌ 400 Bad Request - Possible causes:');
+      console.error('  - Missing or invalid Razorpay credentials in server');
+      console.error('  - Missing Firebase service account configuration');
+      console.error('  - Invalid request payload');
+      throw new Error('Payment gateway configuration error. Please contact support.');
+    } else if (error.statusCode === 401) {
+      console.error('❌ 401 Unauthorized - Authentication required');
+      throw new Error('Please log in to continue with checkout.');
+    } else if (error.statusCode === 403) {
+      console.error('❌ 403 Forbidden - Permission denied');
+      throw new Error('You do not have permission to perform this action.');
+    }
+    
     throw error;
   }
 };

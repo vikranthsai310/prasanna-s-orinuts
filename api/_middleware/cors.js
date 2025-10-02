@@ -14,6 +14,8 @@ export function configureCors(req, res) {
   const allowedOrigins = [
     'https://prasanna-premium-orchard.vercel.app',
     'https://www.prasanna-premium-orchard.vercel.app',
+    'https://prasannasorinuts.com',
+    'https://www.prasannasorinuts.com',
     'https://premiumorchard.com',
     'https://www.premiumorchard.com',
     // Allow localhost in development
