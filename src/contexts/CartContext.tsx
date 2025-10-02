@@ -17,6 +17,7 @@ interface CartContextType {
   addItem: (item: Omit<CartItem, 'quantity'>) => void;
   removeItem: (id: string, weight: string) => void;
   updateQuantity: (id: string, weight: string, quantity: number) => void;
+  updateItemWeight: (id: string, oldWeight: string, newWeight: string, newPrice: number) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
@@ -179,6 +180,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
+  const updateItemWeight = (id: string, oldWeight: string, newWeight: string, newPrice: number) => {
+    setItems(prev =>
+      prev.map(item =>
+        item.id === id && item.weight === oldWeight
+          ? { ...item, weight: newWeight, price: newPrice }
+          : item
+      )
+    );
+    
+    toast({
+      title: "Weight Updated",
+      description: `Item weight changed to ${newWeight}`,
+      duration: 2000,
+    });
+  };
+
   const clearCart = () => {
     console.log('🛒 Clearing cart - current items count:', items.length);
     setItems([]);
@@ -214,6 +231,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       addItem,
       removeItem,
       updateQuantity,
+      updateItemWeight,
       clearCart,
       totalItems,
       totalPrice,

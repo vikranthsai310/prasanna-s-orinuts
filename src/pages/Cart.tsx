@@ -1,17 +1,18 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, Package, Truck, Shield, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import ProfileCompletionDialog from '@/components/ProfileCompletionDialog';
+import CartWeightSelector from '@/components/CartWeightSelector';
 import { sampleStorage } from '@/utils/sampleStorage';
 import { mockProducts } from '@/data/mockProducts';
 import { toast } from '@/components/ui/use-toast';
 
 const Cart = () => {
-  const { items, updateQuantity, removeItem, totalPrice, addItem } = useCart();
+  const { items, updateQuantity, removeItem, totalPrice, addItem, updateItemWeight } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showProfileCompletion, setShowProfileCompletion] = useState(false);
@@ -91,178 +92,294 @@ const Cart = () => {
 
   if (items.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center max-w-md mx-auto">
-          <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-          <h1 className="font-playfair text-2xl font-bold mb-2">Your cart is empty</h1>
-          <p className="text-muted-foreground mb-6">
-            Looks like you haven't added any items to your cart yet.
-          </p>
-          <Link to="/products">
-            <Button className="btn-primary">Start Shopping</Button>
-          </Link>
+      <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background to-accent/10 flex items-center justify-center">
+        <div className="container mx-auto px-4 py-16">
+          <div className="text-center max-w-lg mx-auto">
+            <div className="relative mb-8">
+              <div className="absolute inset-0 bg-secondary/10 blur-3xl rounded-full"></div>
+              <ShoppingBag className="w-24 h-24 mx-auto text-secondary relative animate-bounce" strokeWidth={1.5} />
+            </div>
+            <h1 className="font-playfair text-4xl font-bold mb-3 text-foreground">Your Cart is Empty</h1>
+            <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
+              Discover our premium collection of handpicked dry fruits and nuts.<br />
+              Every product is carefully selected for exceptional quality.
+            </p>
+            <Link to="/products">
+              <Button className="btn-primary text-lg px-8 py-6 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all">
+                Explore Our Collection
+              </Button>
+            </Link>
+            
+            {/* Trust indicators */}
+            <div className="grid grid-cols-3 gap-4 mt-12 pt-8 border-t border-border/50">
+              <div className="text-center">
+                <Package className="w-8 h-8 mx-auto mb-2 text-secondary" strokeWidth={1.5} />
+                <p className="text-xs text-muted-foreground">Premium Quality</p>
+              </div>
+              <div className="text-center">
+                <Truck className="w-8 h-8 mx-auto mb-2 text-secondary" strokeWidth={1.5} />
+                <p className="text-xs text-muted-foreground">Free Delivery</p>
+              </div>
+              <div className="text-center">
+                <Shield className="w-8 h-8 mx-auto mb-2 text-secondary" strokeWidth={1.5} />
+                <p className="text-xs text-muted-foreground">100% Secure</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 animate-fade-in">
-      <h1 className="font-playfair text-3xl font-bold mb-8">Shopping Cart</h1>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Cart Items */}
-        <div className="lg:col-span-2 space-y-4">
-          {items.map((item) => (
-            <div key={`${item.id}-${item.weight}`} className="card-premium">
-              {/* Mobile Layout */}
-              <div className="flex flex-col sm:hidden gap-3">
-                <div className="flex items-start gap-3">
+    <div className="min-h-screen bg-gradient-to-b from-background via-accent/5 to-background">
+      <div className="container mx-auto px-4 py-8 lg:py-12 animate-fade-in">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="font-playfair text-4xl lg:text-5xl font-bold mb-2 text-foreground">Shopping Cart</h1>
+          <p className="text-muted-foreground text-lg">
+            {items.length} {items.length === 1 ? 'item' : 'items'} in your cart
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Cart Items */}
+          <div className="lg:col-span-2 space-y-4">
+            {items.map((item) => (
+              <div 
+                key={`${item.id}-${item.weight}`} 
+                className="group bg-card border border-border/50 rounded-xl p-4 lg:p-6 shadow-sm hover:shadow-xl hover:border-secondary/30 transition-all duration-300 hover:-translate-y-1"
+              >
+                {/* Mobile Layout */}
+                <div className="flex flex-col sm:hidden gap-4">
+                  <div className="flex items-start gap-4">
+                    {/* Product Image */}
+                    <div className="relative flex-shrink-0">
+                      <div className="absolute inset-0 bg-secondary/10 rounded-xl blur-md group-hover:blur-lg transition-all"></div>
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="relative w-24 h-24 object-cover rounded-xl shadow-md"
+                      />
+                    </div>
+                    
+                    {/* Product Details */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-playfair text-lg font-semibold mb-2 leading-tight text-foreground">{item.name}</h3>
+                      
+                      {/* Weight Selector */}
+                      <div className="mb-2">
+                        <CartWeightSelector
+                          productId={item.id}
+                          currentWeight={item.weight}
+                          onWeightChange={(newWeight, newPrice) => 
+                            updateItemWeight(item.id, item.weight, newWeight, newPrice)
+                          }
+                        />
+                      </div>
+                      
+                      <p className="text-secondary font-bold text-lg">₹{item.price.toLocaleString()}</p>
+                    </div>
+                    
+                    {/* Delete Button - Top Right */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeItem(item.id, item.weight)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 w-9 p-0 flex-shrink-0 rounded-lg transition-all"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  
+                  {/* Quantity and Price Row */}
+                  <div className="flex items-center justify-between pt-3 border-t border-border/30">
+                    {/* Quantity Controls */}
+                    <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => updateQuantity(item.id, item.weight, item.quantity - 1)}
+                        className="h-9 w-9 p-0 hover:bg-secondary/10 hover:text-secondary rounded-lg"
+                        disabled={item.quantity <= 1}
+                      >
+                        <Minus className="w-4 h-4" />
+                      </Button>
+                      <span className="w-12 text-center font-semibold text-base">{item.quantity}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => updateQuantity(item.id, item.weight, item.quantity + 1)}
+                        className="h-9 w-9 p-0 hover:bg-secondary/10 hover:text-secondary rounded-lg"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    
+                    {/* Total Price */}
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground mb-0.5">Total</p>
+                      <p className="font-bold text-xl text-secondary">₹{(item.price * item.quantity).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Desktop/Tablet Layout */}
+                <div className="hidden sm:flex items-center gap-6">
                   {/* Product Image */}
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
-                  />
+                  <div className="relative flex-shrink-0">
+                    <div className="absolute inset-0 bg-secondary/10 rounded-xl blur-md group-hover:blur-lg transition-all"></div>
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="relative w-28 h-28 object-cover rounded-xl shadow-md"
+                    />
+                  </div>
                   
                   {/* Product Details */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-base mb-1 leading-tight">{item.name}</h3>
-                    <p className="text-xs text-muted-foreground mb-1">{item.weight}</p>
-                    <p className="text-secondary font-semibold text-sm">₹{item.price}</p>
+                    <h3 className="font-playfair text-xl font-semibold mb-3 text-foreground">{item.name}</h3>
+                    
+                    {/* Weight Selector */}
+                    <div className="mb-3">
+                      <CartWeightSelector
+                        productId={item.id}
+                        currentWeight={item.weight}
+                        onWeightChange={(newWeight, newPrice) => 
+                          updateItemWeight(item.id, item.weight, newWeight, newPrice)
+                        }
+                      />
+                    </div>
+                    
+                    <p className="text-secondary font-bold text-lg">₹{item.price.toLocaleString()} <span className="text-sm text-muted-foreground font-normal">per unit</span></p>
                   </div>
                   
-                  {/* Delete Button - Top Right */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeItem(item.id, item.weight)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 flex-shrink-0"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-                
-                {/* Quantity and Price Row */}
-                <div className="flex items-center justify-between">
                   {/* Quantity Controls */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1 flex-shrink-0">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => updateQuantity(item.id, item.weight, item.quantity - 1)}
-                      className="h-8 w-8 p-0"
+                      className="h-10 w-10 p-0 hover:bg-secondary/10 hover:text-secondary rounded-lg"
+                      disabled={item.quantity <= 1}
                     >
-                      <Minus className="w-3 h-3" />
+                      <Minus className="w-5 h-5" />
                     </Button>
-                    <span className="w-8 text-center font-medium text-sm">{item.quantity}</span>
+                    <span className="w-14 text-center font-semibold text-lg">{item.quantity}</span>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => updateQuantity(item.id, item.weight, item.quantity + 1)}
-                      className="h-8 w-8 p-0"
+                      className="h-10 w-10 p-0 hover:bg-secondary/10 hover:text-secondary rounded-lg"
                     >
-                      <Plus className="w-3 h-3" />
+                      <Plus className="w-5 h-5" />
                     </Button>
                   </div>
                   
-                  {/* Total Price */}
-                  <p className="font-bold text-base">₹{(item.price * item.quantity).toLocaleString()}</p>
+                  {/* Price and Delete */}
+                  <div className="flex flex-col items-end gap-3 min-w-[120px] flex-shrink-0">
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground mb-1">Total Price</p>
+                      <p className="font-bold text-2xl text-secondary">₹{(item.price * item.quantity).toLocaleString()}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeItem(item.id, item.weight)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 px-4 rounded-lg transition-all"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Remove
+                    </Button>
+                  </div>
                 </div>
               </div>
-
-              {/* Desktop/Tablet Layout */}
-              <div className="hidden sm:flex items-start gap-4">
-                {/* Product Image */}
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
-                />
-                
-                {/* Product Details */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-lg mb-1">{item.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">{item.weight}</p>
-                  <p className="text-secondary font-semibold text-base">₹{item.price}</p>
-                </div>
-                
-                {/* Quantity Controls */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => updateQuantity(item.id, item.weight, item.quantity - 1)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </Button>
-                  <span className="w-8 text-center font-medium">{item.quantity}</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => updateQuantity(item.id, item.weight, item.quantity + 1)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-                
-                {/* Price and Delete */}
-                <div className="flex flex-col items-end gap-2 min-w-[100px] flex-shrink-0">
-                  <p className="font-semibold text-lg text-right">₹{(item.price * item.quantity).toLocaleString()}</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeItem(item.id, item.weight)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        {/* Order Summary */}
-        <div className="lg:col-span-1">
-          <div className="card-premium sticky top-4">
-            <h2 className="font-semibold text-xl mb-4">Order Summary</h2>
+            ))}
             
-            <div className="space-y-2 mb-4">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>₹{totalPrice.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Shipping</span>
-                <span className="text-green-600">Free</span>
-              </div>
-              <div className="border-t pt-2">
-                <div className="flex justify-between font-semibold text-lg">
-                  <span>Total</span>
-                  <span className="text-secondary">₹{totalPrice.toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
-            
-            <p className="text-sm text-muted-foreground mb-6">
-              Estimated delivery: 3-5 business days
-            </p>
-            
-            <Button 
-              className="w-full btn-primary"
-              onClick={handleProceedToCheckout}
-            >
-              Proceed to Checkout
-            </Button>
-            
-            <Link to="/products" className="block w-full mt-3">
-              <Button variant="outline" className="w-full">
+            {/* Continue Shopping Link - Mobile */}
+            <Link to="/products" className="block lg:hidden">
+              <Button variant="outline" className="w-full py-6 text-base border-2 hover:border-secondary hover:text-secondary transition-all">
                 Continue Shopping
               </Button>
             </Link>
+          </div>
+          
+          {/* Order Summary */}
+          <div className="lg:col-span-1">
+            <div className="bg-gradient-to-br from-card to-accent/5 border-2 border-border/50 rounded-2xl p-6 lg:p-8 shadow-xl sticky top-4">
+              <h2 className="font-playfair text-2xl font-bold mb-6 text-foreground">Order Summary</h2>
+              
+              <div className="space-y-4 mb-6">
+                <div className="flex justify-between text-base">
+                  <span className="text-muted-foreground">Subtotal ({items.length} {items.length === 1 ? 'item' : 'items'})</span>
+                  <span className="font-semibold">₹{totalPrice.toLocaleString()}</span>
+                </div>
+                
+                <div className="flex items-center justify-between text-base">
+                  <div className="flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-green-600" />
+                    <span className="text-muted-foreground">Shipping</span>
+                  </div>
+                  <span className="font-semibold text-green-600">FREE</span>
+                </div>
+                
+                <div className="flex items-center justify-between text-base pt-2 border-t border-border/50">
+                  <div className="flex items-center gap-2">
+                    <Gift className="w-4 h-4 text-secondary" />
+                    <span className="text-muted-foreground">Free Samples</span>
+                  </div>
+                  <span className="text-secondary font-semibold text-sm">Available</span>
+                </div>
+                
+                <div className="border-t-2 border-secondary/20 pt-4 mt-4">
+                  <div className="flex justify-between items-center">
+                    <span className="font-playfair text-xl font-semibold">Total</span>
+                    <span className="font-playfair text-3xl font-bold text-secondary">₹{totalPrice.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-accent/30 border border-secondary/20 rounded-lg p-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <Truck className="w-5 h-5 text-secondary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold mb-1 text-foreground">Free Express Delivery</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Estimated delivery: <span className="font-semibold text-foreground">3-5 business days</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <Button 
+                className="w-full btn-primary text-lg py-6 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all mb-3"
+                onClick={handleProceedToCheckout}
+              >
+                Proceed to Checkout
+              </Button>
+              
+              <Link to="/products" className="hidden lg:block w-full">
+                <Button variant="outline" className="w-full py-6 text-base border-2 hover:border-secondary hover:text-secondary transition-all">
+                  Continue Shopping
+                </Button>
+              </Link>
+              
+              {/* Trust Badges */}
+              <div className="grid grid-cols-3 gap-3 mt-6 pt-6 border-t border-border/50">
+                <div className="text-center">
+                  <Shield className="w-6 h-6 mx-auto mb-1.5 text-secondary" strokeWidth={1.5} />
+                  <p className="text-xs text-muted-foreground leading-tight">Secure Payment</p>
+                </div>
+                <div className="text-center">
+                  <Package className="w-6 h-6 mx-auto mb-1.5 text-secondary" strokeWidth={1.5} />
+                  <p className="text-xs text-muted-foreground leading-tight">Premium Quality</p>
+                </div>
+                <div className="text-center">
+                  <Truck className="w-6 h-6 mx-auto mb-1.5 text-secondary" strokeWidth={1.5} />
+                  <p className="text-xs text-muted-foreground leading-tight">Fast Delivery</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

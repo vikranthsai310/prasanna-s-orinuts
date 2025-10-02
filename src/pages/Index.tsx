@@ -4,6 +4,7 @@ import { ArrowRight, Heart, ShoppingCart, Check, Shield, Award, Star } from 'luc
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/ProductCard';
 import HeroSection from '@/components/HeroSection';
+import WeightSelectionDialog from '@/components/WeightSelectionDialog';
 import { mockProducts } from '@/data/mockProducts';
 import { useEffect, useRef, useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
@@ -13,6 +14,8 @@ const Index = () => {
   const { toast } = useToast();
   const luxurySectionRef = useRef<HTMLElement>(null);
   const [particles, setParticles] = useState<Array<{id: number, style: React.CSSProperties}>>([]);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [isWeightDialogOpen, setIsWeightDialogOpen] = useState(false);
 
   // Generate floating particles
   useEffect(() => {
@@ -82,12 +85,13 @@ const Index = () => {
   }, []);
 
   // Handle quick add to cart
-  const handleQuickAdd = (product: string) => {
-    toast({
-      title: "Added to Cart",
-      description: `${product} has been added to your cart.`,
-      duration: 3000,
-    });
+  const handleQuickAdd = (productName: string) => {
+    // Find the product by name
+    const product = mockProducts.find(p => p.name === productName);
+    if (product) {
+      setSelectedProduct(product);
+      setIsWeightDialogOpen(true);
+    }
   };
 
   return (
@@ -383,6 +387,14 @@ const Index = () => {
 
       {/* Newsletter Section */}
 
+      {/* Weight Selection Dialog */}
+      {selectedProduct && (
+        <WeightSelectionDialog
+          isOpen={isWeightDialogOpen}
+          onClose={() => setIsWeightDialogOpen(false)}
+          product={selectedProduct}
+        />
+      )}
     </div>
   );
 };
