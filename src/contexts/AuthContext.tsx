@@ -45,6 +45,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Store confirmation result globally
 let confirmationResult: ConfirmationResult | null = null;
+let isOTPBeingSent = false; // Prevent duplicate OTP requests
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -109,33 +110,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const sendOTP = async (phone: string): Promise<void> => {
+    // Prevent duplicate requests
+    if (isOTPBeingSent) {
+      console.log('⚠️ OTP request already in progress, please wait...');
+      throw new Error('OTP request in progress. Please wait.');
+    }
+
     try {
       console.log('📱 Sending OTP to:', phone);
+      isOTPBeingSent = true;
       setIsLoading(true);
 
-      // Clean up any existing reCAPTCHA
-      if ((window as any).recaptchaVerifier) {
-        try {
-          (window as any).recaptchaVerifier.clear();
-        } catch (e) {
-          console.log('Error clearing reCAPTCHA:', e);
-        }
-        (window as any).recaptchaVerifier = null;
-      }
-
-      // Wait for cleanup
-      await new Promise(resolve => setTimeout(resolve, 100));
-
+      // Clean up any existing reCAPTCHA more thoroughly
       const container = document.getElementById('recaptcha-container');
       if (!container) {
         throw new Error('reCAPTCHA container not found');
       }
 
+      // Clear previous reCAPTCHA instance
+      if ((window as any).recaptchaVerifier) {
+        try {
+          console.log('🧹 Clearing existing reCAPTCHA...');
+          (window as any).recaptchaVerifier.clear();
+          (window as any).recaptchaVerifier = null;
+        } catch (e) {
+          console.log('⚠️ Error clearing reCAPTCHA:', e);
+        }
+      }
+
+      // Clear the DOM completely
       container.innerHTML = '';
       
-      console.log('Creating reCAPTCHA verifier...');
+      // Remove any existing reCAPTCHA widgets from DOM
+      const existingWidgets = document.querySelectorAll('.grecaptcha-badge');
+      existingWidgets.forEach(widget => widget.remove());
+
+      // Wait a bit for cleanup
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Create reCAPTCHA verifier
+      console.log('🔐 Creating new reCAPTCHA verifier...');
+      
+      // Create fresh reCAPTCHA verifier
       const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         size: 'invisible',
         callback: () => {
@@ -143,6 +158,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
         'expired-callback': () => {
           console.log('⏰ reCAPTCHA expired');
+          // Clear on expiration
+          if ((window as any).recaptchaVerifier) {
+            try {
+              (window as any).recaptchaVerifier.clear();
+              (window as any).recaptchaVerifier = null;
+            } catch (e) {
+              console.log('Error clearing expired reCAPTCHA:', e);
+            }
+          }
+        },
+        'error-callback': (error: any) => {
+          console.error('❌ reCAPTCHA error:', error);
         }
       });
 
@@ -153,7 +180,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Send OTP
       confirmationResult = await signInWithPhoneNumber(auth, phone, recaptchaVerifier);
       
-      console.log('✅ OTP sent successfully');
+      console.log('✅ OTP sent successfully to:', phone);
       
     } catch (error: any) {
       console.error('❌ Error sending OTP:', error);
@@ -175,11 +202,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('Too many attempts. Please try again later.');
       } else if (error.code === 'auth/captcha-check-failed') {
         throw new Error('Security verification failed. Please try again.');
+      } else if (error.message?.includes('already been rendered')) {
+        throw new Error('Please refresh the page and try again.');
       } else {
         throw new Error(error.message || 'Failed to send OTP. Please try again.');
       }
     } finally {
       setIsLoading(false);
+      isOTPBeingSent = false; // Reset flag
     }
   };
 
