@@ -16,6 +16,7 @@ interface User {
   phone: string;
   name: string;
   isAdmin: boolean;
+  phoneVerified?: boolean;
   addresses?: Address[];
   createdAt?: Date;
 }
@@ -71,6 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               phone: firebaseUser.phoneNumber || userData.phone || '',
               name: userData.name || firebaseUser.displayName || '',
               isAdmin: userData.isAdmin || ADMIN_PHONE_NUMBERS.includes(firebaseUser.phoneNumber || ''),
+              phoneVerified: firebaseUser.phoneNumber ? true : (userData.phoneVerified || false),
               addresses: userData.addresses || [],
               createdAt: userData.createdAt?.toDate() || new Date()
             };
@@ -84,6 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               phone: firebaseUser.phoneNumber || '',
               name: '',
               isAdmin: ADMIN_PHONE_NUMBERS.includes(firebaseUser.phoneNumber || ''),
+              phoneVerified: firebaseUser.phoneNumber ? true : false,
               addresses: []
             });
           }
@@ -95,6 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             phone: firebaseUser.phoneNumber || '',
             name: firebaseUser.displayName || '',
             isAdmin: ADMIN_PHONE_NUMBERS.includes(firebaseUser.phoneNumber || ''),
+            phoneVerified: firebaseUser.phoneNumber ? true : false,
             addresses: []
           });
         }
@@ -217,7 +221,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error.code === 'auth/invalid-phone-number') {
         throw new Error('Invalid phone number. Please check and try again.');
       } else if (error.code === 'auth/too-many-requests') {
-        throw new Error('Too many attempts. Please try again later.');
+        throw new Error('⏰ Too many OTP requests. Please wait 15-30 minutes before trying again. This is a security measure to prevent spam.');
       } else if (error.code === 'auth/captcha-check-failed') {
         throw new Error('Security verification failed. Please try again.');
       } else if (error.message?.includes('already been rendered')) {
@@ -281,6 +285,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         name,
         phone,
         isAdmin: ADMIN_PHONE_NUMBERS.includes(phone),
+        phoneVerified: phone ? true : false,
         updatedAt: new Date()
       };
 
