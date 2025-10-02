@@ -18,6 +18,7 @@ export { appConfig, appOptions } from './app';
 
 // Re-export specific commonly used configurations for easy access
 export const ADMIN_EMAILS = ['vikranthsai310@gmail.com', 'admin@prasannaorinut.com'];
+export const ADMIN_PHONE_NUMBERS = ['+918555856366']; // Admin phone number
 export const ADDRESS_TYPES = ['Home', 'Work', 'Business', 'Other'] as const;
 export const PRODUCT_CATEGORIES = ['nuts', 'dates', 'dried-fruits', 'seeds', 'spices'] as const;
 export const WEIGHT_OPTIONS = ['250g', '500g', '1kg', '2kg'] as const;

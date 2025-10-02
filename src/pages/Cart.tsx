@@ -5,7 +5,6 @@ import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import GoogleSignInDialog from '@/components/GoogleSignInDialog';
 import ProfileCompletionDialog from '@/components/ProfileCompletionDialog';
 import { sampleStorage } from '@/utils/sampleStorage';
 import { mockProducts } from '@/data/mockProducts';
@@ -13,9 +12,8 @@ import { toast } from '@/components/ui/use-toast';
 
 const Cart = () => {
   const { items, updateQuantity, removeItem, totalPrice, addItem } = useCart();
-  const { user, isProfileComplete } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [showSignInDialog, setShowSignInDialog] = useState(false);
   const [showProfileCompletion, setShowProfileCompletion] = useState(false);
 
   const addSamplesToCart = () => {
@@ -36,7 +34,6 @@ const Cart = () => {
             name: `${product.name} (Sample)`,
             price: 0, // Free sample
             weight: '50g', // Sample size
-            quantity: 1,
             image: product.image
           });
         }
@@ -46,8 +43,8 @@ const Cart = () => {
 
   const handleProceedToCheckout = () => {
     if (user) {
-      // Use the optimized profile completion check
-      if (isProfileComplete()) {
+      // Check if user has completed profile (has name)
+      if (user.name) {
         // Check if samples are already selected
         if (sampleStorage.hasSamplesSelected()) {
           // Add samples to cart and proceed to checkout
@@ -63,27 +60,16 @@ const Cart = () => {
           navigate('/samples');
         }
       } else {
-        // User logged in but needs mobile verification
+        // User logged in but needs to complete profile
         setShowProfileCompletion(true);
       }
     } else {
-      // User not logged in, show Google sign-in dialog
-      setShowSignInDialog(true);
+      // User not logged in, redirect to auth page
+      navigate('/auth', { state: { from: { pathname: '/checkout' } } });
     }
   };
 
-  const handleGoogleSignInSuccess = () => {
-    // Check if user already has verified phone after Google sign-in
-    setTimeout(() => {
-      if (user && isProfileComplete()) {
-        // User already has verified phone, proceed directly
-        handleProceedToCheckout();
-      } else {
-        // User needs phone verification
-        setShowProfileCompletion(true);
-      }
-    }, 1000); // Small delay to allow user state to update
-  };
+
 
   const handleProfileCompletion = () => {
     setShowProfileCompletion(false);
@@ -217,13 +203,6 @@ const Cart = () => {
           </div>
         </div>
       </div>
-
-      {/* Google Sign-In Dialog */}
-      <GoogleSignInDialog
-        isOpen={showSignInDialog}
-        onClose={() => setShowSignInDialog(false)}
-        onGoogleSignInSuccess={handleGoogleSignInSuccess}
-      />
 
       {/* Profile Completion Dialog */}
       <ProfileCompletionDialog

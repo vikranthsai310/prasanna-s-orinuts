@@ -28,6 +28,12 @@ service cloud.firestore {
              request.auth.token.email in ['vikranthsai310@gmail.com'];
     }
     
+    // Check if phone is admin phone (fallback)
+    function isAdminPhone() {
+      return isSignedIn() && 
+             request.auth.token.phone_number in ['+918555856366'];
+    }
+    
     // Validate string length
     function validString(value, minLen, maxLen) {
       return value is string && 
@@ -41,10 +47,10 @@ service cloud.firestore {
              email.matches('[^@]+@[^@]+\\.[^@]+');
     }
     
-    // Validate phone number (Indian format)
+    // Validate phone number (international format +91XXXXXXXXXX)
     function validPhone(phone) {
       return phone is string && 
-             phone.matches('[6-9][0-9]{9}');
+             phone.matches('\\+91[6-9][0-9]{9}');
     }
     
     // ============================================
@@ -52,20 +58,20 @@ service cloud.firestore {
     // ============================================
     match /users/{userId} {
       // Allow users to read their own profile or admins to read any profile
-      allow read: if isOwner(userId) || isAdmin() || isAdminEmail();
+      allow read: if isOwner(userId) || isAdmin() || isAdminEmail() || isAdminPhone();
       
-      // Allow users to create their own profile
+      // Allow users to create their own profile with phone number
       allow create: if isOwner(userId) && 
-                       request.resource.data.email == request.auth.token.email &&
+                       request.resource.data.phone is string &&
                        validString(request.resource.data.name, 2, 100);
       
-      // Allow users to update their own profile (but not role)
+      // Allow users to update their own profile (but not admin status)
       allow update: if isOwner(userId) && 
-                       request.resource.data.email == resource.data.email &&
-                       request.resource.data.role == resource.data.role;
+                       request.resource.data.phone == resource.data.phone &&
+                       request.resource.data.isAdmin == resource.data.isAdmin;
       
       // Only admins can delete users
-      allow delete: if isAdmin() || isAdminEmail();
+      allow delete: if isAdmin() || isAdminEmail() || isAdminPhone();
     }
     
     // ============================================
@@ -76,7 +82,7 @@ service cloud.firestore {
       allow read: if true;
       
       // Only admins can create/update/delete products
-      allow create, update, delete: if isAdmin() || isAdminEmail();
+      allow create, update, delete: if isAdmin() || isAdminEmail() || isAdminPhone();
     }
     
     // ============================================
@@ -87,7 +93,8 @@ service cloud.firestore {
       allow read: if isSignedIn() && 
                      (resource.data.userId == request.auth.uid || 
                       isAdmin() || 
-                      isAdminEmail());
+                      isAdminEmail() ||
+                      isAdminPhone());
       
       // Users can create their own orders with validation
       allow create: if isSignedIn() && 
@@ -99,10 +106,10 @@ service cloud.firestore {
                        request.resource.data.items.size() > 0;
       
       // Only admins can update orders (status changes, etc.)
-      allow update: if isAdmin() || isAdminEmail();
+      allow update: if isAdmin() || isAdminEmail() || isAdminPhone();
       
       // Only admins can delete orders
-      allow delete: if isAdmin() || isAdminEmail();
+      allow delete: if isAdmin() || isAdminEmail() || isAdminPhone();
     }
     
     // ============================================
@@ -156,7 +163,8 @@ service cloud.firestore {
       allow delete: if isSignedIn() && 
                        (resource.data.userId == request.auth.uid || 
                         isAdmin() || 
-                        isAdminEmail());
+                        isAdminEmail() ||
+                        isAdminPhone());
     }
     
     // ============================================

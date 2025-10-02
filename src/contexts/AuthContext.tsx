@@ -1,78 +1,54 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { 
-  getAuth, 
-  signInWithEmailAndPassword, 
-  signInWithPhoneNumber, 
-  RecaptchaVerifier,
   signOut,
   onAuthStateChanged,
-  PhoneAuthProvider,
-  signInWithCredential,
-  User as FirebaseUser,
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
-  updateProfile
+  signInWithPhoneNumber,
+  RecaptchaVerifier,
+  ConfirmationResult,
+  updateProfile as firebaseUpdateProfile
 } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db, googleProvider } from '@/lib/firebase';
-import { ADMIN_EMAILS } from '@/config';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
+import { ADMIN_PHONE_NUMBERS } from '@/config';
 
 interface User {
   id: string;
-  email: string;
   phone: string;
   name: string;
   isAdmin: boolean;
-  phoneVerified?: boolean;
+  addresses?: Address[];
+  createdAt?: Date;
+}
+
+interface Address {
+  id: string;
+  name: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  pincode: string;
+  isDefault: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
-  loginWithPhone: (phone: string, otp: string) => Promise<void>;
-  sendOTP: (phone: string) => Promise<string>;
+  sendOTP: (phone: string) => Promise<void>;
+  verifyOTP: (otp: string) => Promise<void>;
+  updateUserName: (name: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
-  isProfileComplete: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Store confirmation result globally
+let confirmationResult: ConfirmationResult | null = null;
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [verificationId, setVerificationId] = useState<string>('');
-
-  // Enable test mode for development (disable in production)
-  useEffect(() => {
-    if (import.meta.env.DEV) {
-      // Enable testing with fictional phone numbers and disable app verification
-      (auth as any).settings = (auth as any).settings || {};
-      (auth as any).settings.appVerificationDisabledForTesting = true;
-      console.log('🔧 Development Mode: App verification disabled for testing');
-      console.log('📱 You can now use test phone numbers from Firebase Console');
-    }
-  }, []);
-
-  // Handle redirect result when user returns from Google OAuth
-  useEffect(() => {
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          // User signed in via redirect
-          console.log('Google sign-in via redirect successful:', result.user);
-        }
-      } catch (error) {
-        console.error('Error handling redirect result:', error);
-      }
-    };
-
-    handleRedirectResult();
-  }, []);
 
   // Listen for auth state changes
   useEffect(() => {
@@ -81,42 +57,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log('👤 Auth state changed:', firebaseUser ? `User ${firebaseUser.uid}` : 'No user');
       
       if (firebaseUser) {
-        // User is signed in
         try {
           console.log('📋 Getting user data from Firestore for UID:', firebaseUser.uid);
           // Get user data from Firestore
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           
           if (userDoc.exists()) {
-            // User exists in Firestore, use that data
+            // User exists in Firestore
             const userData = userDoc.data();
-            const userObject = {
+            const userObject: User = {
               id: firebaseUser.uid,
-              email: firebaseUser.email || userData.email || '',
               phone: firebaseUser.phoneNumber || userData.phone || '',
-              name: userData.name || firebaseUser.displayName || 'User',
-              isAdmin: userData.isAdmin || ADMIN_EMAILS.includes(firebaseUser.email || ''),
-              phoneVerified: userData.phoneVerified || false
+              name: userData.name || firebaseUser.displayName || '',
+              isAdmin: userData.isAdmin || ADMIN_PHONE_NUMBERS.includes(firebaseUser.phoneNumber || ''),
+              addresses: userData.addresses || [],
+              createdAt: userData.createdAt?.toDate() || new Date()
             };
             console.log('✅ User object created:', userObject);
             setUser(userObject);
           } else {
-            // User doesn't exist in Firestore yet, create a new document
-            const newUser = {
-              email: firebaseUser.email || '',
-              phone: firebaseUser.phoneNumber || '',
-              name: firebaseUser.displayName || 'User',
-              isAdmin: ADMIN_EMAILS.includes(firebaseUser.email || ''),
-              phoneVerified: firebaseUser.phoneNumber ? true : false, // If phone from provider, consider verified
-              createdAt: new Date()
-            };
-            
-            // Save to Firestore
-            await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-            
+            // User doesn't exist in Firestore yet - will be created after name input
+            console.log('⚠️ User not found in Firestore, waiting for profile completion');
             setUser({
               id: firebaseUser.uid,
-              ...newUser
+              phone: firebaseUser.phoneNumber || '',
+              name: '',
+              isAdmin: ADMIN_PHONE_NUMBERS.includes(firebaseUser.phoneNumber || ''),
+              addresses: []
             });
           }
         } catch (error) {
@@ -124,11 +91,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Fallback to basic Firebase user data
           setUser({
             id: firebaseUser.uid,
-            email: firebaseUser.email || '',
             phone: firebaseUser.phoneNumber || '',
-            name: firebaseUser.displayName || 'User',
-            isAdmin: ADMIN_EMAILS.includes(firebaseUser.email || ''),
-            phoneVerified: firebaseUser.phoneNumber ? true : false // If phone from provider, consider verified
+            name: firebaseUser.displayName || '',
+            isAdmin: ADMIN_PHONE_NUMBERS.includes(firebaseUser.phoneNumber || ''),
+            addresses: []
           });
         }
       } else {
@@ -142,88 +108,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setIsLoading(true);
+  const sendOTP = async (phone: string): Promise<void> => {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // Auth state listener will handle updating the user state
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      console.log('📱 Sending OTP to:', phone);
+      setIsLoading(true);
 
-  const loginWithGoogle = async () => {
-    setIsLoading(true);
-    try {
-      // Try popup first (faster user experience)
-      const result = await signInWithPopup(auth, googleProvider);
-      
-      // After successful Google login, check if user exists in Firestore
-      const firebaseUser = result.user;
-      const userDocRef = doc(db, 'users', firebaseUser.uid);
-      const userDoc = await getDoc(userDocRef);
-      
-      if (userDoc.exists()) {
-        // User exists, merge any missing data from Google
-        const existingData = userDoc.data();
-        const updatedData = {
-          ...existingData,
-          email: firebaseUser.email || existingData.email,
-          name: firebaseUser.displayName || existingData.name,
-          updatedAt: new Date()
-        };
-        
-        // Only update if there are actual changes
-        await setDoc(userDocRef, updatedData, { merge: true });
-        console.log('✅ Existing user data updated with Google info');
-      } else {
-        // New user, create with Google data
-        const newUserData = {
-          email: firebaseUser.email || '',
-          phone: firebaseUser.phoneNumber || '',
-          name: firebaseUser.displayName || 'User',
-          isAdmin: ADMIN_EMAILS.includes(firebaseUser.email || ''),
-          phoneVerified: firebaseUser.phoneNumber ? true : false,
-          createdAt: new Date()
-        };
-        
-        await setDoc(userDocRef, newUserData);
-        console.log('✅ New user created with Google data');
-      }
-      
-      // Auth state listener will handle updating the user state
-    } catch (error: any) {
-      console.error('Google login error:', error);
-      
-      // If popup fails due to COOP or popup blocking, try redirect
-      if (error.code === 'auth/popup-blocked' || 
-          error.code === 'auth/popup-closed-by-user' ||
-          error.message?.includes('Cross-Origin-Opener-Policy')) {
-        console.log('Popup blocked or COOP issue, trying redirect method...');
-        try {
-          await signInWithRedirect(auth, googleProvider);
-          // Redirect will reload the page, so no need to handle response here
-          return;
-        } catch (redirectError) {
-          console.error('Redirect also failed:', redirectError);
-          throw redirectError;
-        }
-      }
-      
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const sendOTP = async (phone: string): Promise<string> => {
-    try {
-      console.log('Attempting to send OTP to:', phone);
-      
-      // More aggressive cleanup of existing reCAPTCHA
+      // Clean up any existing reCAPTCHA
       if ((window as any).recaptchaVerifier) {
         try {
           (window as any).recaptchaVerifier.clear();
@@ -232,162 +122,143 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         (window as any).recaptchaVerifier = null;
       }
-      
-      // Clear any global reCAPTCHA widgets
-      if (typeof window !== 'undefined' && (window as any).grecaptcha) {
-        try {
-          (window as any).grecaptcha.reset();
-        } catch (e) {
-          console.log('Error resetting grecaptcha:', e);
-        }
-      }
-      
-      // Wait for cleanup to complete
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Check if reCAPTCHA container exists
+
+      // Wait for cleanup
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const container = document.getElementById('recaptcha-container');
       if (!container) {
-        throw new Error('reCAPTCHA container not found. Please ensure the dialog is open.');
+        throw new Error('reCAPTCHA container not found');
       }
-      
-      // Aggressively clear the container
+
       container.innerHTML = '';
-      container.style.display = 'block';
       
-      // Wait a bit more to ensure DOM is clean
-      await new Promise(resolve => setTimeout(resolve, 100));
+      console.log('Creating reCAPTCHA verifier...');
       
-      console.log('Creating fresh reCAPTCHA verifier...');
-      
-      // Create completely fresh reCAPTCHA verifier with unique ID
-      const timestamp = Date.now();
-      const uniqueContainerId = `recaptcha-container-${timestamp}`;
-      
-      // Create a new container element
-      const newContainer = document.createElement('div');
-      newContainer.id = uniqueContainerId;
-      newContainer.style.display = 'none'; // Keep invisible
-      container.appendChild(newContainer);
-      
-      // Create fresh reCAPTCHA verifier with the new container
-      const recaptchaVerifier = new RecaptchaVerifier(auth, uniqueContainerId, {
+      // Create reCAPTCHA verifier
+      const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         size: 'invisible',
-        callback: (response: any) => {
-          console.log('reCAPTCHA solved successfully');
+        callback: () => {
+          console.log('✅ reCAPTCHA solved');
         },
         'expired-callback': () => {
-          console.log('reCAPTCHA expired, please try again');
+          console.log('⏰ reCAPTCHA expired');
         }
       });
-      
-      // Store verifier globally for cleanup
+
       (window as any).recaptchaVerifier = recaptchaVerifier;
+
+      console.log('📤 Sending OTP via Firebase...');
       
-      console.log('reCAPTCHA verifier created, sending SMS...');
+      // Send OTP
+      confirmationResult = await signInWithPhoneNumber(auth, phone, recaptchaVerifier);
       
-      // Send SMS using Firebase method
-      const confirmationResult = await signInWithPhoneNumber(auth, phone, recaptchaVerifier);
-      
-      // Store the confirmation result for verification
-      (window as any).confirmationResult = confirmationResult;
-      
-      console.log('SMS sent successfully');
-      return confirmationResult.verificationId;
+      console.log('✅ OTP sent successfully');
       
     } catch (error: any) {
-      console.error('Error sending OTP:', error);
+      console.error('❌ Error sending OTP:', error);
       
-      // More thorough cleanup on error
+      // Clear reCAPTCHA on error
       if ((window as any).recaptchaVerifier) {
         try {
           (window as any).recaptchaVerifier.clear();
         } catch (e) {
-          console.log('Error during error cleanup:', e);
+          console.log('Error clearing reCAPTCHA after error:', e);
         }
         (window as any).recaptchaVerifier = null;
       }
       
-      // Clear the entire container
-      const container = document.getElementById('recaptcha-container');
-      if (container) {
-        container.innerHTML = '';
-      }
-      
-      // Provide more specific error messages
-      let errorMessage = 'Failed to send OTP. Please try again.';
-      
-      if (error.code === 'auth/invalid-app-credential') {
-        errorMessage = 'Firebase configuration error. Please check your setup.';
+      // User-friendly error messages
+      if (error.code === 'auth/invalid-phone-number') {
+        throw new Error('Invalid phone number. Please check and try again.');
       } else if (error.code === 'auth/too-many-requests') {
-        errorMessage = 'Too many attempts. Please try again later.';
-      } else if (error.code === 'auth/invalid-phone-number') {
-        errorMessage = 'Invalid phone number format.';
-      } else if (error.message?.includes('reCAPTCHA')) {
-        errorMessage = 'reCAPTCHA verification failed. Please try again.';
-      } else if (error.message?.includes('already been rendered')) {
-        errorMessage = 'Please close and reopen the dialog, then try again.';
+        throw new Error('Too many attempts. Please try again later.');
+      } else if (error.code === 'auth/captcha-check-failed') {
+        throw new Error('Security verification failed. Please try again.');
+      } else {
+        throw new Error(error.message || 'Failed to send OTP. Please try again.');
       }
-      
-      throw new Error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const loginWithPhone = async (phone: string, otp: string) => {
-    setIsLoading(true);
+  const verifyOTP = async (otp: string): Promise<void> => {
     try {
-      // Get the stored confirmation result (as per Firebase docs)
-      const confirmationResult = (window as any).confirmationResult;
-      
+      console.log('🔐 Verifying OTP...');
+      setIsLoading(true);
+
       if (!confirmationResult) {
-        throw new Error('No confirmation result available. Please request OTP again.');
+        throw new Error('Please request OTP first');
       }
-      
-      // Confirm the verification code (following Firebase docs pattern)
+
+      // Verify OTP
       const result = await confirmationResult.confirm(otp);
-      const user = result.user;
-      
-      console.log('User signed in successfully:', user.uid);
-      
-      // Update user data in Firestore with phone verification info
-      try {
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
-        
-        const userData = {
-          phone: phone,
-          name: user.displayName || userDoc.data()?.name || 'User',
-          email: user.email || userDoc.data()?.email || '',
-          isAdmin: userDoc.data()?.isAdmin || ADMIN_EMAILS.includes(user.email || ''),
-          phoneVerified: true,
-          updatedAt: new Date(),
-          ...(userDoc.exists() ? {} : { createdAt: new Date() })
-        };
-        
-        await setDoc(userDocRef, userData, { merge: true });
-        console.log('User data updated in Firestore');
-        
-      } catch (firestoreError) {
-        console.error('Error updating user data in Firestore:', firestoreError);
-        // Don't throw here - authentication was successful
-      }
-      
-      // Clean up stored confirmation result
-      (window as any).confirmationResult = null;
+      console.log('✅ OTP verified successfully:', result.user.uid);
+
+      // Firebase auth state listener will handle the rest
       
     } catch (error: any) {
-      console.error('Phone verification error:', error);
+      console.error('❌ Error verifying OTP:', error);
       
-      // Provide more specific error messages
       if (error.code === 'auth/invalid-verification-code') {
-        throw new Error('Invalid verification code. Please check and try again.');
+        throw new Error('Invalid OTP. Please check and try again.');
       } else if (error.code === 'auth/code-expired') {
-        throw new Error('Verification code expired. Please request a new one.');
-      } else if (error.code === 'auth/too-many-requests') {
-        throw new Error('Too many attempts. Please try again later.');
+        throw new Error('OTP expired. Please request a new one.');
+      } else {
+        throw new Error(error.message || 'Failed to verify OTP. Please try again.');
       }
-      
-      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateUserName = async (name: string): Promise<void> => {
+    try {
+      console.log('💾 Updating user name...');
+      setIsLoading(true);
+
+      if (!auth.currentUser) {
+        throw new Error('No user logged in');
+      }
+
+      const userId = auth.currentUser.uid;
+      const phone = auth.currentUser.phoneNumber || '';
+
+      // Check if user document exists
+      const userDocRef = doc(db, 'users', userId);
+      const userDoc = await getDoc(userDocRef);
+
+      const userData = {
+        name,
+        phone,
+        isAdmin: ADMIN_PHONE_NUMBERS.includes(phone),
+        updatedAt: new Date()
+      };
+
+      if (userDoc.exists()) {
+        // Update existing user
+        await updateDoc(userDocRef, userData);
+      } else {
+        // Create new user document
+        await setDoc(userDocRef, {
+          ...userData,
+          addresses: [],
+          createdAt: new Date()
+        });
+      }
+
+      // Update Firebase Auth profile
+      await firebaseUpdateProfile(auth.currentUser, { displayName: name });
+
+      console.log('✅ User name updated successfully');
+
+      // Update local user state
+      setUser(prev => prev ? { ...prev, name } : null);
+
+    } catch (error: any) {
+      console.error('❌ Error updating user name:', error);
+      throw new Error(error.message || 'Failed to save your name. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -395,31 +266,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
+      console.log('👋 Logging out...');
       await signOut(auth);
-      // Auth state listener will handle updating the user state
+      setUser(null);
+      confirmationResult = null;
+      
+      // Clear reCAPTCHA
+      if ((window as any).recaptchaVerifier) {
+        try {
+          (window as any).recaptchaVerifier.clear();
+        } catch (e) {
+          console.log('Error clearing reCAPTCHA on logout:', e);
+        }
+        (window as any).recaptchaVerifier = null;
+      }
+      
+      console.log('✅ Logged out successfully');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('❌ Logout error:', error);
       throw error;
     }
   };
 
-  const isProfileComplete = () => {
-    if (!user) return false;
-    return user.phoneVerified || (user.phone && user.phone.length > 0);
-  };
-
   return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      loginWithGoogle,
-      loginWithPhone,
-      sendOTP,
-      logout,
-      isLoading,
-      isProfileComplete
-    }}>
-      <div id="recaptcha-container"></div>
+    <AuthContext.Provider
+      value={{
+        user,
+        sendOTP,
+        verifyOTP,
+        updateUserName,
+        logout,
+        isLoading
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -427,8 +306,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
+

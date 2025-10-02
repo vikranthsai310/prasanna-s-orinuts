@@ -17,12 +17,12 @@
     <!-- Security Headers -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://www.googletagmanager.com https://www.google-analytics.com https://apis.google.com https://accounts.google.com;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://www.googletagmanager.com https://www.google-analytics.com https://apis.google.com https://accounts.google.com https://www.google.com https://www.gstatic.com;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com;
       font-src 'self' https://fonts.gstatic.com;
       img-src 'self' data: https: blob: https://firebasestorage.googleapis.com https://www.google-analytics.com https://*.googleusercontent.com;
-      connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://checkout.razorpay.com https://api.razorpay.com https://lumberjack.razorpay.com https://www.google-analytics.com https://accounts.google.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com wss://*.firebaseio.com;
-      frame-src https://api.razorpay.com https://checkout.razorpay.com https://accounts.google.com https://*.firebaseapp.com;
+      connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://checkout.razorpay.com https://api.razorpay.com https://lumberjack.razorpay.com https://www.google-analytics.com https://accounts.google.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://www.google.com https://www.gstatic.com wss://*.firebaseio.com;
+      frame-src https://api.razorpay.com https://checkout.razorpay.com https://accounts.google.com https://*.firebaseapp.com https://www.google.com https://www.gstatic.com;
       object-src 'none';
       base-uri 'self';
       form-action 'self' https://checkout.razorpay.com https://accounts.google.com;
