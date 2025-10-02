@@ -172,7 +172,14 @@ const PhoneAuth = ({ onSendOTP, onVerifyOTP, onSetName, isLoading }: PhoneAuthPr
           </CardTitle>
           <CardDescription className="text-amber-700">
             {step === 'phone' && 'Enter your mobile number to get started'}
-            {step === 'otp' && `OTP sent to ${phoneNumber}`}
+            {step === 'otp' && (
+              <div className="space-y-1">
+                <div>OTP sent to {phoneNumber}</div>
+                <div className="text-xs text-amber-600">
+                  📱 Check spam/promotional folder if not received in inbox
+                </div>
+              </div>
+            )}
             {step === 'name' && 'Please tell us your name'}
           </CardDescription>
         </CardHeader>

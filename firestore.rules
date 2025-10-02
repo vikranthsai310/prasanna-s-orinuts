@@ -1,50 +1,172 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public read access to products
-    match /products/{productId} {
-      allow read: if true;
-      allow write: if isAdmin();
+    
+    // ============================================
+    // HELPER FUNCTIONS FOR SECURITY
+    // ============================================
+    
+    // Check if user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
     }
     
-    // Allow users to read/write their own data
+    // Check if user owns the resource
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // Check if user is admin (using phone number)
+    function isAdminPhone() {
+      return isSignedIn() && 
+             request.auth.token.phone_number in ['+918555856366'];
+    }
+    
+    // Check if user is admin from user document (for existing users)
+    function isAdminFromDoc() {
+      return isSignedIn() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Combined admin check
+    function isAdmin() {
+      return isAdminPhone() || isAdminFromDoc();
+    }
+    
+    // Validate string length
+    function validString(value, minLen, maxLen) {
+      return value is string && 
+             value.size() >= minLen && 
+             value.size() <= maxLen;
+    }
+    
+    // Validate phone number (international format +91XXXXXXXXXX)
+    function validPhone(phone) {
+      return phone is string && 
+             phone.matches('\\+91[6-9][0-9]{9}');
+    }
+    
+    // ============================================
+    // USERS COLLECTION
+    // ============================================
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      allow read: if isAdmin();
+      // Allow users to read their own profile or admins to read any profile
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Allow users to create their own profile with phone number
+      allow create: if isOwner(userId) && 
+                       request.resource.data.phone is string &&
+                       validString(request.resource.data.name, 1, 100);
+      
+      // Allow users to update their own profile (but not admin status unless already admin)
+      allow update: if isOwner(userId) && (
+                       request.resource.data.isAdmin == resource.data.isAdmin ||
+                       isAdminPhone()
+                     );
+      
+      // Only admins can delete users
+      allow delete: if isAdmin();
     }
     
-    // Allow users to manage their own addresses
-    match /addresses/{addressId} {
-      allow read, write: if request.auth != null && 
-        request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && 
-        request.auth.uid == request.resource.data.userId;
-      allow read: if isAdmin();
+    // ============================================
+    // PRODUCTS COLLECTION
+    // ============================================
+    match /products/{productId} {
+      // Anyone can read products
+      allow read: if true;
+      
+      // Only admins can create/update/delete products
+      allow create, update, delete: if isAdmin();
     }
     
-    // Orders - users can read their own orders, admins can read all
+    // ============================================
+    // ORDERS COLLECTION
+    // ============================================
     match /orders/{orderId} {
-      allow read: if request.auth != null && 
-        (request.auth.uid == resource.data.userId || isAdmin());
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // Users can read their own orders, admins can read all
+      allow read: if isSignedIn() && 
+                     (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Users can create their own orders with validation
+      allow create: if isSignedIn() && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Only admins can update orders (status changes, etc.)
       allow update: if isAdmin();
+      
+      // Only admins can delete orders
+      allow delete: if isAdmin();
     }
     
     // Allow collection queries - but individual document rules still apply
     match /orders {
-      allow list: if request.auth != null;
+      allow list: if isSignedIn();
     }
     
-    // Admin-only collections
+    // ============================================
+    // ADDRESSES COLLECTION
+    // ============================================
+    match /addresses/{addressId} {
+      // Users can read their own addresses
+      allow read: if isSignedIn() && 
+                     resource.data.userId == request.auth.uid;
+      
+      // Users can create their own addresses with validation
+      allow create: if isSignedIn() && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Users can update their own addresses
+      allow update: if isSignedIn() && 
+                       resource.data.userId == request.auth.uid &&
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Users can delete their own addresses
+      allow delete: if isSignedIn() && 
+                       resource.data.userId == request.auth.uid;
+    }
+    
+    // ============================================
+    // REVIEWS COLLECTION
+    // ============================================
+    match /reviews/{reviewId} {
+      // Anyone can read reviews
+      allow read: if true;
+      
+      // Authenticated users can create reviews
+      allow create: if isSignedIn() && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Users can update their own reviews
+      allow update: if isSignedIn() && 
+                       resource.data.userId == request.auth.uid;
+      
+      // Users can delete their own reviews, admins can delete any
+      allow delete: if isSignedIn() && 
+                       (resource.data.userId == request.auth.uid || isAdmin());
+    }
+    
+    // ============================================
+    // CART COLLECTION
+    // ============================================
+    match /carts/{cartId} {
+      // Users can only access their own cart
+      allow read, write: if isSignedIn() && 
+                            cartId == request.auth.uid;
+    }
+    
+    // ============================================
+    // ANALYTICS (Admin only)
+    // ============================================
     match /analytics/{document=**} {
       allow read, write: if isAdmin();
     }
     
-    // Helper function to check if user is admin
-    function isAdmin() {
-      return request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    // ============================================
+    // DENY ALL OTHER COLLECTIONS
+    // ============================================
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 } 
