@@ -156,26 +156,26 @@ const PhoneAuth = ({ onSendOTP, onVerifyOTP, onSetName, isLoading }: PhoneAuthPr
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-md mx-auto px-2 sm:px-0">
       {/* Invisible reCAPTCHA container */}
       <div id="recaptcha-container"></div>
 
       <Card className="border-amber-200 shadow-lg">
-        <CardHeader className="space-y-1 text-center">
+        <CardHeader className="space-y-1 text-center px-4 sm:px-6">
           <div className="mx-auto w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-4">
             <Phone className="h-6 w-6 text-amber-700" />
           </div>
-          <CardTitle className="text-2xl font-cormorant font-bold text-amber-900">
+          <CardTitle className="text-xl sm:text-2xl font-cormorant font-bold text-amber-900">
             {step === 'phone' && 'Welcome!'}
             {step === 'otp' && 'Verify OTP'}
             {step === 'name' && 'Complete Your Profile'}
           </CardTitle>
-          <CardDescription className="text-amber-700">
+          <CardDescription className="text-amber-700 text-sm sm:text-base">
             {step === 'phone' && 'Enter your mobile number to get started'}
             {step === 'otp' && (
               <div className="space-y-1">
-                <div>OTP sent to {phoneNumber}</div>
-                <div className="text-xs text-amber-600">
+                <div className="break-all px-2">OTP sent to {phoneNumber}</div>
+                <div className="text-xs text-amber-600 px-2">
                   📱 Check spam/promotional folder if not received in inbox
                 </div>
               </div>
@@ -184,7 +184,7 @@ const PhoneAuth = ({ onSendOTP, onVerifyOTP, onSetName, isLoading }: PhoneAuthPr
           </CardDescription>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           {/* Phone Number Step */}
           {step === 'phone' && (
             <form onSubmit={handlePhoneSubmit} className="space-y-4">
@@ -217,7 +217,7 @@ const PhoneAuth = ({ onSendOTP, onVerifyOTP, onSetName, isLoading }: PhoneAuthPr
 
               <Button
                 type="submit"
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white text-sm sm:text-base"
                 disabled={isLoading || phoneNumber.replace(/\D/g, '').length !== 10}
               >
                 {isLoading ? (
@@ -233,7 +233,7 @@ const PhoneAuth = ({ onSendOTP, onVerifyOTP, onSetName, isLoading }: PhoneAuthPr
                 )}
               </Button>
 
-              <p className="text-xs text-center text-amber-700">
+              <p className="text-xs text-center text-amber-700 px-2">
                 By continuing, you agree to receive SMS from Prasanna's Orinuts
               </p>
             </form>
@@ -246,7 +246,7 @@ const PhoneAuth = ({ onSendOTP, onVerifyOTP, onSetName, isLoading }: PhoneAuthPr
                 <Label className="text-amber-900 text-center block">
                   Enter 6-Digit OTP
                 </Label>
-                <div className="flex gap-2 justify-center" onPaste={handleOTPPaste}>
+                <div className="flex gap-1.5 sm:gap-2 justify-center px-2" onPaste={handleOTPPaste}>
                   {otp.map((digit, index) => (
                     <Input
                       key={index}
@@ -257,7 +257,7 @@ const PhoneAuth = ({ onSendOTP, onVerifyOTP, onSetName, isLoading }: PhoneAuthPr
                       value={digit}
                       onChange={(e) => handleOTPChange(index, e.target.value)}
                       onKeyDown={(e) => handleOTPKeyDown(index, e)}
-                      className="w-12 h-12 text-center text-lg font-bold border-amber-200 focus:border-amber-500 focus:ring-amber-500"
+                      className="w-10 h-10 sm:w-12 sm:h-12 text-center text-base sm:text-lg font-bold border-amber-200 focus:border-amber-500 focus:ring-amber-500"
                       disabled={isLoading}
                       autoFocus={index === 0}
                     />
@@ -273,7 +273,7 @@ const PhoneAuth = ({ onSendOTP, onVerifyOTP, onSetName, isLoading }: PhoneAuthPr
 
               <Button
                 type="submit"
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white text-sm sm:text-base"
                 disabled={isLoading || otp.join('').length !== 6}
               >
                 {isLoading ? (
@@ -291,7 +291,7 @@ const PhoneAuth = ({ onSendOTP, onVerifyOTP, onSetName, isLoading }: PhoneAuthPr
                   type="button"
                   onClick={handleResendOTP}
                   disabled={countdown > 0 || isLoading}
-                  className={`text-sm ${
+                  className={`text-xs sm:text-sm ${
                     countdown > 0 || isLoading
                       ? 'text-amber-400 cursor-not-allowed'
                       : 'text-amber-600 hover:text-amber-700 underline'
@@ -308,7 +308,7 @@ const PhoneAuth = ({ onSendOTP, onVerifyOTP, onSetName, isLoading }: PhoneAuthPr
                   setOtp(['', '', '', '', '', '']);
                   setError('');
                 }}
-                className="text-sm text-amber-600 hover:text-amber-700 underline w-full"
+                className="text-xs sm:text-sm text-amber-600 hover:text-amber-700 underline w-full"
               >
                 Change phone number
               </button>
@@ -342,7 +342,7 @@ const PhoneAuth = ({ onSendOTP, onVerifyOTP, onSetName, isLoading }: PhoneAuthPr
 
               <Button
                 type="submit"
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white text-sm sm:text-base"
                 disabled={isLoading || name.trim().length < 2}
               >
                 {isLoading ? (
