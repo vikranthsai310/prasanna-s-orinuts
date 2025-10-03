@@ -68,12 +68,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (userDoc.exists()) {
             // User exists in Firestore
             const userData = userDoc.data();
+            
+            // Check if we need to update phoneVerified status in Firestore
+            const shouldBeVerified = firebaseUser.phoneNumber ? true : false;
+            const currentlyVerified = userData.phoneVerified || false;
+            
+            // Update Firestore if phone is verified but not marked as such
+            if (shouldBeVerified && !currentlyVerified) {
+              console.log('🔄 Updating phoneVerified status in Firestore');
+              await updateDoc(doc(db, 'users', firebaseUser.uid), {
+                phoneVerified: true,
+                updatedAt: new Date()
+              });
+            }
+            
             const userObject: User = {
               id: firebaseUser.uid,
               phone: firebaseUser.phoneNumber || userData.phone || '',
               name: userData.name || firebaseUser.displayName || '',
               isAdmin: userData.isAdmin || ADMIN_PHONE_NUMBERS.includes(firebaseUser.phoneNumber || ''),
-              phoneVerified: firebaseUser.phoneNumber ? true : (userData.phoneVerified || false),
+              phoneVerified: shouldBeVerified,
               addresses: userData.addresses || [],
               createdAt: userData.createdAt?.toDate() || new Date()
             };
