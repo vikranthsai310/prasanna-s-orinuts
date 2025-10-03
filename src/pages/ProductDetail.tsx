@@ -87,9 +87,8 @@ const ProductDetail = () => {
       name: product.name,
       price: product.prices[selectedWeight],
       weight: selectedWeight,
-      quantity,
       image: product.image
-    });
+    }, quantity);
   };
 
   if (isLoading) {

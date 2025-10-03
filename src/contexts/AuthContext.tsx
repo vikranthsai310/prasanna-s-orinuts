@@ -14,6 +14,7 @@ import { ADMIN_PHONE_NUMBERS } from '@/config';
 interface User {
   id: string;
   phone: string;
+  email?: string;
   name: string;
   isAdmin: boolean;
   phoneVerified?: boolean;
