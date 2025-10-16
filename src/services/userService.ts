@@ -11,6 +11,16 @@ import {
 import { db } from '@/lib/firebase';
 import { getUserOrders } from './orderService';
 
+export interface Address {
+  name: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  isDefault?: boolean;
+}
+
 export interface AdminUser {
   id: string;
   name: string;
@@ -19,9 +29,11 @@ export interface AdminUser {
   isAdmin: boolean;
   phoneVerified: boolean;
   joinDate: Timestamp | Date;
+  createdAt: Timestamp | Date;
   totalOrders: number;
   totalSpent: number;
   lastOrderDate?: Timestamp | Date;
+  addresses?: Address[];
 }
 
 export interface UserStats {
@@ -58,9 +70,11 @@ export const getAllUsers = async (): Promise<AdminUser[]> => {
         isAdmin: userData.isAdmin || false,
         phoneVerified: userData.phoneVerified || false,
         joinDate: userData.createdAt || new Date(),
+        createdAt: userData.createdAt || new Date(),
         totalOrders: 0,
         totalSpent: 0,
-        lastOrderDate: undefined
+        lastOrderDate: undefined,
+        addresses: userData.addresses || []
       });
     });
     
@@ -167,9 +181,11 @@ export const getUserById = async (userId: string): Promise<AdminUser | null> => 
         isAdmin: userData.isAdmin || false,
         phoneVerified: userData.phoneVerified || false,
         joinDate: userData.createdAt || new Date(),
+        createdAt: userData.createdAt || new Date(),
         totalOrders: stats.totalOrders,
         totalSpent: stats.totalSpent,
-        lastOrderDate: stats.lastOrderDate
+        lastOrderDate: stats.lastOrderDate,
+        addresses: userData.addresses || []
       };
     }
     

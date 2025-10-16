@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, Eye, MoreHorizontal, Loader2, Users, TrendingUp, Calendar, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -217,9 +218,11 @@ const AdminUsers = () => {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex space-x-2">
-                          <Button variant="outline" size="sm" title="View Details">
-                            <Eye className="w-4 h-4" />
-                          </Button>
+                          <Link to={`/admin/users/${user.id}`}>
+                            <Button variant="outline" size="sm" title="View Details">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </Link>
                           <Button variant="outline" size="sm" title="More Actions">
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
