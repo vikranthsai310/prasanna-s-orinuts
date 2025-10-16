@@ -355,55 +355,57 @@ const AdminProducts = () => {
 
       {/* Add/Edit Product Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{selectedProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="text-xl font-playfair">{selectedProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
           </DialogHeader>
           
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column */}
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+            <div className="flex-1 overflow-y-auto px-1 space-y-5 pb-4">
+              {/* Basic Information Section */}
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Product Name</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="input-field w-full"
-                    required
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">Product Name *</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="input-field w-full"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">Category *</label>
+                    <Select value={formData.category} onValueChange={handleCategoryChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="nuts">Nuts</SelectItem>
+                        <SelectItem value="dates">Dates</SelectItem>
+                        <SelectItem value="dried-fruits">Dried Fruits</SelectItem>
+                        <SelectItem value="mixed">Mixed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <label className="block text-sm font-medium mb-1.5">Description *</label>
                   <textarea
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
-                    className="input-field w-full h-24"
+                    className="input-field w-full h-20 resize-none"
                     required
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Category</label>
-                  <Select value={formData.category} onValueChange={handleCategoryChange}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="nuts">Nuts</SelectItem>
-                      <SelectItem value="dates">Dates</SelectItem>
-                      <SelectItem value="dried-fruits">Dried Fruits</SelectItem>
-                      <SelectItem value="mixed">Mixed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Stock</label>
+                  <label className="block text-sm font-medium mb-1.5">Stock *</label>
                   <input
                     type="number"
                     name="stock"
@@ -416,70 +418,76 @@ const AdminProducts = () => {
                 </div>
               </div>
               
-              {/* Right Column */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Price (250g)</label>
-                  <input
-                    type="number"
-                    name="price250g"
-                    value={formData.price250g}
-                    onChange={handleInputChange}
-                    className="input-field w-full"
-                    min="0"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Price (500g)</label>
-                  <input
-                    type="number"
-                    name="price500g"
-                    value={formData.price500g}
-                    onChange={handleInputChange}
-                    className="input-field w-full"
-                    min="0"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Price (1kg)</label>
-                  <input
-                    type="number"
-                    name="price1kg"
-                    value={formData.price1kg}
-                    onChange={handleInputChange}
-                    className="input-field w-full"
-                    min="0"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Product Images</label>
-                  
-                  {/* Upload Button */}
-                  <label className="w-full mb-3 block">
-                    <div className="btn-outline flex items-center justify-center w-full py-2 rounded-md cursor-pointer">
-                      <Upload className="w-4 h-4 mr-2" />
-                      <span>Add Images</span>
-                    </div>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      multiple
-                      className="hidden" 
-                      onChange={handleImageChange}
+              {/* Pricing Section */}
+              <div className="border-t pt-4">
+                <h3 className="font-medium mb-3 text-base">Pricing</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">250g (₹) *</label>
+                    <input
+                      type="number"
+                      name="price250g"
+                      value={formData.price250g}
+                      onChange={handleInputChange}
+                      className="input-field w-full"
+                      min="0"
+                      required
                     />
-                  </label>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">500g (₹) *</label>
+                    <input
+                      type="number"
+                      name="price500g"
+                      value={formData.price500g}
+                      onChange={handleInputChange}
+                      className="input-field w-full"
+                      min="0"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">1kg (₹) *</label>
+                    <input
+                      type="number"
+                      name="price1kg"
+                      value={formData.price1kg}
+                      onChange={handleInputChange}
+                      className="input-field w-full"
+                      min="0"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Product Images Section */}
+              <div className="border-t pt-4">
+                <h3 className="font-medium mb-3 text-base">Product Images</h3>
+                
+                {/* Upload Button */}
+                <label className="w-full mb-3 block">
+                  <div className="btn-outline flex items-center justify-center w-full py-2.5 rounded-md cursor-pointer hover:bg-accent transition-colors">
+                    <Upload className="w-4 h-4 mr-2" />
+                    <span className="text-sm font-medium">Add Images</span>
+                  </div>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    multiple
+                    className="hidden" 
+                    onChange={handleImageChange}
+                  />
+                </label>
 
-                  {/* Image Preview Grid */}
-                  <div className="grid grid-cols-3 gap-2">
+                {/* Image Preview Grid */}
+                {(existingImages.length > 0 || imagePreviews.length > 0) ? (
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
                     {/* Existing Images */}
                     {existingImages.map((url, index) => (
-                      <div key={`existing-${index}`} className="relative group w-20 h-20 rounded-md overflow-hidden">
+                      <div key={`existing-${index}`} className="relative group aspect-square rounded-lg overflow-hidden border-2 border-border hover:border-secondary transition-colors">
                         <img 
                           src={url} 
                           alt={`Existing ${index + 1}`} 
@@ -488,7 +496,7 @@ const AdminProducts = () => {
                         <button
                           type="button"
                           onClick={() => removeExistingImage(index)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -497,98 +505,101 @@ const AdminProducts = () => {
 
                     {/* New Image Previews */}
                     {imagePreviews.map((preview, index) => (
-                      <div key={`new-${index}`} className="relative group w-20 h-20 rounded-md overflow-hidden">
+                      <div key={`new-${index}`} className="relative group aspect-square rounded-lg overflow-hidden border-2 border-secondary hover:border-primary transition-colors">
                         <img 
                           src={preview} 
                           alt={`New ${index + 1}`} 
                           className="w-full h-full object-cover"
                         />
+                        <div className="absolute top-1 left-1 bg-secondary text-white text-xs px-2 py-0.5 rounded">New</div>
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                         >
                           <X className="w-3 h-3" />
                         </button>
                       </div>
                     ))}
                   </div>
-                  
-                  {existingImages.length === 0 && imagePreviews.length === 0 && (
-                    <p className="text-sm text-muted-foreground mt-2">No images uploaded yet</p>
-                  )}
+                ) : (
+                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                    <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">No images uploaded yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">Click "Add Images" to upload product photos</p>
+                  </div>
+                )}
+              </div>
+            
+              {/* Nutritional Info Section */}
+              <div className="border-t pt-4">
+                <h3 className="font-medium mb-3 text-base">Nutritional Information (per 100g)</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium mb-1.5">Calories *</label>
+                    <input
+                      type="number"
+                      name="calories"
+                      value={formData.calories}
+                      onChange={handleInputChange}
+                      className="input-field w-full text-sm"
+                      min="0"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1.5">Protein (g) *</label>
+                    <input
+                      type="number"
+                      name="protein"
+                      value={formData.protein}
+                      onChange={handleInputChange}
+                      className="input-field w-full text-sm"
+                      min="0"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1.5">Fat (g) *</label>
+                    <input
+                      type="number"
+                      name="fat"
+                      value={formData.fat}
+                      onChange={handleInputChange}
+                      className="input-field w-full text-sm"
+                      min="0"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1.5">Carbs (g) *</label>
+                    <input
+                      type="number"
+                      name="carbs"
+                      value={formData.carbs}
+                      onChange={handleInputChange}
+                      className="input-field w-full text-sm"
+                      min="0"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1.5">Fiber (g) *</label>
+                    <input
+                      type="number"
+                      name="fiber"
+                      value={formData.fiber}
+                      onChange={handleInputChange}
+                      className="input-field w-full text-sm"
+                      min="0"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
             </div>
             
-            {/* Nutritional Info */}
-            <div>
-              <h3 className="font-medium mb-3">Nutritional Information (per 100g)</h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Calories</label>
-                  <input
-                    type="number"
-                    name="calories"
-                    value={formData.calories}
-                    onChange={handleInputChange}
-                    className="input-field w-full"
-                    min="0"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Protein (g)</label>
-                  <input
-                    type="number"
-                    name="protein"
-                    value={formData.protein}
-                    onChange={handleInputChange}
-                    className="input-field w-full"
-                    min="0"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Fat (g)</label>
-                  <input
-                    type="number"
-                    name="fat"
-                    value={formData.fat}
-                    onChange={handleInputChange}
-                    className="input-field w-full"
-                    min="0"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Carbs (g)</label>
-                  <input
-                    type="number"
-                    name="carbs"
-                    value={formData.carbs}
-                    onChange={handleInputChange}
-                    className="input-field w-full"
-                    min="0"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Fiber (g)</label>
-                  <input
-                    type="number"
-                    name="fiber"
-                    value={formData.fiber}
-                    onChange={handleInputChange}
-                    className="input-field w-full"
-                    min="0"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <DialogFooter>
+            <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4">
               <DialogClose asChild>
                 <Button type="button" variant="outline">Cancel</Button>
               </DialogClose>
