@@ -113,6 +113,9 @@ const Header = () => {
                 src="/Logo.png" 
                 alt="Prasanna's Orinuts Logo" 
                 className="h-10 sm:h-12 w-auto transition-transform duration-300 group-hover:scale-105"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
               />
               <div className="hidden sm:flex flex-col items-start">
                 <span className="font-cormorant text-lg sm:text-xl lg:text-2xl font-bold text-amber-900 tracking-wide leading-tight">

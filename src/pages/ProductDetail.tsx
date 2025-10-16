@@ -167,6 +167,9 @@ const ProductDetail = () => {
               src={(product.images && product.images[selectedImageIndex]) || product.image}
               alt={`${product.name} - Image ${selectedImageIndex + 1}`}
               className="w-full h-full object-cover"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
             />
             
             {/* Navigation Arrows (only show if multiple images) */}
@@ -207,7 +210,7 @@ const ProductDetail = () => {
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
-                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-all bg-accent ${
                     selectedImageIndex === index
                       ? 'border-secondary ring-2 ring-secondary/30'
                       : 'border-border hover:border-secondary/50'
@@ -217,6 +220,8 @@ const ProductDetail = () => {
                     src={image}
                     alt={`${product.name} thumbnail ${index + 1}`}
                     className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </button>
               ))}

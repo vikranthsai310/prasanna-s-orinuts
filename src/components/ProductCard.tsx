@@ -30,11 +30,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
         onMouseLeave={() => setIsHovered(false)}
       >
         <Link to={`/products/${product.id}`}>
-          <div className="relative overflow-hidden rounded-lg mb-4">
+          <div className="relative overflow-hidden rounded-lg mb-4 bg-accent">
             <img
               src={validateImageUrl(product.image)}
               alt={product.name}
               className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
             />
             <div className={`absolute inset-0 bg-primary/40 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
               <div className="absolute bottom-4 left-4 right-4">

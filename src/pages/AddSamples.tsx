@@ -90,9 +90,8 @@ const AddSamples = () => {
           name: `${sample.name} (Sample)`,
           price: 0, // Free sample
           weight: '50g', // Sample size
-          quantity: 1,
           image: sample.image
-        });
+        }, 1); // quantity as second parameter
       }
     });
     
@@ -147,11 +146,13 @@ const AddSamples = () => {
                 }`}
                 onClick={() => handleSampleSelect(product)}
               >
-                <div className="relative">
+                <div className="relative bg-accent rounded-lg">
                   <img
                     src={product.image}
                     alt={product.name}
                     className="w-full h-48 object-cover rounded-lg mb-4"
+                    loading="lazy"
+                    decoding="async"
                   />
                   {isSelected && (
                     <div className="absolute top-2 right-2 bg-secondary text-white rounded-full p-1">

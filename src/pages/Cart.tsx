@@ -154,12 +154,14 @@ const Cart = () => {
                 <div className="flex flex-col sm:hidden gap-4">
                   <div className="flex items-start gap-4">
                     {/* Product Image */}
-                    <div className="relative flex-shrink-0">
+                    <div className="relative flex-shrink-0 bg-accent rounded-xl">
                       <div className="absolute inset-0 bg-secondary/10 rounded-xl blur-md group-hover:blur-lg transition-all"></div>
                       <img
                         src={item.image}
                         alt={item.name}
                         className="relative w-24 h-24 object-cover rounded-xl shadow-md"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
                     
@@ -227,12 +229,14 @@ const Cart = () => {
                 {/* Desktop/Tablet Layout */}
                 <div className="hidden sm:flex items-center gap-6">
                   {/* Product Image */}
-                  <div className="relative flex-shrink-0">
+                  <div className="relative flex-shrink-0 bg-accent rounded-xl">
                     <div className="absolute inset-0 bg-secondary/10 rounded-xl blur-md group-hover:blur-lg transition-all"></div>
                     <img
                       src={item.image}
                       alt={item.name}
                       className="relative w-28 h-28 object-cover rounded-xl shadow-md"
+                      loading="lazy"
+                      decoding="async"
                     />
                   </div>
                   
