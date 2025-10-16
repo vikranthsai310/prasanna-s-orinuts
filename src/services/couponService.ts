@@ -407,6 +407,68 @@ export const generateCouponCode = (prefix: string = '', length: number = 8): str
   return code;
 };
 
+/**
+ * Get coupon statistics for admin dashboard
+ */
+export const getCouponStats = async (): Promise<{
+  totalCoupons: number;
+  activeCoupons: number;
+  totalUsage: number;
+  totalDiscountGiven: number;
+  mostUsedCoupon: { code: string; count: number } | null;
+}> => {
+  try {
+    // Get all coupons
+    const couponsSnapshot = await getDocs(collection(db, COUPONS_COLLECTION));
+    const coupons = couponsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Coupon[];
+
+    const totalCoupons = coupons.length;
+    const activeCoupons = coupons.filter(c => c.isActive).length;
+
+    // Get all coupon usage
+    const usageSnapshot = await getDocs(collection(db, COUPON_USAGE_COLLECTION));
+    const usageRecords = usageSnapshot.docs.map(doc => doc.data()) as CouponUsage[];
+
+    const totalUsage = usageRecords.length;
+    const totalDiscountGiven = usageRecords.reduce((sum, record) => sum + record.discountAmount, 0);
+
+    // Find most used coupon
+    const couponUsageCount: Record<string, number> = {};
+    usageRecords.forEach(record => {
+      couponUsageCount[record.couponCode] = (couponUsageCount[record.couponCode] || 0) + 1;
+    });
+
+    let mostUsedCoupon: { code: string; count: number } | null = null;
+    let maxCount = 0;
+    Object.entries(couponUsageCount).forEach(([code, count]) => {
+      if (count > maxCount) {
+        maxCount = count;
+        mostUsedCoupon = { code, count };
+      }
+    });
+
+    return {
+      totalCoupons,
+      activeCoupons,
+      totalUsage,
+      totalDiscountGiven,
+      mostUsedCoupon
+    };
+  } catch (error) {
+    console.error('Error getting coupon stats:', error);
+    return {
+      totalCoupons: 0,
+      activeCoupons: 0,
+      totalUsage: 0,
+      totalDiscountGiven: 0,
+      mostUsedCoupon: null
+    };
+  }
+};
+
 export default {
   createCoupon,
   getCouponByCode,
@@ -418,4 +480,5 @@ export default {
   recordCouponUsage,
   getCouponUsageHistory,
   generateCouponCode,
+  getCouponStats,
 };

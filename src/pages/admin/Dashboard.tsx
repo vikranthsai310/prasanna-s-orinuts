@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { BarChart3, ShoppingBag, Users, TrendingUp, Package, Loader2 } from 'lucide-react';
+import { BarChart3, ShoppingBag, Users, TrendingUp, Package, Loader2, Tag, Gift } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { 
@@ -12,6 +12,7 @@ import {
   getRecentOrders,
   getLowStockProducts
 } from '@/services/analyticsService';
+import { getCouponStats } from '@/services/couponService';
 import { useToast } from '@/hooks/use-toast';
 import { Order } from '@/services/orderService';
 import { Product } from '@/types/product';
@@ -25,6 +26,13 @@ const AdminDashboard = () => {
     totalRevenue: 0,
     totalUsers: 0,
     totalProducts: 0
+  });
+  const [couponStats, setCouponStats] = useState({
+    totalCoupons: 0,
+    activeCoupons: 0,
+    totalUsage: 0,
+    totalDiscountGiven: 0,
+    mostUsedCoupon: null as { code: string; count: number } | null
   });
   const [orderData, setOrderData] = useState<{ date: string; orders: number }[]>([]);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
@@ -47,7 +55,8 @@ const AdminDashboard = () => {
         products, 
         ordersByDate,
         recentOrdersData,
-        lowStockProductsData
+        lowStockProductsData,
+        couponStatsData
       ] = await Promise.all([
         getTotalRevenue(),
         getTotalOrders(),
@@ -55,14 +64,16 @@ const AdminDashboard = () => {
         getTotalProducts(),
         getOrdersByDateRange(7),
         getRecentOrders(5),
-        getLowStockProducts(20)
+        getLowStockProducts(20),
+        getCouponStats()
       ]);
 
       console.log('📊 Dashboard data fetched:', {
         revenue,
         orders,
         users,
-        products
+        products,
+        coupons: couponStatsData
       });
 
       setStats({
@@ -72,6 +83,7 @@ const AdminDashboard = () => {
         totalProducts: products
       });
       
+      setCouponStats(couponStatsData);
       setOrderData(ordersByDate);
       setRecentOrders(recentOrdersData);
       setLowStockProducts(lowStockProductsData);
@@ -174,6 +186,67 @@ const AdminDashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold text-secondary">{stats.totalProducts}</div>
             <p className="text-xs text-muted-foreground">Total products in inventory</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Coupon Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card className="border-l-4 border-l-purple-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Coupons</CardTitle>
+            <Tag className="h-4 w-4 text-purple-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">{couponStats.activeCoupons}</div>
+            <p className="text-xs text-muted-foreground">
+              Out of {couponStats.totalCoupons} total coupons
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-l-4 border-l-green-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Coupon Usage</CardTitle>
+            <Gift className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{couponStats.totalUsage}</div>
+            <p className="text-xs text-muted-foreground">
+              {couponStats.mostUsedCoupon 
+                ? `Top: ${couponStats.mostUsedCoupon.code} (${couponStats.mostUsedCoupon.count}x)`
+                : 'No coupons used yet'
+              }
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-l-4 border-l-orange-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Discount</CardTitle>
+            <TrendingUp className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">
+              ₹{couponStats.totalDiscountGiven.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">Given to customers</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Discount/Use</CardTitle>
+            <BarChart3 className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              ₹{couponStats.totalUsage > 0 
+                ? Math.round(couponStats.totalDiscountGiven / couponStats.totalUsage).toLocaleString()
+                : '0'
+              }
+            </div>
+            <p className="text-xs text-muted-foreground">Average per coupon usage</p>
           </CardContent>
         </Card>
       </div>
