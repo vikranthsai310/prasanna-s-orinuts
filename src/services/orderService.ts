@@ -49,16 +49,52 @@ export type NewOrder = Omit<Order, 'id' | 'createdAt' | 'updatedAt'>;
 
 const ORDERS_COLLECTION = 'orders';
 
-// Create a new order
+// Create a new order and reduce stock
 export const createOrder = async (orderData: NewOrder): Promise<string> => {
-  const orderWithTimestamps = {
-    ...orderData,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  };
-  
-  const docRef = await addDoc(collection(db, ORDERS_COLLECTION), orderWithTimestamps);
-  return docRef.id;
+  try {
+    // First, verify stock availability for all items
+    for (const item of orderData.items) {
+      const productRef = doc(db, 'products', item.id);
+      const productSnap = await getDoc(productRef);
+      
+      if (!productSnap.exists()) {
+        throw new Error(`Product ${item.name} not found`);
+      }
+      
+      const currentStock = productSnap.data().stock;
+      if (currentStock < item.quantity) {
+        throw new Error(`Insufficient stock for ${item.name}. Available: ${currentStock}, Requested: ${item.quantity}`);
+      }
+    }
+    
+    // Create the order
+    const orderWithTimestamps = {
+      ...orderData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+    
+    const docRef = await addDoc(collection(db, ORDERS_COLLECTION), orderWithTimestamps);
+    
+    // Reduce stock for each item
+    for (const item of orderData.items) {
+      const productRef = doc(db, 'products', item.id);
+      const productSnap = await getDoc(productRef);
+      const currentStock = productSnap.data().stock;
+      
+      await updateDoc(productRef, {
+        stock: currentStock - item.quantity
+      });
+      
+      console.log(`✅ Reduced stock for ${item.name}: ${currentStock} -> ${currentStock - item.quantity}`);
+    }
+    
+    console.log('✅ Order created and stock updated successfully');
+    return docRef.id;
+  } catch (error) {
+    console.error('❌ Error creating order:', error);
+    throw error;
+  }
 };
 
 // Get all orders for a user
@@ -114,10 +150,46 @@ export const updateOrderStatus = async (
   orderStatus: Order['orderStatus']
 ): Promise<void> => {
   const docRef = doc(db, ORDERS_COLLECTION, orderId);
+  
+  // If order is being cancelled, restore stock
+  if (orderStatus === 'cancelled') {
+    const order = await getOrderById(orderId);
+    if (order) {
+      await restoreStock(order);
+    }
+  }
+  
   await updateDoc(docRef, {
     orderStatus,
     updatedAt: serverTimestamp()
   });
+};
+
+// Restore stock when order is cancelled
+export const restoreStock = async (order: Order): Promise<void> => {
+  try {
+    console.log('🔄 Restoring stock for cancelled order:', order.id);
+    
+    for (const item of order.items) {
+      const productRef = doc(db, 'products', item.id);
+      const productSnap = await getDoc(productRef);
+      
+      if (productSnap.exists()) {
+        const currentStock = productSnap.data().stock;
+        
+        await updateDoc(productRef, {
+          stock: currentStock + item.quantity
+        });
+        
+        console.log(`✅ Restored stock for ${item.name}: ${currentStock} -> ${currentStock + item.quantity}`);
+      }
+    }
+    
+    console.log('✅ Stock restored successfully for order:', order.id);
+  } catch (error) {
+    console.error('❌ Error restoring stock:', error);
+    throw error;
+  }
 };
 
 // Update payment status
@@ -240,7 +312,7 @@ export const calculateShippingRates = async (
   deliveryPincode: string,
   weight: number,
   isCod: boolean = false,
-  pickupPincode: string = shippingConfig.shiprocket.pickupPincode
+  pickupPincode: string = shippingConfig.delhivery.warehouse.pincode
 ): Promise<any> => {
   try {
     const response = await fetch('/api/calculate-shipping', {
