@@ -163,6 +163,38 @@ service cloud.firestore {
     }
     
     // ============================================
+    // COUPONS COLLECTION
+    // ============================================
+    match /coupons/{couponId} {
+      // Anyone can read active coupons (needed for validation at checkout)
+      allow read: if true;
+      
+      // Only admins can create/update/delete coupons
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Allow collection queries for coupons
+    match /coupons {
+      allow list: if true; // Anyone can list coupons (for validation)
+    }
+    
+    // ============================================
+    // COUPON USAGE TRACKING
+    // ============================================
+    match /couponUsage/{usageId} {
+      // Users can read their own coupon usage, admins can read all
+      allow read: if isSignedIn() && 
+                     (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // System can create usage records (when order is placed)
+      allow create: if isSignedIn() && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Only admins can update/delete usage records
+      allow update, delete: if isAdmin();
+    }
+    
+    // ============================================
     // DENY ALL OTHER COLLECTIONS
     // ============================================
     match /{document=**} {

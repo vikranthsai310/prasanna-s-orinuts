@@ -929,7 +929,7 @@ const Checkout = () => {
               disabled={isProcessing || !razorpayLoaded}
               className="w-full btn-secondary"
             >
-              {isProcessing ? 'Processing...' : 'Pay with Razorpay'}
+              {isProcessing ? 'Processing...' : 'Pay'}
             </Button>
             
             {!razorpayLoaded && (
