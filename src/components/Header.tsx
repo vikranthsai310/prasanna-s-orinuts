@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Home, Package, LogOut, Settings, BarChart3 } from 'lucide-react';
+import { ShoppingCart, User, Home, Package, LogOut, Settings, BarChart3, Tag } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -230,6 +230,13 @@ const Header = () => {
                           <User className="mr-2 h-4 w-4 text-amber-700" />
                           <span>Manage Users</span>
                         </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => navigate('/admin/coupons')}
+                          className="hover:bg-amber-50 cursor-pointer"
+                        >
+                          <Tag className="mr-2 h-4 w-4 text-amber-700" />
+                          <span>Manage Coupons</span>
+                        </DropdownMenuItem>
                       </>
                     )}
                     
@@ -366,6 +373,17 @@ const Header = () => {
                     >
                       <User className="h-5 w-5 text-amber-700 group-hover:text-amber-900" />
                       <span className="text-base">Manage Users</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        navigate('/admin/coupons');
+                        setIsMenuOpen(false);
+                      }}
+                      className="flex items-center space-x-4 px-4 py-3 rounded-xl text-amber-900 hover:bg-amber-100/80 transition-all duration-200 w-full group"
+                    >
+                      <Tag className="h-5 w-5 text-amber-700 group-hover:text-amber-900" />
+                      <span className="text-base">Manage Coupons</span>
                     </button>
                   </div>
                 )}

@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { validateCoupon, type Coupon } from '@/services/couponService';
 
 export interface CartItem {
   id: string;
@@ -21,6 +22,12 @@ interface CartContextType {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
+  subtotal: number;
+  discount: number;
+  finalTotal: number;
+  appliedCoupon: Coupon | null;
+  applyCoupon: (code: string, userId?: string) => Promise<{ success: boolean; message: string; }>;
+  removeCoupon: () => void;
   mergeGuestCart: () => void;
 }
 
@@ -84,6 +91,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const { user, isLoading } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
 
   // Load cart from localStorage when component mounts or user changes
   useEffect(() => {
@@ -223,7 +231,58 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  
+  // Calculate discount based on applied coupon
+  const discount = appliedCoupon ? (() => {
+    if (appliedCoupon.discountType === 'percentage') {
+      const percentageDiscount = (subtotal * appliedCoupon.discountValue) / 100;
+      // Apply max discount cap if specified
+      return appliedCoupon.maxDiscountAmount 
+        ? Math.min(percentageDiscount, appliedCoupon.maxDiscountAmount)
+        : percentageDiscount;
+    } else {
+      // Fixed discount
+      return Math.min(appliedCoupon.discountValue, subtotal);
+    }
+  })() : 0;
+  
+  const finalTotal = Math.max(subtotal - discount, 0);
+  const totalPrice = finalTotal; // For backward compatibility
+  
+  const applyCoupon = async (code: string, userId?: string): Promise<{ success: boolean; message: string; }> => {
+    try {
+      const validation = await validateCoupon(code, subtotal, userId);
+      
+      if (validation.isValid && validation.coupon) {
+        setAppliedCoupon(validation.coupon);
+        return {
+          success: true,
+          message: `Coupon applied! You saved ₹${validation.discountAmount?.toFixed(2) || '0.00'}`
+        };
+      } else {
+        return {
+          success: false,
+          message: validation.message || 'Invalid coupon code'
+        };
+      }
+    } catch (error) {
+      console.error('Error applying coupon:', error);
+      return {
+        success: false,
+        message: 'Failed to apply coupon. Please try again.'
+      };
+    }
+  };
+  
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    toast({
+      title: "Coupon Removed",
+      description: "The discount has been removed from your cart.",
+      duration: 2000,
+    });
+  };
 
   return (
     <CartContext.Provider value={{
@@ -235,6 +294,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       clearCart,
       totalItems,
       totalPrice,
+      subtotal,
+      discount,
+      finalTotal,
+      appliedCoupon,
+      applyCoupon,
+      removeCoupon,
       mergeGuestCart
     }}>
       {children}

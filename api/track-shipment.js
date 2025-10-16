@@ -1,49 +1,8 @@
-// Vercel Serverless Function for tracking Shiprocket shipments
+// Vercel Serverless Function for tracking Delhivery shipments
 import { requireAuth } from './_middleware/auth.js';
 
-const SHIPROCKET_BASE_URL = 'https://apiv2.shiprocket.in/v1/external';
-
-// Store auth token globally (in production, use proper token management like Redis)
-let authToken = null;
-let tokenExpiry = null;
-
-// Authenticate with Shiprocket
-const authenticateShiprocket = async () => {
-  try {
-    // Check if we have a valid token
-    if (authToken && tokenExpiry && new Date() < tokenExpiry) {
-      return authToken;
-    }
-
-    const response = await fetch(`${SHIPROCKET_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: process.env.SHIPROCKET_USERNAME,
-        password: process.env.SHIPROCKET_PASSWORD,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Authentication failed: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    
-    if (data.token) {
-      authToken = data.token;
-      tokenExpiry = new Date(Date.now() + 8 * 24 * 60 * 60 * 1000); // 8 days
-      return authToken;
-    } else {
-      throw new Error('No token received from Shiprocket');
-    }
-  } catch (error) {
-    console.error('Shiprocket authentication error:', error);
-    throw error;
-  }
-};
+const DELHIVERY_API_URL = process.env.DELHIVERY_API_URL || 'https://track.delhivery.com/api';
+const DELHIVERY_API_TOKEN = process.env.DELHIVERY_API_TOKEN;
 
 async function handler(req, res) {
   // Allow both GET and POST requests
@@ -54,30 +13,34 @@ async function handler(req, res) {
   try {
     console.log('🔐 Track shipment request from user:', req.user.uid);
     
-    let awbCode;
+    let waybill;
     
     if (req.method === 'GET') {
-      awbCode = req.query.awb;
+      waybill = req.query.waybill || req.query.awb;
     } else {
-      awbCode = req.body.awb;
+      waybill = req.body.waybill || req.body.awb;
     }
 
     // Validate the data
-    if (!awbCode) {
+    if (!waybill) {
       return res.status(400).json({ 
-        error: 'Missing required field: awb (tracking number)' 
+        error: 'Missing required field: waybill (tracking number)' 
       });
     }
 
-    // Authenticate with Shiprocket
-    const token = await authenticateShiprocket();
-    
+    if (!DELHIVERY_API_TOKEN) {
+      throw new Error('Delhivery API token is not configured');
+    }
+
+    console.log(`📦 Tracking shipment: ${waybill}`);
+
     const response = await fetch(
-      `${SHIPROCKET_BASE_URL}/courier/track/awb/${awbCode}`,
+      `${DELHIVERY_API_URL}/v1/packages/json/?waybill=${waybill}&token=${DELHIVERY_API_TOKEN}`,
       {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       }
     );
@@ -88,28 +51,42 @@ async function handler(req, res) {
 
     const result = await response.json();
     
+    console.log('✅ Tracking data received:', JSON.stringify(result, null, 2));
+
     // Process tracking data
     let trackingData = null;
     let currentStatus = 'Unknown';
     let estimatedDelivery = null;
+    let trackingHistory = [];
     
-    if (result.tracking_data) {
-      trackingData = result.tracking_data;
+    if (result.ShipmentData && result.ShipmentData.length > 0) {
+      const shipmentData = result.ShipmentData[0].Shipment;
+      trackingData = shipmentData;
       
-      // Extract current status and estimated delivery
-      if (trackingData.track_status === 1) {
-        currentStatus = trackingData.shipment_status || 'In Transit';
-        estimatedDelivery = trackingData.edd;
+      // Extract current status
+      if (shipmentData.Status) {
+        currentStatus = shipmentData.Status.Status || 'Unknown';
+        estimatedDelivery = shipmentData.ExpectedDeliveryDate;
+        
+        // Build tracking history
+        trackingHistory.push({
+          status: currentStatus,
+          date: shipmentData.Status.StatusDateTime,
+          location: shipmentData.Status.StatusLocation,
+          instructions: shipmentData.Status.Instructions,
+        });
       }
+      
     }
     
     return res.status(200).json({
       success: true,
-      awb_code: awbCode,
+      waybill: waybill,
       current_status: currentStatus,
       estimated_delivery: estimatedDelivery,
+      tracking_history: trackingHistory,
       tracking_data: trackingData,
-      track_url: `https://shiprocket.co/tracking/${awbCode}`,
+      track_url: `https://www.delhivery.com/track/package/${waybill}`,
     });
   } catch (error) {
     console.error('❌ Error tracking shipment:', error);

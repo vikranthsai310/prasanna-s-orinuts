@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 
 const Checkout = () => {
-  const { items, totalPrice, clearCart } = useCart();
+  const { items, totalPrice, subtotal, discount, finalTotal, appliedCoupon, applyCoupon, removeCoupon, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -46,6 +46,10 @@ const Checkout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [selectedSamples, setSelectedSamples] = useState(sampleStorage.getSelectedSamples());
+  
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
@@ -227,6 +231,50 @@ const Checkout = () => {
   const handleAddressChange = (addressId: string) => {
     setSelectedAddressId(addressId);
     setUseNewAddress(false);
+  };
+  
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast({
+        title: "Enter Coupon Code",
+        description: "Please enter a coupon code to apply.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsApplyingCoupon(true);
+    try {
+      const result = await applyCoupon(couponCode.toUpperCase(), user?.id);
+      
+      if (result.success) {
+        toast({
+          title: "Coupon Applied! 🎉",
+          description: result.message,
+        });
+        setCouponCode(''); // Clear input after successful application
+      } else {
+        toast({
+          title: "Invalid Coupon",
+          description: result.message,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error applying coupon:', error);
+      toast({
+        title: "Error",
+        description: "Failed to apply coupon. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+  
+  const handleRemoveCoupon = () => {
+    removeCoupon();
+    setCouponCode('');
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -791,19 +839,87 @@ const Checkout = () => {
             ))}
           </div>
           
+          {/* Coupon Code Section */}
+          <div className="mb-6 pb-6 border-b">
+            <h3 className="font-medium mb-3 flex items-center">
+              <Gift className="w-4 h-4 mr-2 text-secondary" />
+              Have a Coupon Code?
+            </h3>
+            
+            {appliedCoupon ? (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center">
+                    <Check className="w-5 h-5 text-green-600 mr-2" />
+                    <div>
+                      <p className="font-semibold text-green-800">{appliedCoupon.code}</p>
+                      {appliedCoupon.description && (
+                        <p className="text-xs text-green-700">{appliedCoupon.description}</p>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRemoveCoupon}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    Remove
+                  </Button>
+                </div>
+                <div className="text-sm text-green-700 mt-2">
+                  You're saving ₹{discount.toFixed(2)}! 🎉
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  onKeyPress={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                  placeholder="Enter coupon code"
+                  className="input-field flex-1"
+                  disabled={isApplyingCoupon}
+                />
+                <Button
+                  onClick={handleApplyCoupon}
+                  disabled={isApplyingCoupon || !couponCode.trim()}
+                  className="btn-secondary whitespace-nowrap"
+                >
+                  {isApplyingCoupon ? 'Applying...' : 'Apply'}
+                </Button>
+              </div>
+            )}
+          </div>
+          
           <div className="border-t pt-4 space-y-2">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>₹{totalPrice.toLocaleString()}</span>
+              <span>₹{subtotal.toLocaleString()}</span>
             </div>
+            {appliedCoupon && discount > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span className="flex items-center">
+                  <Gift className="w-4 h-4 mr-1" />
+                  Coupon Discount ({appliedCoupon.code})
+                </span>
+                <span>-₹{discount.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span>Shipping</span>
               <span className="text-green-600">Free</span>
             </div>
             <div className="flex justify-between text-lg font-semibold border-t pt-2">
               <span>Total</span>
-              <span className="text-secondary">₹{totalPrice.toLocaleString()}</span>
+              <span className="text-secondary">₹{finalTotal.toLocaleString()}</span>
             </div>
+            {appliedCoupon && discount > 0 && (
+              <div className="text-sm text-green-600 text-right">
+                You saved ₹{discount.toFixed(2)}! 🎉
+              </div>
+            )}
           </div>
           
           <div className="mt-6 space-y-3">

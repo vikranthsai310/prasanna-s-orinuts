@@ -37,6 +37,7 @@ const AdminProducts = lazy(() => import("./pages/admin/Products"));
 const AdminOrders = lazy(() => import("./pages/admin/Orders"));
 const AdminUsers = lazy(() => import("./pages/admin/Users"));
 const AdminSettings = lazy(() => import("./pages/admin/Settings"));
+const AdminCoupons = lazy(() => import("./pages/admin/AdminCoupons"));
 const DebugOrders = lazy(() => import("./pages/DebugOrders"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestRazorpay = lazy(() => import("./pages/TestRazorpay"));
@@ -138,6 +139,11 @@ const App = () => {
                     <Route path="/admin/settings" element={
                       <AdminRoute>
                         <AdminSettings />
+                      </AdminRoute>
+                    } />
+                    <Route path="/admin/coupons" element={
+                      <AdminRoute>
+                        <AdminCoupons />
                       </AdminRoute>
                     } />
                     

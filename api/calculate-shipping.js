@@ -1,48 +1,82 @@
-// Vercel Serverless Function for calculating shipping rates via Shiprocket
+// Vercel Serverless Function for calculating shipping rates via Delhivery
 import { requireAuth } from './_middleware/auth.js';
 
-const SHIPROCKET_BASE_URL = 'https://apiv2.shiprocket.in/v1/external';
+const DELHIVERY_API_URL = process.env.DELHIVERY_API_URL || 'https://track.delhivery.com/api';
+const DELHIVERY_API_TOKEN = process.env.DELHIVERY_API_TOKEN;
 
-// Store auth token globally (in production, use proper token management like Redis)
-let authToken = null;
-let tokenExpiry = null;
-
-// Authenticate with Shiprocket
-const authenticateShiprocket = async () => {
+/**
+ * Check serviceability for a pincode pair
+ */
+const checkServiceability = async (pickupPincode, deliveryPincode, weight, cod = false) => {
   try {
-    // Check if we have a valid token
-    if (authToken && tokenExpiry && new Date() < tokenExpiry) {
-      return authToken;
+    if (!DELHIVERY_API_TOKEN) {
+      throw new Error('Delhivery API token is not configured');
     }
 
-    const response = await fetch(`${SHIPROCKET_BASE_URL}/auth/login`, {
-      method: 'POST',
+    const params = new URLSearchParams({
+      token: DELHIVERY_API_TOKEN,
+      pickup_pincode: pickupPincode,
+      delivery_pincode: deliveryPincode,
+      weight: weight.toString(),
+      cod: cod ? '1' : '0',
+    });
+
+    const response = await fetch(`${DELHIVERY_API_URL}/c/api/pin-codes/json/?${params}`, {
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        Accept: 'application/json',
       },
-      body: JSON.stringify({
-        email: process.env.SHIPROCKET_USERNAME,
-        password: process.env.SHIPROCKET_PASSWORD,
-      }),
     });
 
     if (!response.ok) {
-      throw new Error(`Authentication failed: ${response.statusText}`);
+      throw new Error(`Serviceability check failed: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    
-    if (data.token) {
-      authToken = data.token;
-      tokenExpiry = new Date(Date.now() + 8 * 24 * 60 * 60 * 1000); // 8 days
-      return authToken;
-    } else {
-      throw new Error('No token received from Shiprocket');
-    }
+    const result = await response.json();
+    return result;
   } catch (error) {
-    console.error('Shiprocket authentication error:', error);
+    console.error('Delhivery serviceability check error:', error);
     throw error;
   }
+};
+
+/**
+ * Get estimated delivery time based on city
+ */
+const getEstimatedDeliveryTime = (city) => {
+  const metroCities = ['Delhi', 'Mumbai', 'Bangalore', 'Bengaluru', 'Chennai', 'Kolkata', 'Hyderabad', 'Pune', 'Ahmedabad'];
+  const tier1Cities = ['Jaipur', 'Lucknow', 'Kanpur', 'Nagpur', 'Indore', 'Thane', 'Bhopal', 'Visakhapatnam'];
+
+  const normalizedCity = city.trim().toLowerCase();
+
+  if (metroCities.some(metro => normalizedCity.includes(metro.toLowerCase()))) {
+    return '1-2 days';
+  }
+
+  if (tier1Cities.some(tier1 => normalizedCity.includes(tier1.toLowerCase()))) {
+    return '2-3 days';
+  }
+
+  return '3-5 days';
+};
+
+/**
+ * Calculate shipping rate based on weight and serviceability
+ */
+const calculateRate = (weight, isODA, isCOD) => {
+  const baseRate = 50; // Base rate in Rs.
+  const perKgRate = isODA ? 60 : 40; // Higher rate for ODA (Out of Delivery Area)
+  const freightCharge = baseRate + (weight * perKgRate);
+  
+  const codCharges = isCOD ? 50 : 0;
+  const totalAmount = freightCharge + codCharges;
+
+  return {
+    freight_charge: Math.round(freightCharge),
+    cod_charges: codCharges,
+    total_amount: Math.round(totalAmount),
+  };
 };
 
 async function handler(req, res) {
@@ -52,83 +86,120 @@ async function handler(req, res) {
   }
 
   try {
-    console.log('🔐 Calculate shipping request from user:', req.user.uid);
-    
-    const { 
-      pickupPincode, 
-      deliveryPincode, 
-      weight, 
-      isCod = false 
+    console.log('🔐 Calculate shipping request from user:', req.user?.uid || 'unknown');
+
+    const {
+      pickupPincode,
+      deliveryPincode,
+      weight,
+      cod = false,
     } = req.body;
 
-    // Validate the data
+    // Validate required fields
     if (!pickupPincode || !deliveryPincode || !weight) {
-      return res.status(400).json({ 
-        error: 'Missing required fields: pickupPincode, deliveryPincode, weight' 
+      return res.status(400).json({
+        error: 'Missing required fields: pickupPincode, deliveryPincode, weight',
       });
     }
 
-    // Authenticate with Shiprocket
-    const token = await authenticateShiprocket();
-    
-    const params = new URLSearchParams({
-      pickup_postcode: pickupPincode,
-      delivery_postcode: deliveryPincode,
-      weight: weight.toString(),
-      cod: isCod ? '1' : '0',
-    });
+    // Validate pincode format (Indian pincodes are 6 digits)
+    const pincodeRegex = /^\d{6}$/;
+    if (!pincodeRegex.test(pickupPincode) || !pincodeRegex.test(deliveryPincode)) {
+      return res.status(400).json({
+        error: 'Invalid pincode format. Pincode must be 6 digits.',
+      });
+    }
 
-    const response = await fetch(
-      `${SHIPROCKET_BASE_URL}/courier/serviceability/?${params}`,
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      }
+    // Validate weight
+    const weightNum = parseFloat(weight);
+    if (isNaN(weightNum) || weightNum <= 0) {
+      return res.status(400).json({
+        error: 'Invalid weight. Weight must be a positive number.',
+      });
+    }
+
+    console.log(`📦 Calculating shipping from ${pickupPincode} to ${deliveryPincode}, weight: ${weightNum}kg, COD: ${cod}`);
+
+    // Check serviceability
+    const serviceability = await checkServiceability(
+      pickupPincode,
+      deliveryPincode,
+      weightNum,
+      cod
     );
 
-    if (!response.ok) {
-      throw new Error(`Failed to calculate shipping rates: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    
-    // Process and return shipping options
-    const shippingOptions = [];
-    
-    if (result.data && result.data.available_courier_companies) {
-      result.data.available_courier_companies.forEach(courier => {
-        shippingOptions.push({
-          courier_name: courier.courier_name,
-          courier_company_id: courier.courier_company_id,
-          freight_charge: courier.freight_charge,
-          cod_charges: courier.cod_charges,
-          other_charges: courier.other_charges,
-          total_charge: courier.rate,
-          estimated_delivery_days: courier.estimated_delivery_days,
-          pickup_availability: courier.pickup_availability,
-          delivery_availability: courier.delivery_availability,
-        });
+    if (!serviceability.delivery_codes || serviceability.delivery_codes.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Delivery not available for this pincode',
+        serviceable: false,
       });
     }
-    
-    return res.status(200).json({
+
+    const pincodeData = serviceability.delivery_codes[0].postal_code;
+
+    // Check if delivery is available
+    if (pincodeData.pre_paid !== 'Y' && pincodeData.cash !== 'Y') {
+      return res.status(400).json({
+        success: false,
+        error: 'Delivery not available for this pincode',
+        serviceable: false,
+      });
+    }
+
+    // Check if COD is available when requested
+    if (cod && pincodeData.cod !== 'Y') {
+      return res.status(400).json({
+        success: false,
+        error: 'COD not available for this pincode. Please use prepaid payment.',
+        serviceable: true,
+        codAvailable: false,
+      });
+    }
+
+    // Calculate rates
+    const isODA = pincodeData.is_oda === 'Y';
+    const rates = calculateRate(weightNum, isODA, cod);
+
+    // Get estimated delivery time
+    const deliveryTime = getEstimatedDeliveryTime(pincodeData.pin);
+
+    // Return shipping options
+    const response = {
       success: true,
-      serviceable: shippingOptions.length > 0,
-      pickup_postcode: pickupPincode,
-      delivery_postcode: deliveryPincode,
-      weight: weight,
-      cod: isCod,
-      shipping_options: shippingOptions,
-      recommended: shippingOptions.length > 0 ? shippingOptions[0] : null,
-    });
+      serviceable: true,
+      codAvailable: pincodeData.cod === 'Y',
+      isODA: isODA,
+      shippingOptions: [
+        {
+          id: 'delhivery_express',
+          name: 'Delhivery Express',
+          provider: 'Delhivery',
+          deliveryTime: deliveryTime,
+          freight_charge: rates.freight_charge,
+          cod_charges: rates.cod_charges,
+          total_amount: rates.total_amount,
+          currency: 'INR',
+          serviceType: 'Express',
+        },
+      ],
+      pincodeInfo: {
+        deliveryPincode: pincodeData.pin,
+        isODA: isODA,
+        codAvailable: pincodeData.cod === 'Y',
+        prepaidAvailable: pincodeData.pre_paid === 'Y',
+      },
+    };
+
+    console.log('✅ Shipping calculation successful:', response);
+
+    return res.status(200).json(response);
   } catch (error) {
-    console.error('❌ Error calculating shipping rates:', error);
-    return res.status(500).json({ 
-      error: 'Failed to calculate shipping',
+    console.error('❌ Error calculating shipping:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to calculate shipping rates',
       message: error.message,
-      success: false 
     });
   }
 }
