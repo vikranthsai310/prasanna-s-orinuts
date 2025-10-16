@@ -8,6 +8,7 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
+  DialogDescription,
   DialogFooter,
   DialogClose
 } from '@/components/ui/dialog';
@@ -170,6 +171,7 @@ const AdminProducts = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted!', formData);
     
     try {
       const productData = {
@@ -358,6 +360,9 @@ const AdminProducts = () => {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-xl font-playfair">{selectedProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+            <DialogDescription className="sr-only">
+              {selectedProduct ? 'Edit the product details below' : 'Fill in the details to add a new product'}
+            </DialogDescription>
           </DialogHeader>
           
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
@@ -599,11 +604,18 @@ const AdminProducts = () => {
               </div>
             </div>
             
-            <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4">
+            <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4 bg-background z-10">
               <DialogClose asChild>
                 <Button type="button" variant="outline">Cancel</Button>
               </DialogClose>
-              <Button type="submit" className="btn-primary">
+              <Button 
+                type="submit" 
+                className="btn-primary"
+                onClick={(e) => {
+                  console.log('Button clicked!');
+                  // Form will handle submit
+                }}
+              >
                 <Save className="w-4 h-4 mr-2" />
                 {selectedProduct ? 'Update Product' : 'Add Product'}
               </Button>
