@@ -31,7 +31,7 @@ service cloud.firestore {
     // Check if phone is admin phone (fallback)
     function isAdminPhone() {
       return isSignedIn() && 
-             request.auth.token.phone_number in ['+918555856366'];
+             request.auth.token.phone_number in ['+918555856366', '+916301308477'];
     }
     
     // Validate string length

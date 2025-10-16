@@ -18,7 +18,7 @@ export { appConfig, appOptions } from './app';
 
 // Re-export specific commonly used configurations for easy access
 export const ADMIN_EMAILS = ['vikranthsai310@gmail.com', 'admin@prasannaorinut.com'];
-export const ADMIN_PHONE_NUMBERS = ['+918555856366']; // Admin phone number
+export const ADMIN_PHONE_NUMBERS = ['+918555856366', '+916301308477']; // Admin phone numbers
 export const ADDRESS_TYPES = ['Home', 'Work', 'Business', 'Other'] as const;
 export const PRODUCT_CATEGORIES = ['nuts', 'dates', 'dried-fruits', 'seeds', 'spices'] as const;
 export const WEIGHT_OPTIONS = ['250g', '500g', '1kg', '2kg'] as const;
@@ -37,9 +37,9 @@ export const validateConfig = () => {
     errors.push('Razorpay key ID is not configured');
   }
   
-  // Check shipping configuration
-  if (!shippingConfig.shiprocket.username || !shippingConfig.shiprocket.password) {
-    errors.push('Shiprocket credentials are missing');
+  // Check shipping configuration (Delhivery)
+  if (!shippingConfig.delhivery?.api?.token) {
+    errors.push('Delhivery API token is missing');
   }
   
   if (errors.length > 0) {
