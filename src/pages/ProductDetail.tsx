@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, Heart, Loader2 } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Heart, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { mockProducts } from '@/data/mockProducts';
@@ -21,6 +21,7 @@ const ProductDetail = () => {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -158,15 +159,69 @@ const ProductDetail = () => {
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-        {/* Product Image */}
+        {/* Product Image Gallery */}
         <div className="space-y-4">
-          <div className="aspect-square rounded-lg overflow-hidden">
+          {/* Main Image */}
+          <div className="relative aspect-square rounded-lg overflow-hidden bg-accent group">
             <img
-              src={product.image}
-              alt={product.name}
+              src={(product.images && product.images[selectedImageIndex]) || product.image}
+              alt={`${product.name} - Image ${selectedImageIndex + 1}`}
               className="w-full h-full object-cover"
             />
+            
+            {/* Navigation Arrows (only show if multiple images) */}
+            {product.images && product.images.length > 1 && (
+              <>
+                <button
+                  onClick={() => setSelectedImageIndex((prev) => 
+                    prev === 0 ? product.images!.length - 1 : prev - 1
+                  )}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                
+                <button
+                  onClick={() => setSelectedImageIndex((prev) => 
+                    prev === product.images!.length - 1 ? 0 : prev + 1
+                  )}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+                
+                {/* Image Counter */}
+                <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
+                  {selectedImageIndex + 1} / {product.images.length}
+                </div>
+              </>
+            )}
           </div>
+          
+          {/* Thumbnail Gallery (only show if multiple images) */}
+          {product.images && product.images.length > 1 && (
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+              {product.images.map((image, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedImageIndex(index)}
+                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                    selectedImageIndex === index
+                      ? 'border-secondary ring-2 ring-secondary/30'
+                      : 'border-border hover:border-secondary/50'
+                  }`}
+                >
+                  <img
+                    src={image}
+                    alt={`${product.name} thumbnail ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Product Info */}
