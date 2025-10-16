@@ -50,8 +50,9 @@ const AdminProducts = () => {
     fiber: 0,
     image: '/placeholder.svg'
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
 
   useEffect(() => {
     fetchProducts();
@@ -91,17 +92,28 @@ const AdminProducts = () => {
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImageFile(file);
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files);
+      setImageFiles(prev => [...prev, ...files]);
       
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      // Create previews for all files
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          setImagePreviews(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
+  };
+
+  const removeImage = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingImage = (index: number) => {
+    setExistingImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const openAddModal = () => {
@@ -121,8 +133,9 @@ const AdminProducts = () => {
       fiber: 0,
       image: '/placeholder.svg'
     });
-    setImageFile(null);
-    setImagePreview(null);
+    setImageFiles([]);
+    setImagePreviews([]);
+    setExistingImages([]);
     setIsModalOpen(true);
   };
 
@@ -143,8 +156,10 @@ const AdminProducts = () => {
       fiber: product.nutritionalInfo.fiber,
       image: product.image
     });
-    setImageFile(null);
-    setImagePreview(product.image);
+    setImageFiles([]);
+    setImagePreviews([]);
+    // Set existing images from product
+    setExistingImages(product.images || [product.image]);
     setIsModalOpen(true);
   };
 
@@ -173,20 +188,25 @@ const AdminProducts = () => {
           carbs: formData.carbs,
           fiber: formData.fiber
         },
-        category: formData.category,
+        category: formData.category as 'nuts' | 'dates' | 'dried-fruits' | 'mixed',
         stock: formData.stock
       };
 
       if (selectedProduct) {
         // Update existing product
-        await updateProduct(selectedProduct.id, productData, imageFile || undefined);
+        await updateProduct(
+          selectedProduct.id, 
+          productData, 
+          imageFiles.length > 0 ? imageFiles : undefined,
+          existingImages
+        );
         toast({
           title: "Success",
           description: "Product updated successfully"
         });
       } else {
         // Add new product
-        await addProduct(productData, imageFile || undefined);
+        await addProduct(productData, imageFiles.length > 0 ? imageFiles : undefined);
         toast({
           title: "Success",
           description: "Product added successfully"
@@ -438,28 +458,65 @@ const AdminProducts = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Product Image</label>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-20 h-20 rounded-md overflow-hidden">
-                      <img 
-                        src={imagePreview || formData.image} 
-                        alt="Product preview" 
-                        className="w-full h-full object-cover"
-                      />
+                  <label className="block text-sm font-medium mb-1">Product Images</label>
+                  
+                  {/* Upload Button */}
+                  <label className="w-full mb-3 block">
+                    <div className="btn-outline flex items-center justify-center w-full py-2 rounded-md cursor-pointer">
+                      <Upload className="w-4 h-4 mr-2" />
+                      <span>Add Images</span>
                     </div>
-                    <label className="flex-1">
-                      <div className="btn-outline flex items-center justify-center w-full py-2 rounded-md cursor-pointer">
-                        <Upload className="w-4 h-4 mr-2" />
-                        <span>Upload Image</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      multiple
+                      className="hidden" 
+                      onChange={handleImageChange}
+                    />
+                  </label>
+
+                  {/* Image Preview Grid */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* Existing Images */}
+                    {existingImages.map((url, index) => (
+                      <div key={`existing-${index}`} className="relative group w-20 h-20 rounded-md overflow-hidden">
+                        <img 
+                          src={url} 
+                          alt={`Existing ${index + 1}`} 
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeExistingImage(index)}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
                       </div>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
-                        onChange={handleImageChange}
-                      />
-                    </label>
+                    ))}
+
+                    {/* New Image Previews */}
+                    {imagePreviews.map((preview, index) => (
+                      <div key={`new-${index}`} className="relative group w-20 h-20 rounded-md overflow-hidden">
+                        <img 
+                          src={preview} 
+                          alt={`New ${index + 1}`} 
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
+                  
+                  {existingImages.length === 0 && imagePreviews.length === 0 && (
+                    <p className="text-sm text-muted-foreground mt-2">No images uploaded yet</p>
+                  )}
                 </div>
               </div>
             </div>

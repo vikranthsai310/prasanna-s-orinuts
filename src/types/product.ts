@@ -3,7 +3,8 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  image: string;
+  image: string; // Primary image (for backward compatibility)
+  images?: string[]; // Multiple images array (optional for backward compatibility)
   prices: {
     '250g': number;
     '500g': number;

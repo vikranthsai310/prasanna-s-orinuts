@@ -95,22 +95,32 @@ export const getProductById = async (id: string): Promise<Product | null> => {
 };
 
 // Add a new product
-export const addProduct = async (product: Omit<Product, 'id'>, imageFile?: File): Promise<string> => {
-  let imageUrl = product.image;
+export const addProduct = async (
+  product: Omit<Product, 'id'>, 
+  imageFiles?: File[]
+): Promise<string> => {
+  let imageUrls: string[] = [];
+  let primaryImageUrl = product.image;
   
-  // Upload image if provided
-  if (imageFile) {
-    const storageRef = ref(storage, `products/${Date.now()}_${imageFile.name}`);
-    const uploadResult = await uploadBytes(storageRef, imageFile);
-    imageUrl = await getDownloadURL(uploadResult.ref);
+  // Upload multiple images if provided
+  if (imageFiles && imageFiles.length > 0) {
+    const uploadPromises = imageFiles.map(async (file) => {
+      const storageRef = ref(storage, `products/${Date.now()}_${Math.random()}_${file.name}`);
+      const uploadResult = await uploadBytes(storageRef, file);
+      return await getDownloadURL(uploadResult.ref);
+    });
+    
+    imageUrls = await Promise.all(uploadPromises);
+    primaryImageUrl = imageUrls[0]; // First image is the primary image
   }
   
-  const productWithImage = {
+  const productWithImages = {
     ...product,
-    image: imageUrl
+    image: primaryImageUrl,
+    images: imageUrls.length > 0 ? imageUrls : [primaryImageUrl]
   };
   
-  const docRef = await addDoc(collection(db, PRODUCTS_COLLECTION), productWithImage);
+  const docRef = await addDoc(collection(db, PRODUCTS_COLLECTION), productWithImages);
   return docRef.id;
 };
 
@@ -118,32 +128,48 @@ export const addProduct = async (product: Omit<Product, 'id'>, imageFile?: File)
 export const updateProduct = async (
   id: string, 
   product: Partial<Omit<Product, 'id'>>,
-  imageFile?: File
+  newImageFiles?: File[],
+  existingImages?: string[]
 ): Promise<void> => {
   const docRef = doc(db, PRODUCTS_COLLECTION, id);
   
   let updateData = { ...product };
   
-  // Upload new image if provided
-  if (imageFile) {
-    // Get the current product to check if we need to delete the old image
-    const currentProduct = await getProductById(id);
+  // Get current product for comparison
+  const currentProduct = await getProductById(id);
+  
+  // Upload new images if provided
+  let newImageUrls: string[] = [];
+  if (newImageFiles && newImageFiles.length > 0) {
+    const uploadPromises = newImageFiles.map(async (file) => {
+      const storageRef = ref(storage, `products/${Date.now()}_${Math.random()}_${file.name}`);
+      const uploadResult = await uploadBytes(storageRef, file);
+      return await getDownloadURL(uploadResult.ref);
+    });
     
-    // Upload new image
-    const storageRef = ref(storage, `products/${Date.now()}_${imageFile.name}`);
-    const uploadResult = await uploadBytes(storageRef, imageFile);
-    const newImageUrl = await getDownloadURL(uploadResult.ref);
+    newImageUrls = await Promise.all(uploadPromises);
+  }
+  
+  // Combine existing images with new uploads
+  const allImages = [...(existingImages || []), ...newImageUrls];
+  
+  if (allImages.length > 0) {
+    updateData.images = allImages;
+    updateData.image = allImages[0]; // First image is primary
     
-    // Add new image URL to update data
-    updateData.image = newImageUrl;
-    
-    // Delete old image if it's not a placeholder
-    if (currentProduct && !currentProduct.image.includes('placeholder')) {
-      try {
-        const oldImageRef = ref(storage, currentProduct.image);
-        await deleteObject(oldImageRef);
-      } catch (error) {
-        console.error('Error deleting old image:', error);
+    // Delete old images that are no longer used (not in existingImages)
+    if (currentProduct?.images) {
+      const imagesToDelete = currentProduct.images.filter(
+        (url) => !existingImages?.includes(url) && !url.includes('placeholder')
+      );
+      
+      for (const imageUrl of imagesToDelete) {
+        try {
+          const imageRef = ref(storage, imageUrl);
+          await deleteObject(imageRef);
+        } catch (error) {
+          console.error('Error deleting old image:', error);
+        }
       }
     }
   }
@@ -153,15 +179,22 @@ export const updateProduct = async (
 
 // Delete a product
 export const deleteProduct = async (id: string): Promise<void> => {
-  // Get the product to check if we need to delete the image
+  // Get the product to check if we need to delete images
   const product = await getProductById(id);
   
-  if (product && !product.image.includes('placeholder')) {
-    try {
-      const imageRef = ref(storage, product.image);
-      await deleteObject(imageRef);
-    } catch (error) {
-      console.error('Error deleting product image:', error);
+  if (product) {
+    // Delete all product images
+    const imagesToDelete = product.images || [product.image];
+    
+    for (const imageUrl of imagesToDelete) {
+      if (!imageUrl.includes('placeholder')) {
+        try {
+          const imageRef = ref(storage, imageUrl);
+          await deleteObject(imageRef);
+        } catch (error) {
+          console.error('Error deleting product image:', error);
+        }
+      }
     }
   }
   
