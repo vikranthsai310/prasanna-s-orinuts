@@ -205,10 +205,10 @@ const WeightSelectionDialog = ({ isOpen, onClose, product }: WeightSelectionDial
                             <div className="relative">
                               <span className="text-xs text-muted-foreground/70 line-through">₹{option.price}</span>
                             </div>
-                            <p className="font-playfair text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                            <p className="font-playfair text-xl font-bold text-[#C99700]">
                               ₹{optionPricing.discountedPrice}
                             </p>
-                            <div className="text-[9px] font-medium text-green-600/90 uppercase tracking-wide">
+                            <div className="text-[9px] font-medium text-[#C99700]/90 uppercase tracking-wide">
                               SAVE ₹{optionPricing.savings}
                             </div>
                           </div>

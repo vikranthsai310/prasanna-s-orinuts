@@ -248,8 +248,7 @@ const ProductDetail = () => {
               <h1 className="font-playfair text-3xl font-bold flex-1">{product.name}</h1>
               {discount !== null && (
                 <div className="relative flex-shrink-0">
-                  <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-orange-500 rounded-xl blur-md opacity-40"></div>
-                  <div className="relative bg-gradient-to-r from-red-600 to-orange-500 text-white px-4 py-2 rounded-xl shadow-xl">
+                  <div className="bg-[#C99700] text-white px-4 py-2 rounded-xl shadow-xl border-2 border-[#DAA520]">
                     <div className="flex items-center gap-1.5">
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
@@ -299,11 +298,11 @@ const ProductDetail = () => {
                             <span className="text-sm text-muted-foreground/80 font-medium">₹{price}</span>
                             <div className="absolute top-1/2 left-0 w-full h-[1.5px] bg-red-500/70 transform -rotate-12"></div>
                           </div>
-                          <span className="font-bold text-lg bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                          <span className="font-bold text-lg text-[#C99700]">
                             ₹{discountedPrice.toFixed(0)}
                           </span>
                         </div>
-                        <span className="text-[10px] font-semibold text-green-600/90 tracking-wide">
+                        <span className="text-[10px] font-semibold text-[#C99700]/90 tracking-wide">
                           SAVE ₹{(price - discountedPrice).toFixed(0)}
                         </span>
                       </div>
@@ -356,18 +355,18 @@ const ProductDetail = () => {
                           <div className="absolute top-1/2 left-0 w-full h-[2px] bg-red-500/80 transform -rotate-12"></div>
                         </div>
                         <div className="flex items-baseline gap-1">
-                          <span className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                          <span className="text-4xl font-bold text-[#C99700]">
                             ₹{Math.floor(calculateDiscountedPrice(product.prices[selectedWeight], discount) * quantity)}
                           </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
-                        <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1 rounded-full">
+                        <div className="bg-[#C99700] text-white px-3 py-1 rounded-lg border-2 border-[#DAA520]">
                           <span className="text-sm font-bold tracking-wide">
                             YOU SAVE ₹{((product.prices[selectedWeight] - calculateDiscountedPrice(product.prices[selectedWeight], discount)) * quantity).toFixed(0)}
                           </span>
                         </div>
-                        <span className="text-xs text-green-600/80 font-semibold">
+                        <span className="text-xs text-[#C99700]/80 font-semibold">
                           ({discount}% discount applied)
                         </span>
                       </div>

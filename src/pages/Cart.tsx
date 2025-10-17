@@ -221,7 +221,7 @@ const Cart = () => {
                               <span className="font-bold text-[10px] tracking-wide">{pricing.discountPercentage}% OFF</span>
                             </div>
                           </div>
-                          <p className="font-bold text-lg bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                          <p className="font-bold text-lg text-[#C99700]">
                             ₹{item.price.toLocaleString()}
                           </p>
                         </div>
@@ -309,7 +309,7 @@ const Cart = () => {
                           <span className="text-base text-muted-foreground/80">₹{originalPrice}</span>
                           <div className="absolute top-1/2 left-0 w-full h-[1.5px] bg-red-500/70 transform -rotate-12"></div>
                         </div>
-                        <p className="font-bold text-lg bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                        <p className="font-bold text-lg text-[#C99700]">
                           ₹{item.price.toLocaleString()}
                         </p>
                         <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-2 py-1 rounded-full">

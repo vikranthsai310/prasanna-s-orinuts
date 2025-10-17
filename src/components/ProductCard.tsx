@@ -57,11 +57,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
           <div className="relative overflow-hidden rounded-lg mb-4 bg-accent">
             {discount !== null && (
               <div className="absolute top-3 right-3 z-10">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-500 rounded-full blur-sm opacity-75"></div>
-                  <div className="relative bg-gradient-to-r from-red-600 to-red-500 text-white px-3 py-1.5 rounded-full shadow-lg">
-                    <span className="font-bold text-sm tracking-wide">{discount}% OFF</span>
-                  </div>
+                <div className="bg-[#C99700] text-white px-3 py-1.5 rounded-lg shadow-lg border-2 border-[#DAA520]">
+                  <span className="font-bold text-sm tracking-wide">{discount}% OFF</span>
                 </div>
               </div>
             )}
@@ -106,14 +103,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
                       <div className="absolute top-1/2 left-0 w-full h-[1.5px] bg-red-500/70 transform -rotate-12"></div>
                     </div>
                     <div className="flex items-baseline gap-1">
-                      <span className="font-bold text-xl bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                      <span className="font-bold text-xl text-[#C99700]">
                         ₹{discountedPrice.toFixed(0)}
                       </span>
                       {discountedPrice % 1 !== 0 && (
-                        <span className="text-xs text-green-600/80">.{(discountedPrice % 1).toFixed(2).slice(2)}</span>
+                        <span className="text-xs text-[#C99700]/80">.{(discountedPrice % 1).toFixed(2).slice(2)}</span>
                       )}
                     </div>
-                    <div className="text-[10px] font-medium text-green-600/90 tracking-wide">
+                    <div className="text-[10px] font-medium text-[#C99700]/90 tracking-wide">
                       SAVE ₹{(basePrice - discountedPrice).toFixed(0)}
                     </div>
                   </div>
