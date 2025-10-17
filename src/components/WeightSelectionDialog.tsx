@@ -93,31 +93,31 @@ const WeightSelectionDialog = ({ isOpen, onClose, product }: WeightSelectionDial
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="relative bg-gradient-to-r from-[#F8F5F0] to-[#F6E1B3]/30 p-6 border-b border-[#E0DCD7]">
+          <div className="relative bg-gradient-to-r from-[#F8F5F0] to-[#F6E1B3]/30 p-5 border-b border-[#E0DCD7]">
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 text-[#6B5750] hover:text-[#2C1F1A] transition-colors p-2 hover:bg-white/80 rounded-lg"
+              className="absolute top-3 right-3 text-[#6B5750] hover:text-[#2C1F1A] transition-colors p-1.5 hover:bg-white/80 rounded-lg"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
             
-            <div className="flex items-start gap-4 pr-8">
-              {/* Product Image */}
+            <div className="flex items-start gap-3 pr-8">
+              {/* Product Image - Smaller */}
               <div className="relative flex-shrink-0">
-                <div className="absolute inset-0 bg-[#C99700]/20 rounded-xl blur-md"></div>
+                <div className="absolute inset-0 bg-[#C99700]/20 rounded-lg blur-md"></div>
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="relative w-20 h-20 object-cover rounded-xl shadow-lg border-2 border-white"
+                  className="relative w-16 h-16 object-cover rounded-lg shadow-lg border-2 border-white"
                 />
               </div>
               
               {/* Product Info */}
               <div>
-                <h2 className="font-playfair text-2xl font-bold text-[#2C1F1A] mb-1">
+                <h2 className="font-playfair text-xl font-bold text-[#2C1F1A] mb-0.5">
                   {product.name}
                 </h2>
-                <p className="text-[#6B5750] text-sm">
+                <p className="text-[#6B5750] text-xs">
                   Select your preferred weight
                 </p>
               </div>
@@ -125,98 +125,95 @@ const WeightSelectionDialog = ({ isOpen, onClose, product }: WeightSelectionDial
           </div>
 
           {/* Weight Options */}
-          <div className="p-6 bg-white">
-            {/* Product Discount Badge */}
+          <div className="p-5 bg-white max-h-[60vh] overflow-y-auto">
+            {/* Product Discount Badge - Compact */}
             {pricing.hasDiscount && (
-              <div className="mb-4 p-3 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-xl">
+              <div className="mb-3 p-2.5 bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg">
                 <div className="flex items-center justify-center gap-2">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-500 rounded-full blur-sm opacity-75"></div>
-                    <div className="relative bg-gradient-to-r from-red-600 to-red-500 text-white px-3 py-1.5 rounded-full shadow-lg">
-                      <span className="font-bold text-sm tracking-wide">{pricing.discountPercentage}% OFF</span>
-                    </div>
+                  <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-2.5 py-1 rounded-full shadow-md">
+                    <span className="font-bold text-xs tracking-wide">{pricing.discountPercentage}% OFF</span>
                   </div>
-                  <span className="text-sm font-semibold text-red-700">Special Discount Applied!</span>
+                  <span className="text-xs font-semibold text-red-700">Special Discount Applied!</span>
                 </div>
               </div>
             )}
 
-            <div className="space-y-3 mb-6">
+            <div className="space-y-2.5 mb-6">
               {weightOptions.map((option) => {
                 const optionPricing = calculatePricing(product.id, option.price);
+                const isSelected = option.weight === selectedWeight;
                 
                 return (
                   <button
                     key={option.weight}
                     onClick={() => setSelectedWeight(option.weight)}
                     className={`
-                      relative w-full p-4 rounded-xl border-2 transition-all duration-200 bg-white
+                      relative w-full p-3 rounded-lg border-2 transition-all duration-200 bg-white
                       ${selectedWeight === option.weight 
-                        ? 'border-[#C99700] bg-gradient-to-r from-[#FFF9E6] to-[#FFF5D6] shadow-lg scale-[1.02] ring-2 ring-[#C99700]/20' 
-                        : 'border-[#E0DCD7] hover:border-[#C99700]/50 hover:bg-[#FFF9E6]/50 hover:shadow-md'
+                        ? 'border-[#C99700] bg-gradient-to-r from-[#FFF9E6] to-[#FFF5D6] shadow-md scale-[1.01] ring-1 ring-[#C99700]/20' 
+                        : 'border-[#E0DCD7] hover:border-[#C99700]/50 hover:bg-[#FFF9E6]/50'
                       }
                     `}
                   >
-                    {/* Popular Badge */}
+                    {/* Popular Badge - Compact */}
                     {option.popular && (
-                      <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[#C99700] to-[#E5A800] text-[#4B2E28] text-xs font-bold px-3 py-1 rounded-full shadow-lg border border-[#C99700]">
+                      <div className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-[#C99700] to-[#E5A800] text-[#4B2E28] text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md border border-[#C99700]">
                         Popular
                       </div>
                     )}
                     
-                    {/* Bulk Savings Badge */}
+                    {/* Bulk Savings Badge - Compact */}
                     {option.savings && !optionPricing.hasDiscount && (
-                      <div className="absolute -top-2 left-4 bg-gradient-to-r from-green-600 to-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg border border-green-700">
+                      <div className="absolute -top-1.5 left-3 bg-gradient-to-r from-green-600 to-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md border border-green-700">
                         {option.savings}
                       </div>
                     )}
 
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {/* Radio/Check indicator */}
+                      <div className="flex items-center gap-2.5">
+                        {/* Radio/Check indicator - Smaller */}
                         <div className={`
-                          w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all
+                          w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
                           ${selectedWeight === option.weight 
-                            ? 'border-[#C99700] bg-[#C99700] shadow-md' 
+                            ? 'border-[#C99700] bg-[#C99700] shadow-sm' 
                             : 'border-[#E0DCD7] bg-white'
                           }
                         `}>
                           {selectedWeight === option.weight && (
-                            <Check className="w-4 h-4 text-[#4B2E28]" strokeWidth={3} />
+                            <Check className="w-3 h-3 text-[#4B2E28]" strokeWidth={3} />
                           )}
                         </div>
                         
-                        {/* Weight Info */}
+                        {/* Weight Info - Compact */}
                         <div className="text-left">
-                          <div className="flex items-center gap-2">
-                            <Package className="w-4 h-4 text-[#C99700]" strokeWidth={2} />
-                            <span className="font-bold text-lg text-[#2C1F1A]">
+                          <div className="flex items-center gap-1.5">
+                            <Package className="w-3.5 h-3.5 text-[#C99700]" strokeWidth={2} />
+                            <span className="font-bold text-base text-[#2C1F1A]">
                               {option.weight}
                             </span>
                           </div>
-                          <p className="text-xs text-[#6B5750] mt-0.5">
+                          <p className="text-[10px] text-[#6B5750] mt-0.5">
                             ₹{(optionPricing.discountedPrice / parseInt(option.weight)).toFixed(2)}/g
                           </p>
                         </div>
                       </div>
 
-                      {/* Price */}
+                      {/* Price - Compact */}
                       <div className="text-right">
                         {optionPricing.hasDiscount ? (
-                          <div className="flex flex-col items-end gap-1">
+                          <div className="flex flex-col items-end gap-0.5">
                             <div className="relative">
-                              <span className="text-sm text-muted-foreground/80">₹{option.price}</span>
-                              <div className="absolute top-1/2 left-0 w-full h-[1.5px] bg-red-500/70 transform -rotate-12"></div>
+                              <span className="text-xs text-muted-foreground/70 line-through">₹{option.price}</span>
                             </div>
-                            <p className="font-playfair text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                            <p className="font-playfair text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                               ₹{optionPricing.discountedPrice}
                             </p>
-                            <div className="text-[10px] font-medium text-green-600/90 uppercase tracking-wide">
+                            <div className="text-[9px] font-medium text-green-600/90 uppercase tracking-wide">
                               SAVE ₹{optionPricing.savings}
                             </div>
                           </div>
                         ) : (
-                          <p className="font-playfair text-2xl font-bold text-[#C99700]">
+                          <p className="font-playfair text-xl font-bold text-[#C99700]">
                             ₹{option.price}
                           </p>
                         )}
@@ -228,18 +225,18 @@ const WeightSelectionDialog = ({ isOpen, onClose, product }: WeightSelectionDial
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
+            <div className="flex gap-2.5">
               <Button
                 variant="outline"
                 onClick={onClose}
-                className="flex-1 py-6 text-base border-2 border-[#E0DCD7] hover:border-[#C99700] hover:bg-[#FFF9E6] transition-all bg-white"
+                className="flex-1 py-5 text-sm border-2 border-[#E0DCD7] hover:border-[#C99700] hover:bg-[#FFF9E6] transition-all bg-white"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleAddToCart}
                 disabled={isAdding}
-                className="flex-1 bg-gradient-to-r from-[#4B2E28] to-[#3A221F] text-[#C99700] hover:from-[#3A221F] hover:to-[#2C1A17] py-6 text-base shadow-lg hover:shadow-xl transition-all font-bold"
+                className="flex-1 bg-gradient-to-r from-[#4B2E28] to-[#3A221F] text-[#C99700] hover:from-[#3A221F] hover:to-[#2C1A17] py-5 text-sm shadow-lg hover:shadow-xl transition-all font-bold"
               >
                 {isAdding ? (
                   <>
@@ -248,22 +245,22 @@ const WeightSelectionDialog = ({ isOpen, onClose, product }: WeightSelectionDial
                   </>
                 ) : (
                   <>
-                    <ShoppingCart className="w-5 h-5 mr-2" />
+                    <ShoppingCart className="w-4 h-4 mr-2" />
                     Add to Cart - ₹{finalPrice}
                   </>
                 )}
               </Button>
             </div>
 
-            {/* Trust Indicators */}
-            <div className="mt-6 pt-6 border-t border-[#E0DCD7]">
+            {/* Trust Indicators - Compact */}
+            <div className="mt-5 pt-5 border-t border-[#E0DCD7]">
               <div className="flex items-center justify-center gap-6 text-xs text-[#6B5750]">
                 <div className="flex items-center gap-1">
-                  <Package className="w-4 h-4 text-[#C99700]" />
+                  <Package className="w-3.5 h-3.5 text-[#C99700]" />
                   <span className="font-medium">Premium Quality</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Check className="w-4 h-4 text-green-600" />
+                  <Check className="w-3.5 h-3.5 text-green-600" />
                   <span className="font-medium">Fresh & Hygienic</span>
                 </div>
               </div>
