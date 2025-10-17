@@ -10,12 +10,31 @@ import CartWeightSelector from '@/components/CartWeightSelector';
 import { sampleStorage } from '@/utils/sampleStorage';
 import { mockProducts } from '@/data/mockProducts';
 import { toast } from '@/components/ui/use-toast';
+import { useDiscounts } from '@/hooks/useDiscounts';
 
 const Cart = () => {
   const { items, updateQuantity, removeItem, totalPrice, addItem, updateItemWeight } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showProfileCompletion, setShowProfileCompletion] = useState(false);
+  const { calculatePricing } = useDiscounts();
+
+  // Calculate total savings
+  const calculateTotalSavings = () => {
+    let totalSavings = 0;
+    items.forEach(item => {
+      const pricing = calculatePricing(item.id, item.price);
+      // If item already has discount applied (price is discounted), calculate original price
+      if (pricing.hasDiscount) {
+        const originalPrice = Math.round(item.price / (1 - pricing.discountPercentage / 100));
+        const savingsPerItem = (originalPrice - item.price) * item.quantity;
+        totalSavings += savingsPerItem;
+      }
+    });
+    return Math.round(totalSavings);
+  };
+
+  const totalSavings = calculateTotalSavings();
 
   const addSamplesToCart = () => {
     const selectedSamples = sampleStorage.getSelectedSamples();
@@ -145,7 +164,17 @@ const Cart = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => (
+            {items.map((item) => {
+              const pricing = calculatePricing(item.id, item.price);
+              // Calculate original price if discount is applied
+              const originalPrice = pricing.hasDiscount 
+                ? Math.round(item.price / (1 - pricing.discountPercentage / 100))
+                : item.price;
+              const itemSavings = pricing.hasDiscount 
+                ? (originalPrice - item.price) * item.quantity
+                : 0;
+
+              return (
               <div 
                 key={`${item.id}-${item.weight}`} 
                 className="group bg-card border border-border/50 rounded-xl p-4 lg:p-6 shadow-sm hover:shadow-xl hover:border-secondary/30 transition-all duration-300 hover:-translate-y-1"
@@ -180,7 +209,25 @@ const Cart = () => {
                         />
                       </div>
                       
-                      <p className="text-secondary font-bold text-lg">₹{item.price.toLocaleString()}</p>
+                      {/* Price with Discount */}
+                      {pricing.hasDiscount ? (
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <div className="relative">
+                              <span className="text-sm text-muted-foreground/80">₹{originalPrice}</span>
+                              <div className="absolute top-1/2 left-0 w-full h-[1.5px] bg-red-500/70 transform -rotate-12"></div>
+                            </div>
+                            <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-2 py-0.5 rounded-full">
+                              <span className="font-bold text-[10px] tracking-wide">{pricing.discountPercentage}% OFF</span>
+                            </div>
+                          </div>
+                          <p className="font-bold text-lg bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                            ₹{item.price.toLocaleString()}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-secondary font-bold text-lg">₹{item.price.toLocaleString()}</p>
+                      )}
                     </div>
                     
                     {/* Delete Button - Top Right */}
@@ -255,7 +302,24 @@ const Cart = () => {
                       />
                     </div>
                     
-                    <p className="text-secondary font-bold text-lg">₹{item.price.toLocaleString()} <span className="text-sm text-muted-foreground font-normal">per unit</span></p>
+                    {/* Price with Discount */}
+                    {pricing.hasDiscount ? (
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <span className="text-base text-muted-foreground/80">₹{originalPrice}</span>
+                          <div className="absolute top-1/2 left-0 w-full h-[1.5px] bg-red-500/70 transform -rotate-12"></div>
+                        </div>
+                        <p className="font-bold text-lg bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                          ₹{item.price.toLocaleString()}
+                        </p>
+                        <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-2 py-1 rounded-full">
+                          <span className="font-bold text-xs tracking-wide">{pricing.discountPercentage}% OFF</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground font-normal">per unit</span>
+                      </div>
+                    ) : (
+                      <p className="text-secondary font-bold text-lg">₹{item.price.toLocaleString()} <span className="text-sm text-muted-foreground font-normal">per unit</span></p>
+                    )}
                   </div>
                   
                   {/* Quantity Controls */}
@@ -298,7 +362,8 @@ const Cart = () => {
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
             
             {/* Continue Shopping Link - Mobile */}
             <Link to="/products" className="block lg:hidden">
@@ -318,6 +383,17 @@ const Cart = () => {
                   <span className="text-muted-foreground">Subtotal ({items.length} {items.length === 1 ? 'item' : 'items'})</span>
                   <span className="font-semibold">₹{totalPrice.toLocaleString()}</span>
                 </div>
+                
+                {/* Show total savings if applicable */}
+                {totalSavings > 0 && (
+                  <div className="flex items-center justify-between text-base bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg p-3 -mx-1">
+                    <div className="flex items-center gap-2">
+                      <Gift className="w-5 h-5 text-green-600" />
+                      <span className="font-semibold text-green-700">You're Saving</span>
+                    </div>
+                    <span className="font-bold text-lg text-green-600">₹{totalSavings.toLocaleString()}</span>
+                  </div>
+                )}
                 
                 <div className="flex items-center justify-between text-base">
                   <div className="flex items-center gap-2">

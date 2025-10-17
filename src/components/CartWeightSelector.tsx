@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { mockProducts } from '@/data/mockProducts';
+import { useDiscounts } from '@/hooks/useDiscounts';
 
 interface CartWeightSelectorProps {
   productId: string;
@@ -10,6 +11,7 @@ interface CartWeightSelectorProps {
 
 const CartWeightSelector = ({ productId, currentWeight, onWeightChange }: CartWeightSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { calculatePricing } = useDiscounts();
   
   // Find the product to get available weights and prices
   const product = mockProducts.find(p => p.id === productId);
@@ -19,8 +21,9 @@ const CartWeightSelector = ({ productId, currentWeight, onWeightChange }: CartWe
   const weights = Object.keys(product.prices);
   
   const handleWeightSelect = (weight: string) => {
-    const newPrice = product.prices[weight];
-    onWeightChange(weight, newPrice);
+    const originalPrice = product.prices[weight];
+    const pricing = calculatePricing(productId, originalPrice);
+    onWeightChange(weight, pricing.discountedPrice); // Pass discounted price
     setIsOpen(false);
   };
 
@@ -56,7 +59,8 @@ const CartWeightSelector = ({ productId, currentWeight, onWeightChange }: CartWe
                 Select Weight
               </div>
               {weights.map((weight) => {
-                const price = product.prices[weight];
+                const originalPrice = product.prices[weight];
+                const pricing = calculatePricing(productId, originalPrice);
                 const isSelected = weight === currentWeight;
                 
                 return (
@@ -82,9 +86,22 @@ const CartWeightSelector = ({ productId, currentWeight, onWeightChange }: CartWe
                         {weight}
                       </span>
                     </div>
-                    <span className={`font-bold text-sm ${isSelected ? 'text-[#C99700]' : 'text-[#6B5750]'}`}>
-                      ₹{price}
-                    </span>
+                    
+                    {/* Price with discount */}
+                    {pricing.hasDiscount ? (
+                      <div className="flex flex-col items-end gap-0.5">
+                        <div className="relative">
+                          <span className="text-[10px] text-muted-foreground/70 line-through">₹{originalPrice}</span>
+                        </div>
+                        <span className={`font-bold text-sm ${isSelected ? 'text-green-600' : 'text-green-600/80'}`}>
+                          ₹{pricing.discountedPrice}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className={`font-bold text-sm ${isSelected ? 'text-[#C99700]' : 'text-[#6B5750]'}`}>
+                        ₹{originalPrice}
+                      </span>
+                    )}
                   </button>
                 );
               })}

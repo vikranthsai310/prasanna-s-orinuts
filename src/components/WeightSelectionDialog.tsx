@@ -3,6 +3,7 @@ import { X, Package, Check, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from '@/components/ui/use-toast';
+import { useDiscounts } from '@/hooks/useDiscounts';
 
 interface WeightOption {
   weight: string;
@@ -26,6 +27,7 @@ interface WeightSelectionDialogProps {
 
 const WeightSelectionDialog = ({ isOpen, onClose, product }: WeightSelectionDialogProps) => {
   const { addItem } = useCart();
+  const { calculatePricing } = useDiscounts();
   const [selectedWeight, setSelectedWeight] = useState<string>('250g');
   const [isAdding, setIsAdding] = useState(false);
 
@@ -36,24 +38,30 @@ const WeightSelectionDialog = ({ isOpen, onClose, product }: WeightSelectionDial
     const basePrice = product.prices['250g'] || 0;
     const currentPrice = price;
     const expectedPrice = basePrice * (parseInt(weight) / 250);
-    const savings = expectedPrice > currentPrice ? Math.round(((expectedPrice - currentPrice) / expectedPrice) * 100) : 0;
+    const bulkSavings = expectedPrice > currentPrice ? Math.round(((expectedPrice - currentPrice) / expectedPrice) * 100) : 0;
 
     return {
       weight,
       price,
       popular: index === 1, // Middle option is popular
-      savings: savings > 0 ? `Save ${savings}%` : undefined
+      savings: bulkSavings > 0 ? `Save ${bulkSavings}%` : undefined
     };
   });
+
+  // Calculate pricing with discounts
+  const selectedPrice = product.prices[selectedWeight];
+  const pricing = calculatePricing(product.id, selectedPrice);
+  const finalPrice = pricing.discountedPrice;
 
   const handleAddToCart = () => {
     setIsAdding(true);
     const selectedPrice = product.prices[selectedWeight];
+    const pricing = calculatePricing(product.id, selectedPrice);
     
     addItem({
       id: product.id,
       name: product.name,
-      price: selectedPrice,
+      price: pricing.discountedPrice, // Use discounted price
       weight: selectedWeight,
       image: product.image
     });
@@ -118,71 +126,105 @@ const WeightSelectionDialog = ({ isOpen, onClose, product }: WeightSelectionDial
 
           {/* Weight Options */}
           <div className="p-6 bg-white">
-            <div className="space-y-3 mb-6">
-              {weightOptions.map((option) => (
-                <button
-                  key={option.weight}
-                  onClick={() => setSelectedWeight(option.weight)}
-                  className={`
-                    relative w-full p-4 rounded-xl border-2 transition-all duration-200 bg-white
-                    ${selectedWeight === option.weight 
-                      ? 'border-[#C99700] bg-gradient-to-r from-[#FFF9E6] to-[#FFF5D6] shadow-lg scale-[1.02] ring-2 ring-[#C99700]/20' 
-                      : 'border-[#E0DCD7] hover:border-[#C99700]/50 hover:bg-[#FFF9E6]/50 hover:shadow-md'
-                    }
-                  `}
-                >
-                  {/* Popular Badge */}
-                  {option.popular && (
-                    <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[#C99700] to-[#E5A800] text-[#4B2E28] text-xs font-bold px-3 py-1 rounded-full shadow-lg border border-[#C99700]">
-                      Popular
-                    </div>
-                  )}
-                  
-                  {/* Savings Badge */}
-                  {option.savings && (
-                    <div className="absolute -top-2 left-4 bg-gradient-to-r from-green-600 to-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg border border-green-700">
-                      {option.savings}
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {/* Radio/Check indicator */}
-                      <div className={`
-                        w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all
-                        ${selectedWeight === option.weight 
-                          ? 'border-[#C99700] bg-[#C99700] shadow-md' 
-                          : 'border-[#E0DCD7] bg-white'
-                        }
-                      `}>
-                        {selectedWeight === option.weight && (
-                          <Check className="w-4 h-4 text-[#4B2E28]" strokeWidth={3} />
-                        )}
-                      </div>
-                      
-                      {/* Weight Info */}
-                      <div className="text-left">
-                        <div className="flex items-center gap-2">
-                          <Package className="w-4 h-4 text-[#C99700]" strokeWidth={2} />
-                          <span className="font-bold text-lg text-[#2C1F1A]">
-                            {option.weight}
-                          </span>
-                        </div>
-                        <p className="text-xs text-[#6B5750] mt-0.5">
-                          ₹{(option.price / parseInt(option.weight)).toFixed(2)}/g
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Price */}
-                    <div className="text-right">
-                      <p className="font-playfair text-2xl font-bold text-[#C99700]">
-                        ₹{option.price}
-                      </p>
+            {/* Product Discount Badge */}
+            {pricing.hasDiscount && (
+              <div className="mb-4 p-3 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-xl">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-500 rounded-full blur-sm opacity-75"></div>
+                    <div className="relative bg-gradient-to-r from-red-600 to-red-500 text-white px-3 py-1.5 rounded-full shadow-lg">
+                      <span className="font-bold text-sm tracking-wide">{pricing.discountPercentage}% OFF</span>
                     </div>
                   </div>
-                </button>
-              ))}
+                  <span className="text-sm font-semibold text-red-700">Special Discount Applied!</span>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3 mb-6">
+              {weightOptions.map((option) => {
+                const optionPricing = calculatePricing(product.id, option.price);
+                
+                return (
+                  <button
+                    key={option.weight}
+                    onClick={() => setSelectedWeight(option.weight)}
+                    className={`
+                      relative w-full p-4 rounded-xl border-2 transition-all duration-200 bg-white
+                      ${selectedWeight === option.weight 
+                        ? 'border-[#C99700] bg-gradient-to-r from-[#FFF9E6] to-[#FFF5D6] shadow-lg scale-[1.02] ring-2 ring-[#C99700]/20' 
+                        : 'border-[#E0DCD7] hover:border-[#C99700]/50 hover:bg-[#FFF9E6]/50 hover:shadow-md'
+                      }
+                    `}
+                  >
+                    {/* Popular Badge */}
+                    {option.popular && (
+                      <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[#C99700] to-[#E5A800] text-[#4B2E28] text-xs font-bold px-3 py-1 rounded-full shadow-lg border border-[#C99700]">
+                        Popular
+                      </div>
+                    )}
+                    
+                    {/* Bulk Savings Badge */}
+                    {option.savings && !optionPricing.hasDiscount && (
+                      <div className="absolute -top-2 left-4 bg-gradient-to-r from-green-600 to-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg border border-green-700">
+                        {option.savings}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {/* Radio/Check indicator */}
+                        <div className={`
+                          w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all
+                          ${selectedWeight === option.weight 
+                            ? 'border-[#C99700] bg-[#C99700] shadow-md' 
+                            : 'border-[#E0DCD7] bg-white'
+                          }
+                        `}>
+                          {selectedWeight === option.weight && (
+                            <Check className="w-4 h-4 text-[#4B2E28]" strokeWidth={3} />
+                          )}
+                        </div>
+                        
+                        {/* Weight Info */}
+                        <div className="text-left">
+                          <div className="flex items-center gap-2">
+                            <Package className="w-4 h-4 text-[#C99700]" strokeWidth={2} />
+                            <span className="font-bold text-lg text-[#2C1F1A]">
+                              {option.weight}
+                            </span>
+                          </div>
+                          <p className="text-xs text-[#6B5750] mt-0.5">
+                            ₹{(optionPricing.discountedPrice / parseInt(option.weight)).toFixed(2)}/g
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Price */}
+                      <div className="text-right">
+                        {optionPricing.hasDiscount ? (
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="relative">
+                              <span className="text-sm text-muted-foreground/80">₹{option.price}</span>
+                              <div className="absolute top-1/2 left-0 w-full h-[1.5px] bg-red-500/70 transform -rotate-12"></div>
+                            </div>
+                            <p className="font-playfair text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                              ₹{optionPricing.discountedPrice}
+                            </p>
+                            <div className="text-[10px] font-medium text-green-600/90 uppercase tracking-wide">
+                              SAVE ₹{optionPricing.savings}
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="font-playfair text-2xl font-bold text-[#C99700]">
+                            ₹{option.price}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Action Buttons */}
@@ -207,7 +249,7 @@ const WeightSelectionDialog = ({ isOpen, onClose, product }: WeightSelectionDial
                 ) : (
                   <>
                     <ShoppingCart className="w-5 h-5 mr-2" />
-                    Add to Cart - ₹{product.prices[selectedWeight]}
+                    Add to Cart - ₹{finalPrice}
                   </>
                 )}
               </Button>
