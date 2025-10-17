@@ -177,6 +177,28 @@ service cloud.firestore {
     }
     
     // ============================================
+    // COUPONS COLLECTION
+    // ============================================
+    match /coupons/{couponId} {
+      // Anyone can read active coupons
+      allow read: if true;
+      
+      // Only admins can create/update/delete coupons
+      allow create, update, delete: if isAdmin() || isAdminEmail() || isAdminPhone();
+    }
+    
+    // ============================================
+    // PRODUCT DISCOUNTS COLLECTION
+    // ============================================
+    match /productDiscounts/{productId} {
+      // Anyone can read discounts (needed to display discounted prices)
+      allow read: if true;
+      
+      // Only admins can create/update/delete discounts
+      allow create, update, delete: if isAdmin() || isAdminEmail() || isAdminPhone();
+    }
+    
+    // ============================================
     // DENY ALL OTHER COLLECTIONS
     // ============================================
     match /{document=**} {

@@ -179,6 +179,22 @@ service cloud.firestore {
     }
     
     // ============================================
+    // PRODUCT DISCOUNTS COLLECTION
+    // ============================================
+    match /productDiscounts/{productId} {
+      // Anyone can read discounts (needed to display discounted prices)
+      allow read: if true;
+      
+      // Only admins can create/update/delete discounts
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Allow collection queries for product discounts
+    match /productDiscounts {
+      allow list: if true; // Anyone can list discounts
+    }
+    
+    // ============================================
     // COUPON USAGE TRACKING
     // ============================================
     match /couponUsage/{usageId} {

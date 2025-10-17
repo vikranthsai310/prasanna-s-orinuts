@@ -17,7 +17,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -62,10 +63,14 @@ const ProductDiscounts = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      console.log('🔄 Loading discounts and products...');
       const [discountsData, productsData] = await Promise.all([
         getAllDiscounts(),
         getAllProducts()
       ]);
+      console.log('✅ Loaded discounts:', discountsData.length);
+      console.log('✅ Loaded products:', productsData.length);
+      console.log('📦 Products:', productsData);
       setDiscounts(discountsData);
       setProducts(productsData);
     } catch (error) {
@@ -77,6 +82,8 @@ const ProductDiscounts = () => {
   };
 
   const handleOpenDialog = (discount?: ProductDiscount) => {
+    console.log('🔓 Opening dialog, available products:', availableProducts.length);
+    console.log('📦 Available products:', availableProducts);
     if (discount) {
       setEditingDiscount(discount);
       setSelectedProductId(discount.id);
@@ -391,6 +398,12 @@ const ProductDiscounts = () => {
             <DialogTitle>
               {editingDiscount ? 'Edit Discount' : 'Add New Discount'}
             </DialogTitle>
+            <DialogDescription>
+              {editingDiscount 
+                ? 'Update the discount percentage for this product. The discount will be applied immediately if active.'
+                : 'Select a product and set a percentage-based discount. You can see a live preview of the discounted price.'
+              }
+            </DialogDescription>
           </DialogHeader>
           
           <form onSubmit={handleSubmit}>
@@ -398,22 +411,38 @@ const ProductDiscounts = () => {
               {/* Product Selection */}
               <div className="space-y-2">
                 <Label htmlFor="product">Product</Label>
-                <Select
-                  value={selectedProductId}
-                  onValueChange={setSelectedProductId}
-                  disabled={!!editingDiscount}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a product" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableProducts.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {product.name} - ₹{product.prices['250g']}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {availableProducts.length === 0 && !editingDiscount ? (
+                  <div className="p-4 border rounded-md text-center text-muted-foreground">
+                    <p className="mb-2">No products available</p>
+                    <p className="text-sm">All products already have discounts or loading failed</p>
+                  </div>
+                ) : (
+                  <Select
+                    value={selectedProductId}
+                    onValueChange={(value) => {
+                      console.log('🎯 Selected product:', value);
+                      setSelectedProductId(value);
+                    }}
+                    disabled={!!editingDiscount}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a product" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableProducts.length > 0 ? (
+                        availableProducts.map((product) => (
+                          <SelectItem key={product.id} value={product.id}>
+                            {product.name} - ₹{product.prices['250g']}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center text-muted-foreground text-sm">
+                          No products available
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
                 {editingDiscount && (
                   <p className="text-sm text-muted-foreground">
                     Product cannot be changed. Delete and create new discount to change product.
