@@ -56,9 +56,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <Link to={`/products/${product.id}`}>
           <div className="relative overflow-hidden rounded-lg mb-4 bg-accent">
             {discount !== null && (
-              <Badge className="absolute top-2 right-2 z-10 bg-red-500 text-white">
-                {discount}% OFF
-              </Badge>
+              <div className="absolute top-3 right-3 z-10">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-500 rounded-full blur-sm opacity-75"></div>
+                  <div className="relative bg-gradient-to-r from-red-600 to-red-500 text-white px-3 py-1.5 rounded-full shadow-lg">
+                    <span className="font-bold text-sm tracking-wide">{discount}% OFF</span>
+                  </div>
+                </div>
+              </div>
             )}
             <img
               src={validateImageUrl(product.image)}
@@ -89,22 +94,31 @@ const ProductCard = ({ product }: ProductCardProps) => {
             <p className="text-muted-foreground text-sm line-clamp-2">
               {product.description}
             </p>
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
+            <div className="flex items-center justify-between mt-3">
+              <div className="text-sm text-muted-foreground font-medium">
                 Starting from
               </div>
               <div className="flex flex-col items-end">
                 {discountedPrice !== null ? (
-                  <>
-                    <div className="text-sm line-through text-muted-foreground">
-                      ₹{basePrice}
+                  <div className="flex flex-col items-end gap-0.5">
+                    <div className="relative">
+                      <span className="text-sm text-muted-foreground/80 font-medium">₹{basePrice}</span>
+                      <div className="absolute top-1/2 left-0 w-full h-[1.5px] bg-red-500/70 transform -rotate-12"></div>
                     </div>
-                    <div className="font-semibold text-lg text-green-600">
-                      ₹{discountedPrice.toFixed(2)}
+                    <div className="flex items-baseline gap-1">
+                      <span className="font-bold text-xl bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                        ₹{discountedPrice.toFixed(0)}
+                      </span>
+                      {discountedPrice % 1 !== 0 && (
+                        <span className="text-xs text-green-600/80">.{(discountedPrice % 1).toFixed(2).slice(2)}</span>
+                      )}
                     </div>
-                  </>
+                    <div className="text-[10px] font-medium text-green-600/90 tracking-wide">
+                      SAVE ₹{(basePrice - discountedPrice).toFixed(0)}
+                    </div>
+                  </div>
                 ) : (
-                  <div className="font-semibold text-lg text-secondary">
+                  <div className="font-bold text-xl text-secondary">
                     ₹{basePrice}
                   </div>
                 )}

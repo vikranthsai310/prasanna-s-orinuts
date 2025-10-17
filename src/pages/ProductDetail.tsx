@@ -244,12 +244,24 @@ const ProductDetail = () => {
         {/* Product Info */}
         <div className="space-y-6">
           <div>
-            <div className="flex items-start gap-3 mb-2">
+            <div className="flex items-start gap-4 mb-3">
               <h1 className="font-playfair text-3xl font-bold flex-1">{product.name}</h1>
               {discount !== null && (
-                <Badge className="bg-red-500 text-white text-lg px-3 py-1">
-                  {discount}% OFF
-                </Badge>
+                <div className="relative flex-shrink-0">
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-orange-500 rounded-xl blur-md opacity-40"></div>
+                  <div className="relative bg-gradient-to-r from-red-600 to-orange-500 text-white px-4 py-2 rounded-xl shadow-xl">
+                    <div className="flex items-center gap-1.5">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                        <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                      </svg>
+                      <span className="font-bold text-lg tracking-tight">{discount}% OFF</span>
+                    </div>
+                    <div className="text-[10px] font-semibold tracking-wider uppercase opacity-90 mt-0.5">
+                      Special Offer
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
             <p className="text-muted-foreground text-lg">{product.description}</p>
@@ -257,28 +269,46 @@ const ProductDetail = () => {
 
           {/* Weight Selection */}
           <div>
-            <h3 className="font-semibold mb-3">Select Weight</h3>
-            <div className="space-y-2">
+            <h3 className="font-semibold mb-3 text-lg">Select Weight</h3>
+            <div className="space-y-3">
               {Object.entries(product.prices).map(([weight, price]) => {
                 const discountedPrice = discount !== null ? calculateDiscountedPrice(price, discount) : null;
+                const isSelected = selectedWeight === weight;
                 return (
-                  <label key={weight} className="flex items-center space-x-3 cursor-pointer">
+                  <label 
+                    key={weight} 
+                    className={`flex items-center space-x-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                      isSelected 
+                        ? 'border-secondary bg-secondary/5 shadow-md' 
+                        : 'border-gray-200 hover:border-secondary/50 hover:bg-gray-50'
+                    }`}
+                  >
                     <input
                       type="radio"
                       name="weight"
                       value={weight}
-                      checked={selectedWeight === weight}
+                      checked={isSelected}
                       onChange={(e) => setSelectedWeight(e.target.value as '250g' | '500g' | '1kg')}
-                      className="text-secondary focus:ring-secondary"
+                      className="text-secondary focus:ring-secondary w-5 h-5"
                     />
-                    <span className="flex-1">{weight}</span>
+                    <span className={`flex-1 font-medium ${isSelected ? 'text-secondary' : ''}`}>{weight}</span>
                     {discountedPrice !== null ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm line-through text-muted-foreground">₹{price}</span>
-                        <span className="font-semibold text-green-600">₹{discountedPrice.toFixed(2)}</span>
+                      <div className="flex flex-col items-end gap-0.5">
+                        <div className="flex items-center gap-2">
+                          <div className="relative">
+                            <span className="text-sm text-muted-foreground/80 font-medium">₹{price}</span>
+                            <div className="absolute top-1/2 left-0 w-full h-[1.5px] bg-red-500/70 transform -rotate-12"></div>
+                          </div>
+                          <span className="font-bold text-lg bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                            ₹{discountedPrice.toFixed(0)}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-semibold text-green-600/90 tracking-wide">
+                          SAVE ₹{(price - discountedPrice).toFixed(0)}
+                        </span>
                       </div>
                     ) : (
-                      <span className="font-semibold text-secondary">₹{price}</span>
+                      <span className="font-bold text-lg text-secondary">₹{price}</span>
                     )}
                   </label>
                 );
@@ -310,29 +340,59 @@ const ProductDetail = () => {
 
           {/* Price & Actions */}
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex flex-col">
-                {discount !== null ? (
-                  <>
-                    <span className="text-lg line-through text-muted-foreground">
-                      ₹{(product.prices[selectedWeight] * quantity).toLocaleString()}
-                    </span>
-                    <span className="text-2xl font-bold text-green-600">
-                      ₹{(calculateDiscountedPrice(product.prices[selectedWeight], discount) * quantity).toLocaleString()}
-                    </span>
-                    <span className="text-sm text-green-600">
-                      You save ₹{((product.prices[selectedWeight] - calculateDiscountedPrice(product.prices[selectedWeight], discount)) * quantity).toFixed(2)}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-2xl font-bold text-secondary">
-                    ₹{(product.prices[selectedWeight] * quantity).toLocaleString()}
-                  </span>
-                )}
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl p-6 mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-col gap-2">
+                  {discount !== null ? (
+                    <>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Total Price</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <span className="text-xl text-muted-foreground/70 font-semibold">
+                            ₹{(product.prices[selectedWeight] * quantity).toLocaleString()}
+                          </span>
+                          <div className="absolute top-1/2 left-0 w-full h-[2px] bg-red-500/80 transform -rotate-12"></div>
+                        </div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                            ₹{Math.floor(calculateDiscountedPrice(product.prices[selectedWeight], discount) * quantity)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1 rounded-full">
+                          <span className="text-sm font-bold tracking-wide">
+                            YOU SAVE ₹{((product.prices[selectedWeight] - calculateDiscountedPrice(product.prices[selectedWeight], discount)) * quantity).toFixed(0)}
+                          </span>
+                        </div>
+                        <span className="text-xs text-green-600/80 font-semibold">
+                          ({discount}% discount applied)
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Total Price</span>
+                      <span className="text-4xl font-bold text-secondary">
+                        ₹{(product.prices[selectedWeight] * quantity).toLocaleString()}
+                      </span>
+                    </>
+                  )}
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="text-sm text-muted-foreground font-medium">Availability</span>
+                  {product.stock > 0 ? (
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                      <span className="text-sm font-semibold text-green-600">{product.stock} in stock</span>
+                    </div>
+                  ) : (
+                    <span className="text-sm font-semibold text-red-600">Out of stock</span>
+                  )}
+                </div>
               </div>
-              <span className="text-sm text-muted-foreground">
-                {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
-              </span>
             </div>
             
             <div className="flex space-x-4">
