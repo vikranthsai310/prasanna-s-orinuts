@@ -96,11 +96,19 @@ const SearchBar = ({ className = '', isMobile = false, isExpandable = false }: S
     }
   };
 
-  // Clear search
-  const clearSearch = () => {
-    setQuery('');
-    setResults([]);
-    setShowResults(false);
+  // Handle X button click - clear content if exists, close search if empty
+  const handleClearOrClose = () => {
+    if (query.trim()) {
+      // Clear search content
+      setQuery('');
+      setResults([]);
+      setShowResults(false);
+    } else {
+      // Close search bar
+      if (isMobile || isExpandable) {
+        setIsOpen(false);
+      }
+    }
   };
 
   // Search icon only (mobile or expandable desktop)
@@ -141,9 +149,9 @@ const SearchBar = ({ className = '', isMobile = false, isExpandable = false }: S
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className={`
-                pl-10 pr-10 h-10 
+                pl-10 pr-12 h-11
                 bg-background/50 
-                border-border/50 
+                border-2 border-border/50 
                 focus:border-secondary 
                 focus:ring-secondary/20 
                 focus:ring-4
@@ -155,48 +163,47 @@ const SearchBar = ({ className = '', isMobile = false, isExpandable = false }: S
                 hover:border-border/70
                 focus:bg-background
                 shadow-md
+                rounded-xl
                 ${isMobile ? 'w-full' : isExpandable ? 'w-80 xl:w-96' : 'w-64 lg:w-80'}
                 ${isExpandable && !isMobile ? 'animate-in slide-in-from-right-5 fade-in duration-300' : ''}
               `}
               autoComplete="off"
               autoFocus={isExpandable || isMobile}
             />
-            {query && (
+            
+            {/* Single X button - clears content if exists, closes search if empty */}
+            {(isMobile || isExpandable) && (
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                onClick={clearSearch}
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-muted/50 z-10"
+                onClick={handleClearOrClose}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-lg hover:bg-secondary/10 hover:text-secondary transition-all duration-200 hover:scale-105 z-10"
+                title={query ? "Clear search" : "Close search"}
               >
-                <X className="h-3 w-3" />
+                <X className="h-4 w-4 stroke-[2.5]" />
               </Button>
             )}
+            
+            {/* Clear button for non-expandable desktop search */}
+            {!isMobile && !isExpandable && query && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={handleClearOrClose}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-lg hover:bg-secondary/10 hover:text-secondary transition-all duration-200 hover:scale-105 z-10"
+                title="Clear search"
+              >
+                <X className="h-4 w-4 stroke-[2.5]" />
+              </Button>
+            )}
+            
             {isLoading && (
-              <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground z-10" />
+              <Loader2 className="absolute right-12 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground z-10" />
             )}
           </div>
         </div>
-
-        {/* Close button for mobile and expandable desktop */}
-        {(isMobile || isExpandable) && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsOpen(false)}
-            className={`
-              absolute top-1/2 transform -translate-y-1/2 
-              hover:bg-secondary/10 hover:text-secondary
-              transition-all duration-200 ease-out
-              rounded-full h-8 w-8 p-0
-              hover:scale-105 hover:shadow-sm
-              ${isMobile ? '-right-12' : 'right-2'}
-            `}
-          >
-            <X className="h-4 w-4 stroke-2" />
-          </Button>
-        )}
       </form>
 
       {/* Search Results Dropdown */}
