@@ -1,12 +1,14 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { Product } from '@/types/product';
 import { validateImageUrl } from '@/utils/imageErrorHandler';
 import WeightSelectionDialog from '@/components/WeightSelectionDialog';
+import { getProductDiscount, calculateDiscountedPrice } from '@/services/discountService';
 
 interface ProductCardProps {
   product: Product;
@@ -15,12 +17,34 @@ interface ProductCardProps {
 const ProductCard = ({ product }: ProductCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isWeightDialogOpen, setIsWeightDialogOpen] = useState(false);
+  const [discount, setDiscount] = useState<number | null>(null);
   const { addItem } = useCart();
+
+  useEffect(() => {
+    loadDiscount();
+  }, [product.id]);
+
+  const loadDiscount = async () => {
+    try {
+      const productDiscount = await getProductDiscount(product.id);
+      if (productDiscount && productDiscount.isActive) {
+        setDiscount(productDiscount.discountPercentage);
+      } else {
+        setDiscount(null);
+      }
+    } catch (error) {
+      console.error('Error loading discount:', error);
+      setDiscount(null);
+    }
+  };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsWeightDialogOpen(true);
   };
+
+  const basePrice = product.prices['250g'];
+  const discountedPrice = discount !== null ? calculateDiscountedPrice(basePrice, discount) : null;
 
   return (
     <>
@@ -31,6 +55,11 @@ const ProductCard = ({ product }: ProductCardProps) => {
       >
         <Link to={`/products/${product.id}`}>
           <div className="relative overflow-hidden rounded-lg mb-4 bg-accent">
+            {discount !== null && (
+              <Badge className="absolute top-2 right-2 z-10 bg-red-500 text-white">
+                {discount}% OFF
+              </Badge>
+            )}
             <img
               src={validateImageUrl(product.image)}
               alt={product.name}
@@ -64,8 +93,21 @@ const ProductCard = ({ product }: ProductCardProps) => {
               <div className="text-sm text-muted-foreground">
                 Starting from
               </div>
-              <div className="font-semibold text-lg text-secondary">
-                ₹{product.prices['250g']}
+              <div className="flex flex-col items-end">
+                {discountedPrice !== null ? (
+                  <>
+                    <div className="text-sm line-through text-muted-foreground">
+                      ₹{basePrice}
+                    </div>
+                    <div className="font-semibold text-lg text-green-600">
+                      ₹{discountedPrice.toFixed(2)}
+                    </div>
+                  </>
+                ) : (
+                  <div className="font-semibold text-lg text-secondary">
+                    ₹{basePrice}
+                  </div>
+                )}
               </div>
             </div>
           </div>

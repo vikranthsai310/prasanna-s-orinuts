@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, Heart, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { mockProducts } from '@/data/mockProducts';
 import { useCart } from '@/contexts/CartContext';
@@ -10,6 +11,7 @@ import ProductCard from '@/components/ProductCard';
 import ProductStructuredData from '@/components/ProductStructuredData';
 import { SEO } from '@/components/SEO';
 import { getProductById, getAllProducts } from '@/services/productService';
+import { getProductDiscount, calculateDiscountedPrice } from '@/services/discountService';
 import { Product } from '@/types/product';
 
 const ProductDetail = () => {
@@ -22,6 +24,7 @@ const ProductDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [discount, setDiscount] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -34,6 +37,12 @@ const ProductDetail = () => {
         
         if (fetchedProduct) {
           setProduct(fetchedProduct);
+          
+          // Fetch discount
+          const productDiscount = await getProductDiscount(id);
+          if (productDiscount && productDiscount.isActive) {
+            setDiscount(productDiscount.discountPercentage);
+          }
           
           // Fetch related products
           const allProducts = await getAllProducts();
@@ -83,10 +92,13 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     if (!product) return;
     
+    const basePrice = product.prices[selectedWeight];
+    const finalPrice = discount !== null ? calculateDiscountedPrice(basePrice, discount) : basePrice;
+    
     addItem({
       id: product.id,
       name: product.name,
-      price: product.prices[selectedWeight],
+      price: finalPrice,
       weight: selectedWeight,
       image: product.image
     }, quantity);
@@ -232,7 +244,14 @@ const ProductDetail = () => {
         {/* Product Info */}
         <div className="space-y-6">
           <div>
-            <h1 className="font-playfair text-3xl font-bold mb-2">{product.name}</h1>
+            <div className="flex items-start gap-3 mb-2">
+              <h1 className="font-playfair text-3xl font-bold flex-1">{product.name}</h1>
+              {discount !== null && (
+                <Badge className="bg-red-500 text-white text-lg px-3 py-1">
+                  {discount}% OFF
+                </Badge>
+              )}
+            </div>
             <p className="text-muted-foreground text-lg">{product.description}</p>
           </div>
 
@@ -240,20 +259,30 @@ const ProductDetail = () => {
           <div>
             <h3 className="font-semibold mb-3">Select Weight</h3>
             <div className="space-y-2">
-              {Object.entries(product.prices).map(([weight, price]) => (
-                <label key={weight} className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="weight"
-                    value={weight}
-                    checked={selectedWeight === weight}
-                    onChange={(e) => setSelectedWeight(e.target.value as '250g' | '500g' | '1kg')}
-                    className="text-secondary focus:ring-secondary"
-                  />
-                  <span className="flex-1">{weight}</span>
-                  <span className="font-semibold text-secondary">₹{price}</span>
-                </label>
-              ))}
+              {Object.entries(product.prices).map(([weight, price]) => {
+                const discountedPrice = discount !== null ? calculateDiscountedPrice(price, discount) : null;
+                return (
+                  <label key={weight} className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="weight"
+                      value={weight}
+                      checked={selectedWeight === weight}
+                      onChange={(e) => setSelectedWeight(e.target.value as '250g' | '500g' | '1kg')}
+                      className="text-secondary focus:ring-secondary"
+                    />
+                    <span className="flex-1">{weight}</span>
+                    {discountedPrice !== null ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm line-through text-muted-foreground">₹{price}</span>
+                        <span className="font-semibold text-green-600">₹{discountedPrice.toFixed(2)}</span>
+                      </div>
+                    ) : (
+                      <span className="font-semibold text-secondary">₹{price}</span>
+                    )}
+                  </label>
+                );
+              })}
             </div>
           </div>
 
@@ -282,9 +311,25 @@ const ProductDetail = () => {
           {/* Price & Actions */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <span className="text-2xl font-bold text-secondary">
-                ₹{(product.prices[selectedWeight] * quantity).toLocaleString()}
-              </span>
+              <div className="flex flex-col">
+                {discount !== null ? (
+                  <>
+                    <span className="text-lg line-through text-muted-foreground">
+                      ₹{(product.prices[selectedWeight] * quantity).toLocaleString()}
+                    </span>
+                    <span className="text-2xl font-bold text-green-600">
+                      ₹{(calculateDiscountedPrice(product.prices[selectedWeight], discount) * quantity).toLocaleString()}
+                    </span>
+                    <span className="text-sm text-green-600">
+                      You save ₹{((product.prices[selectedWeight] - calculateDiscountedPrice(product.prices[selectedWeight], discount)) * quantity).toFixed(2)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-2xl font-bold text-secondary">
+                    ₹{(product.prices[selectedWeight] * quantity).toLocaleString()}
+                  </span>
+                )}
+              </div>
               <span className="text-sm text-muted-foreground">
                 {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
               </span>
