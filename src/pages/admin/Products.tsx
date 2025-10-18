@@ -28,6 +28,7 @@ import {
 } from '@/services/productService';
 import { Product } from '@/types/product';
 import { useToast } from '@/hooks/use-toast';
+import { AIAssistant } from '@/components/AIAssistant';
 
 const AdminProducts = () => {
   const { toast } = useToast();
@@ -91,6 +92,31 @@ const AdminProducts = () => {
 
   const handleCategoryChange = (value: string) => {
     setFormData(prev => ({ ...prev, category: value as 'nuts' | 'dates' | 'dried-fruits' | 'mixed' }));
+  };
+
+  // AI Assistant handlers
+  const handleAIFillNutritionalInfo = (data: {
+    calories: number;
+    protein: number;
+    fat: number;
+    carbs: number;
+    fiber: number;
+  }) => {
+    setFormData(prev => ({
+      ...prev,
+      calories: data.calories,
+      protein: data.protein,
+      fat: data.fat,
+      carbs: data.carbs,
+      fiber: data.fiber
+    }));
+  };
+
+  const handleAIFillDescription = (description: string) => {
+    setFormData(prev => ({
+      ...prev,
+      description: description
+    }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -683,6 +709,15 @@ const AdminProducts = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* AI Assistant - Only show when modal is open */}
+      {isModalOpen && (
+        <AIAssistant
+          productName={formData.name}
+          onFillNutritionalInfo={handleAIFillNutritionalInfo}
+          onFillDescription={handleAIFillDescription}
+        />
+      )}
     </div>
   );
 };
