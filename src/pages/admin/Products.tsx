@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Search, Loader2, X, Save, Upload, Star } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Loader2, X, Save, Upload, Star, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -28,7 +28,7 @@ import {
 } from '@/services/productService';
 import { Product } from '@/types/product';
 import { useToast } from '@/hooks/use-toast';
-import { AIAssistant } from '@/components/AIAssistant';
+import { getNutritionalInfo, getProductDescription } from '@/services/geminiService';
 
 const AdminProducts = () => {
   const { toast } = useToast();
@@ -38,6 +38,8 @@ const AdminProducts = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isAIEnabled, setIsAIEnabled] = useState(false);
+  const [isAILoading, setIsAILoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -82,41 +84,59 @@ const AdminProducts = () => {
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: name.startsWith('price') || name === 'stock' || 
                                        name === 'calories' || name === 'protein' || 
                                        name === 'fat' || name === 'carbs' || 
                                        name === 'fiber' ? Number(value) : value }));
+    
+    // Auto-fill with AI when product name changes and AI is enabled
+    if (name === 'name' && value.trim().length >= 3 && isAIEnabled && !isAILoading) {
+      setIsAILoading(true);
+      try {
+        // Get nutritional info
+        const nutritionData = await getNutritionalInfo(value);
+        if (nutritionData) {
+          setFormData(prev => ({
+            ...prev,
+            name: value,
+            calories: nutritionData.calories,
+            protein: nutritionData.protein,
+            fat: nutritionData.fat,
+            carbs: nutritionData.carbs,
+            fiber: nutritionData.fiber
+          }));
+        }
+
+        // Get product description
+        const description = await getProductDescription(value);
+        if (description) {
+          setFormData(prev => ({
+            ...prev,
+            description: description
+          }));
+        }
+
+        toast({
+          title: 'AI Auto-fill Complete!',
+          description: 'Nutritional data and description have been filled automatically.',
+        });
+      } catch (error) {
+        console.error('AI auto-fill error:', error);
+        toast({
+          title: 'AI Auto-fill Failed',
+          description: 'Could not fetch data automatically. Please fill manually.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsAILoading(false);
+      }
+    }
   };
 
   const handleCategoryChange = (value: string) => {
     setFormData(prev => ({ ...prev, category: value as 'nuts' | 'dates' | 'dried-fruits' | 'mixed' }));
-  };
-
-  // AI Assistant handlers
-  const handleAIFillNutritionalInfo = (data: {
-    calories: number;
-    protein: number;
-    fat: number;
-    carbs: number;
-    fiber: number;
-  }) => {
-    setFormData(prev => ({
-      ...prev,
-      calories: data.calories,
-      protein: data.protein,
-      fat: data.fat,
-      carbs: data.carbs,
-      fiber: data.fiber
-    }));
-  };
-
-  const handleAIFillDescription = (description: string) => {
-    setFormData(prev => ({
-      ...prev,
-      description: description
-    }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -426,6 +446,37 @@ const AdminProducts = () => {
           
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
             <div className="flex-1 overflow-y-auto px-1 space-y-5 pb-4">
+              {/* AI Auto-fill Toggle */}
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-2 rounded-lg">
+                      <Sparkles className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-lg">Prasanna's AI Auto-fill</h4>
+                      <p className="text-sm text-muted-foreground">Automatically fill nutritional data & description when you enter product name</p>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isAIEnabled}
+                      onChange={(e) => setIsAIEnabled(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-blue-600"></div>
+                    <span className="ms-3 text-sm font-medium text-gray-900">{isAIEnabled ? 'ON' : 'OFF'}</span>
+                  </label>
+                </div>
+                {isAILoading && (
+                  <div className="mt-3 flex items-center gap-2 text-purple-600">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-sm font-medium">AI is filling data automatically...</span>
+                  </div>
+                )}
+              </div>
+
               {/* Basic Information Section */}
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -438,7 +489,11 @@ const AdminProducts = () => {
                       onChange={handleInputChange}
                       className="input-field w-full"
                       required
+                      placeholder={isAIEnabled ? "Enter product name (AI will auto-fill)" : "Enter product name"}
                     />
+                    {isAIEnabled && (
+                      <p className="text-xs text-purple-600 mt-1">✨ AI will auto-fill when you type at least 3 characters</p>
+                    )}
                   </div>
                   
                   <div>
@@ -709,15 +764,6 @@ const AdminProducts = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* AI Assistant - Only show when modal is open */}
-      {isModalOpen && (
-        <AIAssistant
-          productName={formData.name}
-          onFillNutritionalInfo={handleAIFillNutritionalInfo}
-          onFillDescription={handleAIFillDescription}
-        />
-      )}
     </div>
   );
 };
