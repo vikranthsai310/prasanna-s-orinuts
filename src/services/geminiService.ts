@@ -14,7 +14,7 @@ export interface NutritionalData {
 
 export const getNutritionalInfo = async (productName: string): Promise<NutritionalData | null> => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `You are a nutritional data expert. Provide accurate nutritional information for "${productName}" per 100g.
 
@@ -61,7 +61,7 @@ Use decimal values for precision (e.g., 21.2, 3.3). Return only the JSON, nothin
 
 export const getProductDescription = async (productName: string): Promise<string | null> => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `Write a compelling 2-3 sentence product description for "${productName}" for an e-commerce dry fruits website. Focus on quality, taste, and health benefits. Keep it professional and concise.`;
 
@@ -76,7 +76,7 @@ export const getProductDescription = async (productName: string): Promise<string
 
 export const askAIAssistant = async (question: string): Promise<string | null> => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `You are a helpful assistant for an admin managing a dry fruits e-commerce store. Answer the following question concisely and accurately:
 
