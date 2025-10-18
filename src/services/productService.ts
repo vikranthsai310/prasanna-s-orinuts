@@ -223,3 +223,21 @@ export const searchProducts = async (searchTerm: string): Promise<Product[]> => 
       product.description.toLowerCase().includes(searchTermLower)
     );
 }; 
+
+// Get best seller products
+export const getBestSellerProducts = async (): Promise<Product[]> => {
+  const productsRef = collection(db, PRODUCTS_COLLECTION);
+  const q = query(productsRef, where('isBestSeller', '==', true));
+  const snapshot = await getDocs(q);
+  
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  } as Product));
+};
+
+// Toggle best seller status
+export const toggleBestSeller = async (productId: string, isBestSeller: boolean): Promise<void> => {
+  const docRef = doc(db, PRODUCTS_COLLECTION, productId);
+  await updateDoc(docRef, { isBestSeller });
+};

@@ -6,17 +6,41 @@ import ProductCard from '@/components/ProductCard';
 import HeroSection from '@/components/HeroSection';
 import WeightSelectionDialog from '@/components/WeightSelectionDialog';
 import { SEO } from '@/components/SEO';
-import { mockProducts } from '@/data/mockProducts';
+import { getBestSellerProducts } from '@/services/productService';
+import { Product } from '@/types/product';
 import { useEffect, useRef, useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 
 const Index = () => {
-  const featuredProducts = mockProducts.slice(0, 4);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const luxurySectionRef = useRef<HTMLElement>(null);
   const [particles, setParticles] = useState<Array<{id: number, style: React.CSSProperties}>>([]);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isWeightDialogOpen, setIsWeightDialogOpen] = useState(false);
+
+  // Fetch best seller products from Firestore
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+        const products = await getBestSellerProducts();
+        setFeaturedProducts(products); // Show all best seller products
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load products',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   // Generate floating particles
   useEffect(() => {
@@ -88,7 +112,7 @@ const Index = () => {
   // Handle quick add to cart
   const handleQuickAdd = (productName: string) => {
     // Find the product by name
-    const product = mockProducts.find(p => p.name === productName);
+    const product = featuredProducts.find(p => p.name === productName);
     if (product) {
       setSelectedProduct(product);
       setIsWeightDialogOpen(true);
@@ -379,9 +403,27 @@ const Index = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            {isLoading ? (
+              // Loading skeleton
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="card-premium animate-pulse">
+                  <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
+                  <div className="space-y-2">
+                    <div className="bg-gray-200 h-6 rounded w-3/4"></div>
+                    <div className="bg-gray-200 h-4 rounded w-full"></div>
+                    <div className="bg-gray-200 h-4 rounded w-2/3"></div>
+                  </div>
+                </div>
+              ))
+            ) : featuredProducts.length > 0 ? (
+              featuredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <p className="text-muted-foreground text-lg">No products available at the moment.</p>
+              </div>
+            )}
           </div>
           
           <div className="text-center">

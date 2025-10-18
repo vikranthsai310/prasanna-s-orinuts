@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Search, Loader2, X, Save, Upload } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Loader2, X, Save, Upload, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -23,7 +23,8 @@ import {
   getAllProducts, 
   addProduct, 
   updateProduct, 
-  deleteProduct 
+  deleteProduct,
+  toggleBestSeller 
 } from '@/services/productService';
 import { Product } from '@/types/product';
 import { useToast } from '@/hooks/use-toast';
@@ -248,6 +249,25 @@ const AdminProducts = () => {
     }
   };
 
+  const handleToggleBestSeller = async (product: Product) => {
+    try {
+      const newStatus = !product.isBestSeller;
+      await toggleBestSeller(product.id, newStatus);
+      toast({
+        title: "Success",
+        description: `${product.name} ${newStatus ? 'added to' : 'removed from'} Best Sellers`
+      });
+      fetchProducts();
+    } catch (error) {
+      console.error('Error toggling best seller:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update best seller status",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
@@ -288,6 +308,7 @@ const AdminProducts = () => {
                 <th className="text-left py-3 px-4">Price Range</th>
                 <th className="text-left py-3 px-4">Stock</th>
                 <th className="text-left py-3 px-4">Status</th>
+                <th className="text-center py-3 px-4">Best Seller</th>
                 <th className="text-left py-3 px-4">Actions</th>
               </tr>
             </thead>
@@ -327,6 +348,18 @@ const AdminProducts = () => {
                       </Badge>
                     </td>
                     <td className="py-3 px-4">
+                      <div className="flex justify-center">
+                        <Button
+                          variant={product.isBestSeller ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleToggleBestSeller(product)}
+                          className={product.isBestSeller ? 'bg-[#C99700] hover:bg-[#B8860B] text-white' : ''}
+                        >
+                          <Star className={`w-4 h-4 ${product.isBestSeller ? 'fill-current' : ''}`} />
+                        </Button>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
                       <div className="flex space-x-2">
                         <Button variant="outline" size="sm" onClick={() => openEditModal(product)}>
                           <Edit className="w-4 h-4" />
@@ -345,7 +378,7 @@ const AdminProducts = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={7} className="py-8 text-center text-muted-foreground">
                     No products found. {searchTerm && 'Try a different search term.'}
                   </td>
                 </tr>

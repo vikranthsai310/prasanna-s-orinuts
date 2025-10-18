@@ -19,6 +19,7 @@ export interface Product {
   };
   category: 'nuts' | 'dates' | 'dried-fruits' | 'mixed';
   stock: number;
+  isBestSeller?: boolean; // Flag to mark product as best seller
 }
 
 export interface CartItem {
