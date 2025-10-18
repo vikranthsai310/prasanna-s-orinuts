@@ -100,7 +100,7 @@ export const AIAssistant = ({ onFillNutritionalInfo, onFillDescription, productN
 
   if (!isExpanded) {
     return (
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-6 right-6 z-[9999]">
         <Button
           onClick={() => setIsExpanded(true)}
           className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg rounded-full px-6 py-6 flex items-center gap-2"
@@ -114,7 +114,7 @@ export const AIAssistant = ({ onFillNutritionalInfo, onFillDescription, productN
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 bg-white rounded-2xl shadow-2xl border-2 border-purple-200 p-6 w-96 animate-in slide-in-from-bottom">
+    <div className="fixed bottom-6 right-6 z-[9999] bg-white rounded-2xl shadow-2xl border-2 border-purple-200 p-6 w-96 animate-in slide-in-from-bottom">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
