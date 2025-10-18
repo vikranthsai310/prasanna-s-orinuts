@@ -574,7 +574,7 @@ const AdminProducts = () => {
                 <h3 className="font-medium mb-3 text-base">Nutritional Information (per 100g)</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                   <div>
-                    <label className="block text-xs font-medium mb-1.5">Calories *</label>
+                    <label className="block text-xs font-medium mb-1.5">Calories (kcal) *</label>
                     <input
                       type="number"
                       name="calories"
@@ -582,6 +582,7 @@ const AdminProducts = () => {
                       onChange={handleInputChange}
                       className="input-field w-full text-sm"
                       min="0"
+                      step="0.1"
                       required
                     />
                   </div>
@@ -594,6 +595,7 @@ const AdminProducts = () => {
                       onChange={handleInputChange}
                       className="input-field w-full text-sm"
                       min="0"
+                      step="0.1"
                       required
                     />
                   </div>
@@ -606,6 +608,7 @@ const AdminProducts = () => {
                       onChange={handleInputChange}
                       className="input-field w-full text-sm"
                       min="0"
+                      step="0.1"
                       required
                     />
                   </div>
@@ -618,6 +621,7 @@ const AdminProducts = () => {
                       onChange={handleInputChange}
                       className="input-field w-full text-sm"
                       min="0"
+                      step="0.1"
                       required
                     />
                   </div>
@@ -630,6 +634,7 @@ const AdminProducts = () => {
                       onChange={handleInputChange}
                       className="input-field w-full text-sm"
                       min="0"
+                      step="0.1"
                       required
                     />
                   </div>
