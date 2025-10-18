@@ -158,21 +158,26 @@ export const AIAssistant = ({ onFillNutritionalInfo, onFillDescription, productN
 
   if (!isExpanded) {
     return (
-      <div className="fixed bottom-6 right-6 z-[9999]">
-        <Button
-          onClick={() => setIsExpanded(true)}
-          className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg rounded-full px-6 py-6 flex items-center gap-2"
-          size="lg"
-        >
-          <Sparkles className="w-5 h-5" />
-          <span className="font-semibold">Prasanna's AI</span>
-        </Button>
-      </div>
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsExpanded(true);
+        }}
+        className="fixed bottom-6 right-6 z-[99999] bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-2xl rounded-full px-8 py-4 flex items-center gap-3 cursor-pointer transition-all hover:scale-105 border-2 border-white"
+        type="button"
+      >
+        <Sparkles className="w-6 h-6" />
+        <span className="font-bold text-lg">Prasanna's AI</span>
+      </button>
     );
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] bg-white rounded-2xl shadow-2xl border-2 border-purple-200 w-96 h-[600px] flex flex-col animate-in slide-in-from-bottom">
+    <div 
+      className="fixed bottom-6 right-6 z-[99999] bg-white rounded-2xl shadow-2xl border-2 border-purple-200 w-96 h-[600px] flex flex-col animate-in slide-in-from-bottom"
+      onClick={(e) => e.stopPropagation()}
+    >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-purple-100 bg-gradient-to-r from-purple-50 to-blue-50">
         <div className="flex items-center gap-2">
