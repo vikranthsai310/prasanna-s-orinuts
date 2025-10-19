@@ -193,7 +193,7 @@ const WeightSelectionDialog = ({ isOpen, onClose, product }: WeightSelectionDial
                             </span>
                           </div>
                           <p className="text-[10px] text-[#6B5750] mt-0.5">
-                            ₹{(optionPricing.discountedPrice / parseInt(option.weight)).toFixed(2)}/g
+                            ₹{(optionPricing.discountedPrice / (option.weight === '1kg' ? 1000 : parseInt(option.weight))).toFixed(2)}/g
                           </p>
                         </div>
                       </div>
