@@ -1,4 +1,5 @@
 import { Product } from '@/types/product';
+import { SampleProduct } from '@/services/sampleService';
 
 const SAMPLES_STORAGE_KEY = 'selected_samples';
 
@@ -11,13 +12,18 @@ export interface SelectedSample {
 
 export const sampleStorage = {
   // Save selected samples to localStorage
-  saveSelectedSamples: (samples: Product[]): void => {
-    const selectedSamples: SelectedSample[] = samples.map(sample => ({
-      id: sample.id,
-      name: sample.name,
-      image: sample.image,
-      selectedAt: Date.now()
-    }));
+  saveSelectedSamples: (samples: Product[] | SampleProduct[]): void => {
+    const selectedSamples: SelectedSample[] = samples.map(sample => {
+      // Check if it's a SampleProduct or Product
+      const isSampleProduct = 'productName' in sample;
+      
+      return {
+        id: isSampleProduct ? (sample as SampleProduct).productId : sample.id,
+        name: isSampleProduct ? (sample as SampleProduct).productName : (sample as Product).name,
+        image: isSampleProduct ? (sample as SampleProduct).productImage : (sample as Product).image,
+        selectedAt: Date.now()
+      };
+    });
     
     localStorage.setItem(SAMPLES_STORAGE_KEY, JSON.stringify(selectedSamples));
   },
