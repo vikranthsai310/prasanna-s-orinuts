@@ -14,6 +14,7 @@ import {
 import { db } from '@/lib/firebase';
 import { CartItem } from '@/types/product';
 import { shippingConfig } from '@/config';
+import { decreaseSampleStock, getAllSamples } from './sampleService';
 
 export interface Address {
   name: string;
@@ -52,18 +53,40 @@ const ORDERS_COLLECTION = 'orders';
 // Create a new order and reduce stock
 export const createOrder = async (orderData: NewOrder): Promise<string> => {
   try {
+    // Get all sample products to identify which items are samples
+    const samples = await getAllSamples();
+    const sampleProductIds = samples.map(s => s.productId);
+    
     // First, verify stock availability for all items
     for (const item of orderData.items) {
-      const productRef = doc(db, 'products', item.id);
-      const productSnap = await getDoc(productRef);
+      // Check if this is a sample product (price is 0 or name contains "Sample")
+      const isSample = item.price === 0 || item.name.includes('(Sample)');
       
-      if (!productSnap.exists()) {
-        throw new Error(`Product ${item.name} not found`);
-      }
-      
-      const currentStock = productSnap.data().stock;
-      if (currentStock < item.quantity) {
-        throw new Error(`Insufficient stock for ${item.name}. Available: ${currentStock}, Requested: ${item.quantity}`);
+      if (isSample) {
+        // Find the corresponding sample in our samples collection
+        const sample = samples.find(s => 
+          s.productId === item.id || 
+          s.productName === item.name.replace(' (Sample)', '')
+        );
+        
+        if (sample) {
+          if (sample.stock < item.quantity) {
+            throw new Error(`Insufficient sample stock for ${item.name}. Available: ${sample.stock}, Requested: ${item.quantity}`);
+          }
+        }
+      } else {
+        // Regular product stock check
+        const productRef = doc(db, 'products', item.id);
+        const productSnap = await getDoc(productRef);
+        
+        if (!productSnap.exists()) {
+          throw new Error(`Product ${item.name} not found`);
+        }
+        
+        const currentStock = productSnap.data().stock;
+        if (currentStock < item.quantity) {
+          throw new Error(`Insufficient stock for ${item.name}. Available: ${currentStock}, Requested: ${item.quantity}`);
+        }
       }
     }
     
@@ -78,15 +101,31 @@ export const createOrder = async (orderData: NewOrder): Promise<string> => {
     
     // Reduce stock for each item
     for (const item of orderData.items) {
-      const productRef = doc(db, 'products', item.id);
-      const productSnap = await getDoc(productRef);
-      const currentStock = productSnap.data().stock;
+      const isSample = item.price === 0 || item.name.includes('(Sample)');
       
-      await updateDoc(productRef, {
-        stock: currentStock - item.quantity
-      });
-      
-      console.log(`✅ Reduced stock for ${item.name}: ${currentStock} -> ${currentStock - item.quantity}`);
+      if (isSample) {
+        // Find and decrease sample stock
+        const sample = samples.find(s => 
+          s.productId === item.id || 
+          s.productName === item.name.replace(' (Sample)', '')
+        );
+        
+        if (sample) {
+          await decreaseSampleStock(sample.id, item.quantity);
+          console.log(`✅ Reduced sample stock for ${item.name}: ${sample.stock} -> ${sample.stock - item.quantity}`);
+        }
+      } else {
+        // Regular product stock reduction
+        const productRef = doc(db, 'products', item.id);
+        const productSnap = await getDoc(productRef);
+        const currentStock = productSnap.data().stock;
+        
+        await updateDoc(productRef, {
+          stock: currentStock - item.quantity
+        });
+        
+        console.log(`✅ Reduced stock for ${item.name}: ${currentStock} -> ${currentStock - item.quantity}`);
+      }
     }
     
     console.log('✅ Order created and stock updated successfully');

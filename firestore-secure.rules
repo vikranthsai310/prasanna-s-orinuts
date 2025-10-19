@@ -229,6 +229,17 @@ service cloud.firestore {
     }
     
     // ============================================
+    // SAMPLE PRODUCTS COLLECTION
+    // ============================================
+    match /sampleProducts/{sampleId} {
+      // Anyone can read active samples (needed for sample selection page)
+      allow read: if true;
+      
+      // Only admins can create/update/delete sample products
+      allow create, update, delete: if isAdmin() || isAdminEmail() || isAdminPhone();
+    }
+    
+    // ============================================
     // DENY ALL OTHER COLLECTIONS
     // ============================================
     match /{document=**} {
