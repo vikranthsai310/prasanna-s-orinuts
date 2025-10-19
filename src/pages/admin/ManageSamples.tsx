@@ -365,106 +365,128 @@ const AdminSamples = () => {
             {filteredSamples.map((sample) => (
               <div
                 key={sample.id}
-                className="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4 p-3 md:p-4 border rounded-lg hover:bg-muted/50 transition"
+                className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
               >
-                {/* Mobile Layout: Image + Info in one row */}
-                <div className="flex items-start gap-3 flex-1 w-full sm:w-auto">
-                  {/* Drag Handle - Hidden on mobile */}
-                  <div className="cursor-move text-muted-foreground hidden sm:block">
-                    <GripVertical className="w-5 h-5" />
-                  </div>
-
-                  {/* Product Image */}
-                  <img
-                    src={sample.productImage}
-                    alt={sample.productName}
-                    className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg flex-shrink-0"
-                  />
-
-                  {/* Product Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-1.5 md:gap-2 mb-1">
-                      <h3 className="font-semibold text-sm md:text-base truncate">{sample.productName}</h3>
-                      <Badge variant={sample.isActive ? 'default' : 'secondary'} className="text-xs">
-                        {sample.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
-                      {sample.stock === 0 && (
-                        <Badge variant="destructive" className="text-xs">Out of Stock</Badge>
-                      )}
-                      {sample.stock > 0 && sample.stock < 10 && (
-                        <Badge variant="outline" className="text-orange-600 border-orange-600 text-xs">
-                          Low Stock
-                        </Badge>
-                      )}
+                {/* Product Info Section */}
+                <div className="p-3 md:p-4">
+                  <div className="flex items-start gap-3">
+                    {/* Drag Handle - Hidden on mobile */}
+                    <div className="cursor-move text-muted-foreground hidden sm:block mt-1">
+                      <GripVertical className="w-5 h-5" />
                     </div>
-                    <div className="text-xs md:text-sm text-muted-foreground flex flex-wrap gap-x-2 gap-y-1">
-                      <span><span className="font-medium">Weight:</span> {sample.sampleWeight}</span>
-                      <span><span className="font-medium">Max:</span> {sample.maxQuantity}</span>
-                      <span>
-                        <span className="font-medium">Stock:</span> 
-                        <span className={`ml-1 font-semibold ${
-                          sample.stock === 0 ? 'text-red-600' : 
-                          sample.stock < 10 ? 'text-orange-600' : 
-                          'text-green-600'
-                        }`}>
-                          {sample.stock}
+
+                    {/* Product Image */}
+                    <img
+                      src={sample.productImage}
+                      alt={sample.productName}
+                      className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg flex-shrink-0"
+                    />
+
+                    {/* Product Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3 className="font-semibold text-base md:text-lg">{sample.productName}</h3>
+                        <Badge 
+                          variant={sample.isActive ? 'default' : 'secondary'} 
+                          className="text-xs flex-shrink-0"
+                        >
+                          {sample.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </div>
+                      
+                      {/* Stock Badges */}
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {sample.stock === 0 && (
+                          <Badge variant="destructive" className="text-xs">Out of Stock</Badge>
+                        )}
+                        {sample.stock > 0 && sample.stock < 10 && (
+                          <Badge variant="outline" className="text-orange-600 border-orange-600 text-xs">
+                            Low Stock
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Product Stats */}
+                      <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-1.5 text-xs md:text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <span className="font-medium">Weight:</span> 
+                          <span className="text-gray-900">{sample.sampleWeight}</span>
                         </span>
-                      </span>
-                      <span className="hidden sm:inline"><span className="font-medium">Order:</span> {sample.order}</span>
+                        <span className="flex items-center gap-1">
+                          <span className="font-medium">Max:</span> 
+                          <span className="text-gray-900">{sample.maxQuantity}</span>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span className="font-medium">Stock:</span> 
+                          <span className={`font-semibold ${
+                            sample.stock === 0 ? 'text-red-600' : 
+                            sample.stock < 10 ? 'text-orange-600' : 
+                            'text-green-600'
+                          }`}>
+                            {sample.stock}
+                          </span>
+                        </span>
+                        <span className="hidden sm:flex items-center gap-1">
+                          <span className="font-medium">Order:</span> 
+                          <span className="text-gray-900">{sample.order}</span>
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleToggleStatus(sample.id, sample.isActive)}
-                    disabled={processing === sample.id}
-                    className="flex-1 sm:flex-none"
-                  >
-                    {processing === sample.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : sample.isActive ? (
-                      <>
-                        <EyeOff className="w-4 h-4" />
-                        <span className="ml-1 sm:hidden">Hide</span>
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="w-4 h-4" />
-                        <span className="ml-1 sm:hidden">Show</span>
-                      </>
-                    )}
-                  </Button>
+                {/* Action Buttons - Separated section with border */}
+                <div className="border-t border-gray-100 bg-gray-50/50 px-3 py-2 md:px-4">
+                  <div className="flex items-center gap-2 justify-end sm:justify-start">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggleStatus(sample.id, sample.isActive)}
+                      disabled={processing === sample.id}
+                      className="flex items-center gap-1.5 bg-white hover:bg-gray-50 min-w-[85px] sm:min-w-0"
+                    >
+                      {processing === sample.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : sample.isActive ? (
+                        <>
+                          <EyeOff className="w-4 h-4" />
+                          <span className="text-xs font-medium">Hide</span>
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-4 h-4" />
+                          <span className="text-xs font-medium">Show</span>
+                        </>
+                      )}
+                    </Button>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openEditModal(sample)}
-                    className="flex-1 sm:flex-none"
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span className="ml-1 sm:hidden">Edit</span>
-                  </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEditModal(sample)}
+                      className="flex items-center gap-1.5 bg-white hover:bg-gray-50 min-w-[70px] sm:min-w-0"
+                    >
+                      <Edit className="w-4 h-4" />
+                      <span className="text-xs font-medium">Edit</span>
+                    </Button>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteSample(sample.id, sample.productName)}
-                    disabled={processing === sample.id}
-                    className="text-red-600 hover:text-red-700 flex-1 sm:flex-none"
-                  >
-                    {processing === sample.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Trash2 className="w-4 h-4" />
-                        <span className="ml-1 sm:hidden">Delete</span>
-                      </>
-                    )}
-                  </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteSample(sample.id, sample.productName)}
+                      disabled={processing === sample.id}
+                      className="flex items-center gap-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 bg-white min-w-[85px] sm:min-w-0"
+                    >
+                      {processing === sample.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Trash2 className="w-4 h-4" />
+                          <span className="text-xs font-medium">Delete</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
