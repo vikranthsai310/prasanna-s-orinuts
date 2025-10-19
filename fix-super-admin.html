@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Super Admin Roles</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #7C3AED;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #6D28D9;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            border-left: 4px solid #7C3AED;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success {
+            color: #10B981;
+        }
+        .error {
+            color: #EF4444;
+        }
+        .info {
+            color: #3B82F6;
+        }
+        .warning {
+            color: #F59E0B;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix Super Admin Roles</h1>
+        <p>This tool will update the database records for both Super Admins to ensure they have the correct role.</p>
+        
+        <button id="checkBtn" onclick="checkUsers()">1. Check Current Status</button>
+        <button id="fixBtn" onclick="fixSuperAdmins()" disabled>2. Fix Super Admin Roles</button>
+        
+        <div id="output"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getFirestore, collection, getDocs, doc, updateDoc, query, where } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD_bNl8lgPZ08t6YUEcbxRIwYlqgvh3KS4",
+            authDomain: "orinut-494cc.firebaseapp.com",
+            projectId: "orinut-494cc",
+            storageBucket: "orinut-494cc.firebasestorage.app",
+            messagingSenderId: "625652358936",
+            appId: "1:625652358936:web:ff50d01f9c8a4e6ce4c8e2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const SUPER_ADMIN_PHONES = ['+916301308477', '+918555856366'];
+
+        let usersToFix = [];
+
+        window.checkUsers = async function() {
+            const output = document.getElementById('output');
+            const fixBtn = document.getElementById('fixBtn');
+            const checkBtn = document.getElementById('checkBtn');
+            
+            output.innerHTML = '<span class="info">🔍 Checking users...</span>\n';
+            checkBtn.disabled = true;
+            usersToFix = [];
+
+            try {
+                const usersRef = collection(db, 'users');
+                const snapshot = await getDocs(usersRef);
+                
+                output.innerHTML += `<span class="info">📊 Total users in database: ${snapshot.size}</span>\n\n`;
+
+                for (const docSnap of snapshot.docs) {
+                    const userData = docSnap.data();
+                    if (SUPER_ADMIN_PHONES.includes(userData.phone)) {
+                        const status = userData.adminRole === 'super-admin' ? 
+                            '<span class="success">✅ CORRECT</span>' : 
+                            '<span class="error">❌ NEEDS FIX</span>';
+                        
+                        output.innerHTML += `<span class="info">Found: ${userData.name} (${userData.phone})</span>\n`;
+                        output.innerHTML += `  Current role: ${userData.adminRole || 'none'} ${status}\n`;
+                        output.innerHTML += `  isAdmin: ${userData.isAdmin}\n`;
+                        output.innerHTML += `  User ID: ${docSnap.id}\n\n`;
+
+                        if (userData.adminRole !== 'super-admin') {
+                            usersToFix.push({
+                                id: docSnap.id,
+                                name: userData.name,
+                                phone: userData.phone
+                            });
+                        }
+                    }
+                }
+
+                if (usersToFix.length > 0) {
+                    output.innerHTML += `<span class="warning">⚠️ Found ${usersToFix.length} user(s) that need to be fixed.</span>\n`;
+                    output.innerHTML += `<span class="info">Click "Fix Super Admin Roles" to update them.</span>\n`;
+                    fixBtn.disabled = false;
+                } else {
+                    output.innerHTML += `<span class="success">✅ All Super Admin roles are correct!</span>\n`;
+                    fixBtn.disabled = true;
+                }
+
+            } catch (error) {
+                output.innerHTML += `<span class="error">❌ Error: ${error.message}</span>\n`;
+            } finally {
+                checkBtn.disabled = false;
+            }
+        };
+
+        window.fixSuperAdmins = async function() {
+            const output = document.getElementById('output');
+            const fixBtn = document.getElementById('fixBtn');
+            
+            if (usersToFix.length === 0) {
+                output.innerHTML += `<span class="warning">⚠️ No users to fix. Please run "Check Current Status" first.</span>\n`;
+                return;
+            }
+
+            output.innerHTML += `\n<span class="info">🔧 Starting fix process...</span>\n`;
+            fixBtn.disabled = true;
+
+            try {
+                for (const user of usersToFix) {
+                    output.innerHTML += `<span class="info">Updating ${user.name} (${user.phone})...</span>\n`;
+                    
+                    await updateDoc(doc(db, 'users', user.id), {
+                        adminRole: 'super-admin',
+                        isAdmin: true,
+                        updatedAt: new Date()
+                    });
+                    
+                    output.innerHTML += `<span class="success">  ✅ Updated successfully!</span>\n`;
+                }
+
+                output.innerHTML += `\n<span class="success">🎉 All Super Admin roles have been fixed!</span>\n`;
+                output.innerHTML += `<span class="info">📱 Please ask the users to LOG OUT and LOG BACK IN to see the changes.</span>\n`;
+
+                usersToFix = [];
+                fixBtn.disabled = true;
+
+            } catch (error) {
+                output.innerHTML += `<span class="error">❌ Error: ${error.message}</span>\n`;
+                fixBtn.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>

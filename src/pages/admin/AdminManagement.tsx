@@ -22,6 +22,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import {
   getAllUsers,
   getAllAdmins,
@@ -75,6 +77,57 @@ const AdminManagement = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fixSuperAdminRoles = async () => {
+    if (!window.confirm('This will update both Super Admin phone numbers (+916301308477 and +918555856366) to have the correct "super-admin" role in the database. Continue?')) {
+      return;
+    }
+
+    setProcessing('fixing-roles');
+    try {
+      // Get all users
+      const users = await getAllUsers();
+      
+      // Find users with Super Admin phone numbers
+      const superAdminUsers = users.filter(u => SUPER_ADMIN_PHONES.includes(u.phone));
+      
+      if (superAdminUsers.length === 0) {
+        toast({
+          title: 'No Super Admins Found',
+          description: 'Could not find users with Super Admin phone numbers.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Update each Super Admin directly using updateDoc
+      for (const superAdmin of superAdminUsers) {
+        const userRef = doc(db, 'users', superAdmin.id);
+        await updateDoc(userRef, {
+          isAdmin: true,
+          adminRole: 'super-admin',
+          updatedAt: new Date()
+        });
+        console.log(`✅ Updated ${superAdmin.name} to super-admin role`);
+      }
+
+      toast({
+        title: 'Super Admin Roles Fixed!',
+        description: `Updated ${superAdminUsers.length} user(s). Both Super Admins should now LOG OUT and LOG BACK IN to see changes.`,
+      });
+
+      await fetchData();
+    } catch (error) {
+      console.error('Error fixing super admin roles:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fix roles. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessing(null);
     }
   };
 
@@ -166,13 +219,28 @@ const AdminManagement = () => {
             Manage admin access and permissions (Super Admin Only)
           </p>
         </div>
-        <Button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2"
-        >
-          <UserPlus className="w-4 h-4" />
-          Add New Admin
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={fixSuperAdminRoles}
+            disabled={processing === 'fixing-roles'}
+            variant="outline"
+            className="flex items-center gap-2 border-purple-300 text-purple-700 hover:bg-purple-50"
+          >
+            {processing === 'fixing-roles' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Crown className="w-4 h-4" />
+            )}
+            Fix Super Admin Roles
+          </Button>
+          <Button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2"
+          >
+            <UserPlus className="w-4 h-4" />
+            Add New Admin
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}

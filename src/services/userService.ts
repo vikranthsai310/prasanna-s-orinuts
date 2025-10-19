@@ -304,9 +304,9 @@ export const getAllAdmins = async (): Promise<AdminUser[]> => {
 };
 
 // Promote user to admin (super admin only)
-export const promoteToAdmin = async (userId: string, adminRole: 'admin' = 'admin'): Promise<void> => {
+export const promoteToAdmin = async (userId: string, adminRole: 'admin' | 'super-admin' = 'admin'): Promise<void> => {
   try {
-    console.log('Promoting user to admin:', userId);
+    console.log('Promoting user to admin:', userId, 'with role:', adminRole);
     const userRef = doc(db, USERS_COLLECTION, userId);
     await updateDoc(userRef, {
       isAdmin: true,
