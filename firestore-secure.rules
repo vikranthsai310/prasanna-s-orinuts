@@ -34,6 +34,12 @@ service cloud.firestore {
              request.auth.token.phone_number in ['+918555856366', '+916301308477'];
     }
     
+    // Check if user is Super Admin
+    function isSuperAdmin() {
+      return isSignedIn() && 
+             request.auth.token.phone_number in ['+916301308477', '+918555856366'];
+    }
+    
     // Validate string length
     function validString(value, minLen, maxLen) {
       return value is string && 
@@ -76,11 +82,15 @@ service cloud.firestore {
                        validString(request.resource.data.name, 2, 100);
       
       // Allow users to update their own profile (but not admin status or suspended status)
+      // Only Super Admin can modify isAdmin and adminRole fields
       allow update: if (isOwner(userId) && 
                        request.resource.data.phone == resource.data.phone &&
                        request.resource.data.isAdmin == resource.data.isAdmin &&
+                       request.resource.data.get('adminRole', null) == resource.data.get('adminRole', null) &&
                        request.resource.data.isSuspended == resource.data.isSuspended) ||
-                       (isAdmin() || isAdminEmail() || isAdminPhone());
+                       (isSuperAdmin()) ||
+                       ((isAdmin() || isAdminEmail() || isAdminPhone()) && 
+                        request.resource.data.get('adminRole', null) == resource.data.get('adminRole', null));
       
       // Only admins can delete users
       allow delete: if isAdmin() || isAdminEmail() || isAdminPhone();

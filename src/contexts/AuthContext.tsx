@@ -9,7 +9,9 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import { ADMIN_PHONE_NUMBERS } from '@/config';
+import { ADMIN_PHONE_NUMBERS, SUPER_ADMIN_PHONES } from '@/config';
+
+type AdminRole = 'super-admin' | 'admin' | null;
 
 interface User {
   id: string;
@@ -17,6 +19,7 @@ interface User {
   email?: string;
   name: string;
   isAdmin: boolean;
+  adminRole?: AdminRole;
   phoneVerified?: boolean;
   isSuspended?: boolean;
   addresses?: Address[];
@@ -97,6 +100,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               phone: firebaseUser.phoneNumber || userData.phone || '',
               name: userData.name || firebaseUser.displayName || '',
               isAdmin: userData.isAdmin || ADMIN_PHONE_NUMBERS.includes(firebaseUser.phoneNumber || ''),
+              adminRole: SUPER_ADMIN_PHONES.includes(firebaseUser.phoneNumber || '')
+                ? 'super-admin' 
+                : (userData.adminRole || (ADMIN_PHONE_NUMBERS.includes(firebaseUser.phoneNumber || '') ? 'admin' : null)),
               phoneVerified: shouldBeVerified,
               isSuspended: userData.isSuspended || false,
               addresses: userData.addresses || [],

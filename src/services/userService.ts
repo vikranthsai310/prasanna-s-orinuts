@@ -12,6 +12,8 @@ import {
 import { db } from '@/lib/firebase';
 import { getUserOrders } from './orderService';
 
+export type AdminRole = 'super-admin' | 'admin' | null;
+
 export interface Address {
   name: string;
   phone: string;
@@ -28,6 +30,7 @@ export interface AdminUser {
   email: string;
   phone: string;
   isAdmin: boolean;
+  adminRole?: AdminRole;
   phoneVerified: boolean;
   isSuspended?: boolean;
   joinDate: Timestamp | Date;
@@ -256,6 +259,82 @@ export const unsuspendUser = async (userId: string): Promise<void> => {
     console.log('User unsuspended successfully');
   } catch (error) {
     console.error('Error unsuspending user:', error);
+    throw error;
+  }
+};
+
+// Get all admins (super admin only)
+export const getAllAdmins = async (): Promise<AdminUser[]> => {
+  try {
+    console.log('Fetching all admins from Firestore...');
+    const usersRef = collection(db, USERS_COLLECTION);
+    const q = query(usersRef, where('isAdmin', '==', true));
+    const querySnapshot = await getDocs(q);
+    
+    const admins: AdminUser[] = [];
+    
+    for (const docSnapshot of querySnapshot.docs) {
+      const userData = docSnapshot.data();
+      const stats = await getUserStats(docSnapshot.id);
+      
+      admins.push({
+        id: docSnapshot.id,
+        name: userData.name || 'Admin',
+        email: userData.email || '',
+        phone: userData.phone || '',
+        isAdmin: true,
+        adminRole: userData.adminRole || 'admin',
+        phoneVerified: userData.phoneVerified || false,
+        isSuspended: userData.isSuspended || false,
+        joinDate: userData.createdAt || new Date(),
+        createdAt: userData.createdAt || new Date(),
+        totalOrders: stats.totalOrders,
+        totalSpent: stats.totalSpent,
+        lastOrderDate: stats.lastOrderDate,
+        addresses: userData.addresses || []
+      });
+    }
+    
+    console.log(`Found ${admins.length} admins`);
+    return admins;
+  } catch (error) {
+    console.error('Error fetching admins:', error);
+    throw error;
+  }
+};
+
+// Promote user to admin (super admin only)
+export const promoteToAdmin = async (userId: string, adminRole: 'admin' = 'admin'): Promise<void> => {
+  try {
+    console.log('Promoting user to admin:', userId);
+    const userRef = doc(db, USERS_COLLECTION, userId);
+    await updateDoc(userRef, {
+      isAdmin: true,
+      adminRole: adminRole,
+      promotedAt: new Date(),
+      updatedAt: new Date()
+    });
+    console.log('User promoted to admin successfully');
+  } catch (error) {
+    console.error('Error promoting user to admin:', error);
+    throw error;
+  }
+};
+
+// Demote admin to regular user (super admin only, cannot demote super admin)
+export const demoteFromAdmin = async (userId: string): Promise<void> => {
+  try {
+    console.log('Demoting admin to regular user:', userId);
+    const userRef = doc(db, USERS_COLLECTION, userId);
+    await updateDoc(userRef, {
+      isAdmin: false,
+      adminRole: null,
+      demotedAt: new Date(),
+      updatedAt: new Date()
+    });
+    console.log('Admin demoted to regular user successfully');
+  } catch (error) {
+    console.error('Error demoting admin:', error);
     throw error;
   }
 };

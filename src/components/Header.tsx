@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Home, Package, LogOut, Settings, BarChart3, Tag } from 'lucide-react';
+import { ShoppingCart, User, Home, Package, LogOut, Settings, BarChart3, Tag, Shield } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -233,6 +233,15 @@ const Header = () => {
                           <User className="mr-2 h-4 w-4 text-amber-700" />
                           <span>Manage Users</span>
                         </DropdownMenuItem>
+                        {user.adminRole === 'super-admin' && (
+                          <DropdownMenuItem 
+                            onClick={() => navigate('/admin/admin-management')}
+                            className="hover:bg-amber-50 cursor-pointer"
+                          >
+                            <Shield className="mr-2 h-4 w-4 text-purple-700" />
+                            <span>Admin Management</span>
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem 
                           onClick={() => navigate('/admin/coupons')}
                           className="hover:bg-amber-50 cursor-pointer"
@@ -384,6 +393,19 @@ const Header = () => {
                       <User className="h-5 w-5 text-amber-700 group-hover:text-amber-900" />
                       <span className="text-base">Manage Users</span>
                     </button>
+                    
+                    {user.adminRole === 'super-admin' && (
+                      <button
+                        onClick={() => {
+                          navigate('/admin/admin-management');
+                          setIsMenuOpen(false);
+                        }}
+                        className="flex items-center space-x-4 px-4 py-3 rounded-xl text-purple-900 hover:bg-purple-100/80 transition-all duration-200 w-full group"
+                      >
+                        <Shield className="h-5 w-5 text-purple-700 group-hover:text-purple-900" />
+                        <span className="text-base">Admin Management</span>
+                      </button>
+                    )}
                     
                     <button
                       onClick={() => {
