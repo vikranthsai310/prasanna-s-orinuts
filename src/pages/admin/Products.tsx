@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Search, Loader2, X, Save, Upload, Star, Sparkles } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Loader2, X, Save, Upload, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -450,9 +450,6 @@ const AdminProducts = () => {
               <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-2 rounded-lg">
-                      <Sparkles className="w-5 h-5 text-white" />
-                    </div>
                     <div>
                       <h4 className="font-bold text-lg">Prasanna's AI Auto-fill</h4>
                       <p className="text-sm text-muted-foreground">Automatically fill nutritional data & description when you enter product name</p>
