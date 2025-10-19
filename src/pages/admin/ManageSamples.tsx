@@ -252,88 +252,92 @@ const AdminSamples = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 animate-fade-in">
+    <div className="container mx-auto px-4 py-6 md:py-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="font-playfair text-3xl font-bold flex items-center gap-3">
-            <Package className="w-8 h-8 text-orange-600" />
-            Manage Sample Products
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Configure which products are available as free samples
-          </p>
+      <div className="mb-6 md:mb-8">
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <div className="flex-1 min-w-0">
+            <h1 className="font-playfair text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2 md:gap-3">
+              <Package className="w-6 h-6 md:w-8 md:h-8 text-orange-600 flex-shrink-0" />
+              <span className="truncate">Manage Sample Products</span>
+            </h1>
+          </div>
+          <Button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-1 md:gap-2 flex-shrink-0 text-sm md:text-base"
+            size="sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Add Sample Product</span>
+            <span className="sm:hidden">Add</span>
+          </Button>
         </div>
-        <Button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Sample Product
-        </Button>
+        <p className="text-muted-foreground text-sm md:text-base">
+          Configure which products are available as free samples
+        </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="card-premium">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Package className="w-6 h-6 text-blue-600" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+        <div className="card-premium p-3 md:p-4">
+          <div className="flex items-center space-x-2 md:space-x-3">
+            <div className="p-1.5 md:p-2 bg-blue-100 rounded-lg flex-shrink-0">
+              <Package className="w-4 h-4 md:w-6 md:h-6 text-blue-600" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold">{samples.length}</h3>
-              <p className="text-sm text-muted-foreground">Total Samples</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="card-premium">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Eye className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold">{activeSamplesCount}</h3>
-              <p className="text-sm text-muted-foreground">Active Samples</p>
+            <div className="min-w-0">
+              <h3 className="text-base md:text-lg font-semibold">{samples.length}</h3>
+              <p className="text-xs md:text-sm text-muted-foreground truncate">Total Samples</p>
             </div>
           </div>
         </div>
 
-        <div className="card-premium">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Package className="w-6 h-6 text-purple-600" />
+        <div className="card-premium p-3 md:p-4">
+          <div className="flex items-center space-x-2 md:space-x-3">
+            <div className="p-1.5 md:p-2 bg-green-100 rounded-lg flex-shrink-0">
+              <Eye className="w-4 h-4 md:w-6 md:h-6 text-green-600" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold">{totalStock}</h3>
-              <p className="text-sm text-muted-foreground">Total Stock</p>
+            <div className="min-w-0">
+              <h3 className="text-base md:text-lg font-semibold">{activeSamplesCount}</h3>
+              <p className="text-xs md:text-sm text-muted-foreground truncate">Active Samples</p>
             </div>
           </div>
         </div>
 
-        <div className="card-premium">
-          <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-lg ${outOfStockCount > 0 ? 'bg-red-100' : 'bg-orange-100'}`}>
-              <Package className={`w-6 h-6 ${outOfStockCount > 0 ? 'text-red-600' : 'text-orange-600'}`} />
+        <div className="card-premium p-3 md:p-4">
+          <div className="flex items-center space-x-2 md:space-x-3">
+            <div className="p-1.5 md:p-2 bg-purple-100 rounded-lg flex-shrink-0">
+              <Package className="w-4 h-4 md:w-6 md:h-6 text-purple-600" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold">{outOfStockCount > 0 ? outOfStockCount : lowStockCount}</h3>
-              <p className="text-sm text-muted-foreground">{outOfStockCount > 0 ? 'Out of Stock' : 'Low Stock'}</p>
+            <div className="min-w-0">
+              <h3 className="text-base md:text-lg font-semibold">{totalStock}</h3>
+              <p className="text-xs md:text-sm text-muted-foreground truncate">Total Stock</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="card-premium p-3 md:p-4">
+          <div className="flex items-center space-x-2 md:space-x-3">
+            <div className={`p-1.5 md:p-2 rounded-lg flex-shrink-0 ${outOfStockCount > 0 ? 'bg-red-100' : 'bg-orange-100'}`}>
+              <Package className={`w-4 h-4 md:w-6 md:h-6 ${outOfStockCount > 0 ? 'text-red-600' : 'text-orange-600'}`} />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-base md:text-lg font-semibold">{outOfStockCount > 0 ? outOfStockCount : lowStockCount}</h3>
+              <p className="text-xs md:text-sm text-muted-foreground truncate">{outOfStockCount > 0 ? 'Out of Stock' : 'Low Stock'}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Search */}
-      <div className="mb-6">
-        <div className="relative max-w-md">
+      <div className="mb-4 md:mb-6">
+        <div className="relative w-full md:max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <input
             type="text"
-            placeholder="Search samples by product name..."
+            placeholder="Search samples..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="input-field pl-10 w-full"
+            className="input-field pl-10 w-full text-sm md:text-base"
           />
         </div>
       </div>
@@ -357,69 +361,81 @@ const AdminSamples = () => {
             )}
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {filteredSamples.map((sample) => (
               <div
                 key={sample.id}
-                className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition"
+                className="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4 p-3 md:p-4 border rounded-lg hover:bg-muted/50 transition"
               >
-                {/* Drag Handle */}
-                <div className="cursor-move text-muted-foreground">
-                  <GripVertical className="w-5 h-5" />
-                </div>
-
-                {/* Product Image */}
-                <img
-                  src={sample.productImage}
-                  alt={sample.productName}
-                  className="w-16 h-16 object-cover rounded-lg"
-                />
-
-                {/* Product Info */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold">{sample.productName}</h3>
-                    <Badge variant={sample.isActive ? 'default' : 'secondary'}>
-                      {sample.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
-                    {sample.stock === 0 && (
-                      <Badge variant="destructive">Out of Stock</Badge>
-                    )}
-                    {sample.stock > 0 && sample.stock < 10 && (
-                      <Badge variant="outline" className="text-orange-600 border-orange-600">
-                        Low Stock
-                      </Badge>
-                    )}
+                {/* Mobile Layout: Image + Info in one row */}
+                <div className="flex items-start gap-3 flex-1 w-full sm:w-auto">
+                  {/* Drag Handle - Hidden on mobile */}
+                  <div className="cursor-move text-muted-foreground hidden sm:block">
+                    <GripVertical className="w-5 h-5" />
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    <span className="font-medium">Weight:</span> {sample.sampleWeight} • 
-                    <span className="ml-2 font-medium">Max Qty:</span> {sample.maxQuantity} • 
-                    <span className="ml-2 font-medium">Stock:</span> 
-                    <span className={`ml-1 font-semibold ${
-                      sample.stock === 0 ? 'text-red-600' : 
-                      sample.stock < 10 ? 'text-orange-600' : 
-                      'text-green-600'
-                    }`}>
-                      {sample.stock}
-                    </span> • 
-                    <span className="ml-2 font-medium">Order:</span> {sample.order}
+
+                  {/* Product Image */}
+                  <img
+                    src={sample.productImage}
+                    alt={sample.productName}
+                    className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg flex-shrink-0"
+                  />
+
+                  {/* Product Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5 md:gap-2 mb-1">
+                      <h3 className="font-semibold text-sm md:text-base truncate">{sample.productName}</h3>
+                      <Badge variant={sample.isActive ? 'default' : 'secondary'} className="text-xs">
+                        {sample.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                      {sample.stock === 0 && (
+                        <Badge variant="destructive" className="text-xs">Out of Stock</Badge>
+                      )}
+                      {sample.stock > 0 && sample.stock < 10 && (
+                        <Badge variant="outline" className="text-orange-600 border-orange-600 text-xs">
+                          Low Stock
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-xs md:text-sm text-muted-foreground flex flex-wrap gap-x-2 gap-y-1">
+                      <span><span className="font-medium">Weight:</span> {sample.sampleWeight}</span>
+                      <span><span className="font-medium">Max:</span> {sample.maxQuantity}</span>
+                      <span>
+                        <span className="font-medium">Stock:</span> 
+                        <span className={`ml-1 font-semibold ${
+                          sample.stock === 0 ? 'text-red-600' : 
+                          sample.stock < 10 ? 'text-orange-600' : 
+                          'text-green-600'
+                        }`}>
+                          {sample.stock}
+                        </span>
+                      </span>
+                      <span className="hidden sm:inline"><span className="font-medium">Order:</span> {sample.order}</span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleToggleStatus(sample.id, sample.isActive)}
                     disabled={processing === sample.id}
+                    className="flex-1 sm:flex-none"
                   >
                     {processing === sample.id ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : sample.isActive ? (
-                      <EyeOff className="w-4 h-4" />
+                      <>
+                        <EyeOff className="w-4 h-4" />
+                        <span className="ml-1 sm:hidden">Hide</span>
+                      </>
                     ) : (
-                      <Eye className="w-4 h-4" />
+                      <>
+                        <Eye className="w-4 h-4" />
+                        <span className="ml-1 sm:hidden">Show</span>
+                      </>
                     )}
                   </Button>
 
@@ -427,8 +443,10 @@ const AdminSamples = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => openEditModal(sample)}
+                    className="flex-1 sm:flex-none"
                   >
                     <Edit className="w-4 h-4" />
+                    <span className="ml-1 sm:hidden">Edit</span>
                   </Button>
 
                   <Button
@@ -436,12 +454,15 @@ const AdminSamples = () => {
                     size="sm"
                     onClick={() => handleDeleteSample(sample.id, sample.productName)}
                     disabled={processing === sample.id}
-                    className="text-red-600 hover:text-red-700"
+                    className="text-red-600 hover:text-red-700 flex-1 sm:flex-none"
                   >
                     {processing === sample.id ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      <Trash2 className="w-4 h-4" />
+                      <>
+                        <Trash2 className="w-4 h-4" />
+                        <span className="ml-1 sm:hidden">Delete</span>
+                      </>
                     )}
                   </Button>
                 </div>
