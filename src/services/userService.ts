@@ -5,7 +5,8 @@ import {
   getDocs, 
   query, 
   where,
-  orderBy, 
+  orderBy,
+  updateDoc, 
   Timestamp
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -28,6 +29,7 @@ export interface AdminUser {
   phone: string;
   isAdmin: boolean;
   phoneVerified: boolean;
+  isSuspended?: boolean;
   joinDate: Timestamp | Date;
   createdAt: Timestamp | Date;
   totalOrders: number;
@@ -222,4 +224,38 @@ export const formatTimestamp = (timestamp: any): string => {
   
   // Handle regular Date or string
   return new Date(timestamp).toLocaleDateString();
+};
+
+// Suspend a user (admin only)
+export const suspendUser = async (userId: string): Promise<void> => {
+  try {
+    console.log('Suspending user:', userId);
+    const userRef = doc(db, USERS_COLLECTION, userId);
+    await updateDoc(userRef, {
+      isSuspended: true,
+      suspendedAt: new Date(),
+      updatedAt: new Date()
+    });
+    console.log('User suspended successfully');
+  } catch (error) {
+    console.error('Error suspending user:', error);
+    throw error;
+  }
+};
+
+// Unsuspend a user (admin only)
+export const unsuspendUser = async (userId: string): Promise<void> => {
+  try {
+    console.log('Unsuspending user:', userId);
+    const userRef = doc(db, USERS_COLLECTION, userId);
+    await updateDoc(userRef, {
+      isSuspended: false,
+      unsuspendedAt: new Date(),
+      updatedAt: new Date()
+    });
+    console.log('User unsuspended successfully');
+  } catch (error) {
+    console.error('Error unsuspending user:', error);
+    throw error;
+  }
 };

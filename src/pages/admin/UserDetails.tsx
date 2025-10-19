@@ -27,7 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
-import { getUserById, AdminUser } from '@/services/userService';
+import { getUserById, AdminUser, suspendUser, unsuspendUser } from '@/services/userService';
 import { getUserOrders, Order } from '@/services/orderService';
 
 const UserDetails = () => {
@@ -36,6 +36,7 @@ const UserDetails = () => {
   const [user, setUser] = useState<AdminUser | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [suspending, setSuspending] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
@@ -90,6 +91,49 @@ const UserDetails = () => {
     return { total, completed, pending, cancelled, avgOrderValue };
   };
 
+  const handleSuspendToggle = async () => {
+    if (!user || !userId) return;
+    
+    const action = user.isSuspended ? 'unsuspend' : 'suspend';
+    const confirmMessage = user.isSuspended 
+      ? `Are you sure you want to unsuspend ${user.name}? They will be able to access the website again.`
+      : `Are you sure you want to suspend ${user.name}? They will be immediately logged out and blocked from accessing the website.`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+    
+    setSuspending(true);
+    try {
+      if (user.isSuspended) {
+        await unsuspendUser(userId);
+        toast({
+          title: 'User Unsuspended',
+          description: `${user.name} can now access the website.`,
+        });
+      } else {
+        await suspendUser(userId);
+        toast({
+          title: 'User Suspended',
+          description: `${user.name} has been suspended and logged out.`,
+          variant: 'destructive',
+        });
+      }
+      
+      // Refresh user data
+      await fetchUserData();
+    } catch (error) {
+      console.error('Error toggling suspend status:', error);
+      toast({
+        title: 'Error',
+        description: `Failed to ${action} user. Please try again.`,
+        variant: 'destructive',
+      });
+    } finally {
+      setSuspending(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -132,9 +176,21 @@ const UserDetails = () => {
             <Edit className="w-4 h-4 mr-2" />
             Edit User
           </Button>
-          <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-            <Ban className="w-4 h-4 mr-2" />
-            Suspend
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleSuspendToggle}
+            disabled={suspending}
+            className={user?.isSuspended ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}
+          >
+            {suspending ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : user?.isSuspended ? (
+              <CheckSquare className="w-4 h-4 mr-2" />
+            ) : (
+              <Ban className="w-4 h-4 mr-2" />
+            )}
+            {user?.isSuspended ? 'Unsuspend' : 'Suspend'}
           </Button>
         </div>
       </div>
@@ -166,7 +222,11 @@ const UserDetails = () => {
                 {user.isAdmin && (
                   <Badge className="bg-purple-100 text-purple-800">Admin</Badge>
                 )}
-                <Badge className="bg-green-100 text-green-800">Active</Badge>
+                {user.isSuspended ? (
+                  <Badge className="bg-red-100 text-red-800">Suspended</Badge>
+                ) : (
+                  <Badge className="bg-green-100 text-green-800">Active</Badge>
+                )}
               </div>
             </div>
           </div>

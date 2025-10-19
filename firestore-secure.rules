@@ -53,6 +53,16 @@ service cloud.firestore {
              phone.matches('\\+91[6-9][0-9]{9}');
     }
     
+    // Check if user is suspended
+    function isSuspended(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.isSuspended == true;
+    }
+    
+    // Check if current user is not suspended
+    function isNotSuspended() {
+      return isSignedIn() && !isSuspended(request.auth.uid);
+    }
+    
     // ============================================
     // USERS COLLECTION
     // ============================================
@@ -65,10 +75,12 @@ service cloud.firestore {
                        request.resource.data.phone is string &&
                        validString(request.resource.data.name, 2, 100);
       
-      // Allow users to update their own profile (but not admin status)
-      allow update: if isOwner(userId) && 
+      // Allow users to update their own profile (but not admin status or suspended status)
+      allow update: if (isOwner(userId) && 
                        request.resource.data.phone == resource.data.phone &&
-                       request.resource.data.isAdmin == resource.data.isAdmin;
+                       request.resource.data.isAdmin == resource.data.isAdmin &&
+                       request.resource.data.isSuspended == resource.data.isSuspended) ||
+                       (isAdmin() || isAdminEmail() || isAdminPhone());
       
       // Only admins can delete users
       allow delete: if isAdmin() || isAdminEmail() || isAdminPhone();
@@ -89,15 +101,16 @@ service cloud.firestore {
     // ORDERS COLLECTION
     // ============================================
     match /orders/{orderId} {
-      // Users can read their own orders, admins can read all
+      // Users can read their own orders (if not suspended), admins can read all
       allow read: if isSignedIn() && 
-                     (resource.data.userId == request.auth.uid || 
+                     ((resource.data.userId == request.auth.uid && isNotSuspended()) || 
                       isAdmin() || 
                       isAdminEmail() ||
                       isAdminPhone());
       
-      // Users can create their own orders with validation
+      // Only non-suspended users can create orders
       allow create: if isSignedIn() && 
+                       isNotSuspended() &&
                        request.resource.data.userId == request.auth.uid &&
                        request.resource.data.status in ['pending', 'processing'] &&
                        request.resource.data.totalAmount is number &&
@@ -116,12 +129,14 @@ service cloud.firestore {
     // ADDRESSES COLLECTION
     // ============================================
     match /addresses/{addressId} {
-      // Users can read their own addresses
+      // Only non-suspended users can read their own addresses
       allow read: if isSignedIn() && 
+                     isNotSuspended() &&
                      resource.data.userId == request.auth.uid;
       
-      // Users can create their own addresses with validation
+      // Only non-suspended users can create addresses
       allow create: if isSignedIn() && 
+                       isNotSuspended() &&
                        request.resource.data.userId == request.auth.uid &&
                        validString(request.resource.data.name, 2, 100) &&
                        validString(request.resource.data.street, 5, 200) &&
@@ -130,13 +145,15 @@ service cloud.firestore {
                        request.resource.data.pincode.matches('[0-9]{6}') &&
                        validPhone(request.resource.data.phone);
       
-      // Users can update their own addresses
+      // Only non-suspended users can update their addresses
       allow update: if isSignedIn() && 
+                       isNotSuspended() &&
                        resource.data.userId == request.auth.uid &&
                        request.resource.data.userId == request.auth.uid;
       
-      // Users can delete their own addresses
+      // Only non-suspended users can delete their addresses
       allow delete: if isSignedIn() && 
+                       isNotSuspended() &&
                        resource.data.userId == request.auth.uid;
     }
     
@@ -147,21 +164,23 @@ service cloud.firestore {
       // Anyone can read reviews
       allow read: if true;
       
-      // Authenticated users can create reviews with validation
+      // Only non-suspended users can create reviews
       allow create: if isSignedIn() && 
+                       isNotSuspended() &&
                        request.resource.data.userId == request.auth.uid &&
                        request.resource.data.rating is int &&
                        request.resource.data.rating >= 1 &&
                        request.resource.data.rating <= 5 &&
                        validString(request.resource.data.comment, 10, 1000);
       
-      // Users can update their own reviews
+      // Only non-suspended users can update their own reviews
       allow update: if isSignedIn() && 
+                       isNotSuspended() &&
                        resource.data.userId == request.auth.uid;
       
-      // Users can delete their own reviews, admins can delete any
+      // Users can delete their own reviews (if not suspended), admins can delete any
       allow delete: if isSignedIn() && 
-                       (resource.data.userId == request.auth.uid || 
+                       ((resource.data.userId == request.auth.uid && isNotSuspended()) || 
                         isAdmin() || 
                         isAdminEmail() ||
                         isAdminPhone());
@@ -171,8 +190,9 @@ service cloud.firestore {
     // CART COLLECTION (optional, if you use Firestore for carts)
     // ============================================
     match /carts/{cartId} {
-      // Users can only access their own cart
+      // Only non-suspended users can access their cart
       allow read, write: if isSignedIn() && 
+                            isNotSuspended() &&
                             cartId == request.auth.uid;
     }
     

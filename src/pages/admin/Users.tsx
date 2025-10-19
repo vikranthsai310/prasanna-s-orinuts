@@ -200,6 +200,14 @@ const AdminUsers = () => {
                           >
                             {user.phoneVerified ? 'Verified' : 'Unverified'}
                           </Badge>
+                          {user.isSuspended && (
+                            <Badge 
+                              variant="destructive"
+                              className="text-xs w-fit"
+                            >
+                              Suspended
+                            </Badge>
+                          )}
                         </div>
                       </td>
                       <td className="py-3 px-4">

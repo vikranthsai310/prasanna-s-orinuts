@@ -18,6 +18,7 @@ interface User {
   name: string;
   isAdmin: boolean;
   phoneVerified?: boolean;
+  isSuspended?: boolean;
   addresses?: Address[];
   createdAt?: Date;
 }
@@ -69,6 +70,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // User exists in Firestore
             const userData = userDoc.data();
             
+            // CHECK IF USER IS SUSPENDED - Sign them out immediately
+            if (userData.isSuspended === true) {
+              console.log('🚫 User is suspended, signing out...');
+              await signOut(auth);
+              setUser(null);
+              setIsLoading(false);
+              return;
+            }
+            
             // Check if we need to update phoneVerified status in Firestore
             const shouldBeVerified = firebaseUser.phoneNumber ? true : false;
             const currentlyVerified = userData.phoneVerified || false;
@@ -88,6 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               name: userData.name || firebaseUser.displayName || '',
               isAdmin: userData.isAdmin || ADMIN_PHONE_NUMBERS.includes(firebaseUser.phoneNumber || ''),
               phoneVerified: shouldBeVerified,
+              isSuspended: userData.isSuspended || false,
               addresses: userData.addresses || [],
               createdAt: userData.createdAt?.toDate() || new Date()
             };
