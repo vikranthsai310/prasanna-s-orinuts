@@ -174,7 +174,7 @@ const HeroSection = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.6, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  Pleasure
+                  Pleasure,
                 </motion.span>
                 <motion.span
                   className="block text-amber-900 pb-2"
