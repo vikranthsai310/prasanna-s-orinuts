@@ -172,13 +172,13 @@ const HeroSectionAnimated = () => {
             <div className="space-y-2 lg:space-y-3">
               <h1 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-relaxed">
                 <span className="hero-title-line block text-amber-900 pb-2 opacity-0">
-                  Harvest
+                  Purity,
                 </span>
                 <span className="hero-title-line block bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent pb-2 opacity-0">
-                  Luxury,
+                  Pleasure
                 </span>
                 <span className="hero-title-line block text-amber-900 pb-2 opacity-0">
-                  Daily
+                  Perfection
                 </span>
               </h1>
             </div>

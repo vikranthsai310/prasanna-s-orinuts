@@ -166,7 +166,7 @@ const HeroSection = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  Harvest
+                  Purity,
                 </motion.span>
                 <motion.span
                   className="block bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent pb-2"
@@ -174,7 +174,7 @@ const HeroSection = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.6, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  Luxury,
+                  Pleasure
                 </motion.span>
                 <motion.span
                   className="block text-amber-900 pb-2"
@@ -182,7 +182,7 @@ const HeroSection = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.6, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  Daily
+                  and Perfection
                 </motion.span>
               </motion.h1>
             </div>
