@@ -177,43 +177,49 @@ const AdminManagement = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Total Admins</p>
-              <p className="text-3xl font-bold text-secondary">{admins.length}</p>
+        <div className="card-premium">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Shield className="w-6 h-6 text-blue-600" />
             </div>
-            <Shield className="w-12 h-12 text-blue-600 opacity-20" />
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Super Admins</p>
-              <p className="text-3xl font-bold text-purple-600">
+              <h3 className="text-lg font-semibold">{admins.length}</h3>
+              <p className="text-sm text-muted-foreground">Total Admins</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="card-premium">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <Crown className="w-6 h-6 text-purple-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">
                 {admins.filter(a => a.adminRole === 'super-admin').length}
-              </p>
+              </h3>
+              <p className="text-sm text-muted-foreground">Super Admins</p>
             </div>
-            <Crown className="w-12 h-12 text-purple-600 opacity-20" />
           </div>
-        </Card>
+        </div>
 
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Regular Admins</p>
-              <p className="text-3xl font-bold text-green-600">
-                {admins.filter(a => a.adminRole !== 'super-admin').length}
-              </p>
+        <div className="card-premium">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <Shield className="w-6 h-6 text-green-600" />
             </div>
-            <Shield className="w-12 h-12 text-green-600 opacity-20" />
+            <div>
+              <h3 className="text-lg font-semibold">
+                {admins.filter(a => a.adminRole !== 'super-admin').length}
+              </h3>
+              <p className="text-sm text-muted-foreground">Regular Admins</p>
+            </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Current Admins List */}
-      <Card className="p-6 mb-8">
+      <div className="card-premium mb-8">
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
           <Shield className="w-5 h-5" />
           Current Admins
@@ -277,12 +283,12 @@ const AdminManagement = () => {
             </div>
           ))}
         </div>
-      </Card>
+      </div>
 
       {/* Add Admin Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="max-w-4xl w-full max-h-[80vh] overflow-y-auto p-6">
+          <div className="card-premium max-w-4xl w-full max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <UserPlus className="w-6 h-6" />
@@ -306,7 +312,7 @@ const AdminManagement = () => {
                   placeholder="Search users by name, phone, or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
+                  className="input-field pl-10 w-full"
                 />
               </div>
             </div>
@@ -359,12 +365,12 @@ const AdminManagement = () => {
                 ))
               )}
             </div>
-          </Card>
+          </div>
         </div>
       )}
 
       {/* Info Box */}
-      <Card className="p-6 bg-purple-50 border-purple-200">
+      <div className="card-premium bg-purple-50 border-purple-200">
         <div className="flex gap-4">
           <Crown className="w-6 h-6 text-purple-600 flex-shrink-0 mt-1" />
           <div>
@@ -377,7 +383,7 @@ const AdminManagement = () => {
             </ul>
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };
