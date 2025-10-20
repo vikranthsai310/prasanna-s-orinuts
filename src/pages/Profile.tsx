@@ -398,20 +398,22 @@ const Profile = () => {
               <div>
                 <label className="block text-sm font-medium mb-1">Phone Number</label>
                 <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Phone className="w-4 h-4 text-muted-foreground" />
-                    <input
-                      type="tel"
-                      value={profileData.phone}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
-                      disabled={!isEditing}
-                      placeholder="+91 XXXXXXXXXX"
-                      className={`input-field flex-1 ${!isEditing ? 'bg-muted' : ''}`}
-                    />
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <div className="flex items-center flex-1 space-x-2 min-w-0">
+                      <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <input
+                        type="tel"
+                        value={profileData.phone}
+                        onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+                        disabled={!isEditing}
+                        placeholder="+91 XXXXXXXXXX"
+                        className={`input-field flex-1 min-w-0 ${!isEditing ? 'bg-muted' : ''}`}
+                      />
+                    </div>
                     {hasPhone && (
                       <Badge 
                         variant={isPhoneVerified ? "default" : "secondary"}
-                        className={`flex items-center space-x-1 ${
+                        className={`flex items-center justify-center space-x-1 flex-shrink-0 ${
                           isPhoneVerified 
                             ? 'bg-green-100 text-green-800 border-green-200' 
                             : 'bg-orange-100 text-orange-800 border-orange-200'
@@ -420,12 +422,12 @@ const Profile = () => {
                         {isPhoneVerified ? (
                           <>
                             <Shield className="w-3 h-3" />
-                            <span>Verified</span>
+                            <span className="text-xs sm:text-sm">Verified</span>
                           </>
                         ) : (
                           <>
                             <AlertCircle className="w-3 h-3" />
-                            <span>Unverified</span>
+                            <span className="text-xs sm:text-sm">Unverified</span>
                           </>
                         )}
                       </Badge>
