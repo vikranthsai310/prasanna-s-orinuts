@@ -12,7 +12,7 @@ Error fetching product discount: FirebaseError: Missing or insufficient permissi
 Error fetching discounts: FirebaseError: Missing or insufficient permissions.
 ```
 
-### 2. **Product Dropdown Empty** ❌
+### 2. **Product Dropdown Empty*
 - When clicking "Select a product" in Add Discount dialog
 - No products appeared in the dropdown
 - No error message or feedback
