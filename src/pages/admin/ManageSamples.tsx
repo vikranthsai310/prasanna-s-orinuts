@@ -369,9 +369,9 @@ const AdminSamples = () => {
               >
                 {/* Product Info Section */}
                 <div className="p-3 md:p-4">
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-2.5 md:gap-3">
                     {/* Drag Handle - Hidden on mobile */}
-                    <div className="cursor-move text-muted-foreground hidden sm:block mt-1">
+                    <div className="cursor-move text-muted-foreground hidden lg:block mt-1">
                       <GripVertical className="w-5 h-5" />
                     </div>
 
@@ -379,44 +379,46 @@ const AdminSamples = () => {
                     <img
                       src={sample.productImage}
                       alt={sample.productName}
-                      className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg flex-shrink-0"
+                      className="w-14 h-14 md:w-20 md:h-20 object-cover rounded-lg flex-shrink-0"
                     />
 
                     {/* Product Details */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="font-semibold text-base md:text-lg">{sample.productName}</h3>
+                      <div className="flex items-start gap-2 mb-1.5">
+                        <h3 className="font-semibold text-sm md:text-base flex-1 line-clamp-2">{sample.productName}</h3>
                         <Badge 
                           variant={sample.isActive ? 'default' : 'secondary'} 
-                          className="text-xs flex-shrink-0"
+                          className="text-[10px] md:text-xs flex-shrink-0 px-1.5 py-0"
                         >
                           {sample.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </div>
                       
                       {/* Stock Badges */}
-                      <div className="flex flex-wrap gap-1.5 mb-2">
-                        {sample.stock === 0 && (
-                          <Badge variant="destructive" className="text-xs">Out of Stock</Badge>
-                        )}
-                        {sample.stock > 0 && sample.stock < 10 && (
-                          <Badge variant="outline" className="text-orange-600 border-orange-600 text-xs">
-                            Low Stock
-                          </Badge>
-                        )}
-                      </div>
+                      {(sample.stock === 0 || sample.stock < 10) && (
+                        <div className="flex flex-wrap gap-1 mb-1.5">
+                          {sample.stock === 0 && (
+                            <Badge variant="destructive" className="text-[10px] md:text-xs px-1.5 py-0">Out of Stock</Badge>
+                          )}
+                          {sample.stock > 0 && sample.stock < 10 && (
+                            <Badge variant="outline" className="text-orange-600 border-orange-600 text-[10px] md:text-xs px-1.5 py-0">
+                              Low Stock
+                            </Badge>
+                          )}
+                        </div>
+                      )}
 
                       {/* Product Stats */}
-                      <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-1.5 text-xs md:text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <span className="font-medium">Weight:</span> 
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] md:text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1 whitespace-nowrap">
+                          <span className="font-medium">Wt:</span> 
                           <span className="text-gray-900">{sample.sampleWeight}</span>
                         </span>
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1 whitespace-nowrap">
                           <span className="font-medium">Max:</span> 
                           <span className="text-gray-900">{sample.maxQuantity}</span>
                         </span>
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1 whitespace-nowrap">
                           <span className="font-medium">Stock:</span> 
                           <span className={`font-semibold ${
                             sample.stock === 0 ? 'text-red-600' : 
@@ -426,36 +428,32 @@ const AdminSamples = () => {
                             {sample.stock}
                           </span>
                         </span>
-                        <span className="hidden sm:flex items-center gap-1">
-                          <span className="font-medium">Order:</span> 
-                          <span className="text-gray-900">{sample.order}</span>
-                        </span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Action Buttons - Separated section with border */}
-                <div className="border-t border-gray-100 bg-gray-50/50 px-3 py-2 md:px-4">
-                  <div className="flex items-center gap-2 justify-end sm:justify-start">
+                <div className="border-t border-gray-100 bg-gray-50/50 px-2.5 py-2 md:px-4">
+                  <div className="flex items-center gap-1.5 md:gap-2 justify-center md:justify-start">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleToggleStatus(sample.id, sample.isActive)}
                       disabled={processing === sample.id}
-                      className="flex items-center gap-1.5 bg-white hover:bg-gray-50 min-w-[85px] sm:min-w-0"
+                      className="flex-1 md:flex-none flex items-center justify-center gap-1 bg-white hover:bg-gray-50 h-8 text-xs"
                     >
                       {processing === sample.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
                       ) : sample.isActive ? (
                         <>
-                          <EyeOff className="w-4 h-4" />
-                          <span className="text-xs font-medium">Hide</span>
+                          <EyeOff className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                          <span className="font-medium">Hide</span>
                         </>
                       ) : (
                         <>
-                          <Eye className="w-4 h-4" />
-                          <span className="text-xs font-medium">Show</span>
+                          <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                          <span className="font-medium">Show</span>
                         </>
                       )}
                     </Button>
@@ -464,10 +462,10 @@ const AdminSamples = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => openEditModal(sample)}
-                      className="flex items-center gap-1.5 bg-white hover:bg-gray-50 min-w-[70px] sm:min-w-0"
+                      className="flex-1 md:flex-none flex items-center justify-center gap-1 bg-white hover:bg-gray-50 h-8 text-xs"
                     >
-                      <Edit className="w-4 h-4" />
-                      <span className="text-xs font-medium">Edit</span>
+                      <Edit className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                      <span className="font-medium">Edit</span>
                     </Button>
 
                     <Button
@@ -475,14 +473,14 @@ const AdminSamples = () => {
                       size="sm"
                       onClick={() => handleDeleteSample(sample.id, sample.productName)}
                       disabled={processing === sample.id}
-                      className="flex items-center gap-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 bg-white min-w-[85px] sm:min-w-0"
+                      className="flex-1 md:flex-none flex items-center justify-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 bg-white h-8 text-xs"
                     >
                       {processing === sample.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
                       ) : (
                         <>
-                          <Trash2 className="w-4 h-4" />
-                          <span className="text-xs font-medium">Delete</span>
+                          <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                          <span className="font-medium">Delete</span>
                         </>
                       )}
                     </Button>
