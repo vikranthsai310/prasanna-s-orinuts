@@ -147,9 +147,9 @@ const ProductCardAnimated = ({ product, index = 0 }: ProductCardProps) => {
             loading="lazy"
           />
           
-          {/* Hover overlay with improved animation */}
+          {/* Hover overlay with improved animation - hidden on mobile, visible on hover for desktop */}
           <div 
-            className={`absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent transition-all duration-500 ${
+            className={`absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent transition-all duration-500 hidden md:block ${
               isHovered ? 'opacity-100' : 'opacity-0'
             }`}
           >
@@ -164,6 +164,18 @@ const ProductCardAnimated = ({ product, index = 0 }: ProductCardProps) => {
                 Add to Cart
               </Button>
             </div>
+          </div>
+
+          {/* Mobile Add to Cart button - always visible on mobile */}
+          <div className="absolute bottom-4 left-4 right-4 md:hidden">
+            <Button
+              onClick={handleAddToCart}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white shadow-lg"
+              size="sm"
+            >
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              Add to Cart
+            </Button>
           </div>
 
           {/* Price badge */}

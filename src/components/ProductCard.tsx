@@ -70,7 +70,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
               decoding="async"
               fetchPriority="low"
             />
-            <div className={`absolute inset-0 bg-primary/40 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+            {/* Hover overlay - hidden on mobile, visible on hover for desktop */}
+            <div className={`absolute inset-0 bg-primary/40 transition-opacity duration-300 hidden md:block ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
               <div className="absolute bottom-4 left-4 right-4">
                 <Button
                   onClick={handleAddToCart}
@@ -81,6 +82,17 @@ const ProductCard = ({ product }: ProductCardProps) => {
                   Add to Cart
                 </Button>
               </div>
+            </div>
+            {/* Mobile Add to Cart button - always visible on mobile */}
+            <div className="absolute bottom-4 left-4 right-4 md:hidden">
+              <Button
+                onClick={handleAddToCart}
+                className="w-full btn-secondary shadow-lg"
+                size="sm"
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Add to Cart
+              </Button>
             </div>
           </div>
           
