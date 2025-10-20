@@ -207,80 +207,84 @@ const AdminManagement = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 animate-fade-in">
+    <div className="container mx-auto px-4 py-6 md:py-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="font-playfair text-3xl font-bold flex items-center gap-3">
-            <Shield className="w-8 h-8 text-purple-600" />
-            Admin Management
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Manage admin access and permissions (Super Admin Only)
-          </p>
+      <div className="mb-6 md:mb-8">
+        <div className="flex items-start gap-3 mb-3">
+          <Shield className="w-6 h-6 md:w-8 md:h-8 text-purple-600 flex-shrink-0 mt-1" />
+          <div className="flex-1 min-w-0">
+            <h1 className="font-playfair text-xl sm:text-2xl md:text-3xl font-bold">
+              Admin Management
+            </h1>
+            <p className="text-muted-foreground text-xs sm:text-sm md:text-base mt-1 md:mt-2">
+              Manage admin access and permissions (Super Admin Only)
+            </p>
+          </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Button
             onClick={fixSuperAdminRoles}
             disabled={processing === 'fixing-roles'}
             variant="outline"
-            className="flex items-center gap-2 border-purple-300 text-purple-700 hover:bg-purple-50"
+            size="sm"
+            className="flex items-center justify-center gap-1.5 border-purple-300 text-purple-700 hover:bg-purple-50 text-xs sm:text-sm h-9"
           >
             {processing === 'fixing-roles' ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
             ) : (
-              <Crown className="w-4 h-4" />
+              <Crown className="w-3.5 h-3.5 md:w-4 md:h-4" />
             )}
-            Fix Super Admin Roles
+            <span>Fix Super Admin Roles</span>
           </Button>
           <Button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2"
+            size="sm"
+            className="flex items-center justify-center gap-1.5 text-xs sm:text-sm h-9"
           >
-            <UserPlus className="w-4 h-4" />
-            Add New Admin
+            <UserPlus className="w-3.5 h-3.5 md:w-4 md:h-4" />
+            <span>Add New Admin</span>
           </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="card-premium">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Shield className="w-6 h-6 text-blue-600" />
+      <div className="grid grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
+        <div className="card-premium p-3 md:p-4">
+          <div className="flex items-center space-x-2 md:space-x-3">
+            <div className="p-1.5 md:p-2 bg-blue-100 rounded-lg flex-shrink-0">
+              <Shield className="w-4 h-4 md:w-6 md:h-6 text-blue-600" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold">{admins.length}</h3>
-              <p className="text-sm text-muted-foreground">Total Admins</p>
+            <div className="min-w-0">
+              <h3 className="text-base md:text-lg font-semibold">{admins.length}</h3>
+              <p className="text-xs md:text-sm text-muted-foreground truncate">Total Admins</p>
             </div>
           </div>
         </div>
 
-        <div className="card-premium">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Crown className="w-6 h-6 text-purple-600" />
+        <div className="card-premium p-3 md:p-4">
+          <div className="flex items-center space-x-2 md:space-x-3">
+            <div className="p-1.5 md:p-2 bg-purple-100 rounded-lg flex-shrink-0">
+              <Crown className="w-4 h-4 md:w-6 md:h-6 text-purple-600" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold">
+            <div className="min-w-0">
+              <h3 className="text-base md:text-lg font-semibold">
                 {admins.filter(a => a.adminRole === 'super-admin').length}
               </h3>
-              <p className="text-sm text-muted-foreground">Super Admins</p>
+              <p className="text-xs md:text-sm text-muted-foreground truncate">Super Admins</p>
             </div>
           </div>
         </div>
 
-        <div className="card-premium">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Shield className="w-6 h-6 text-green-600" />
+        <div className="card-premium p-3 md:p-4">
+          <div className="flex items-center space-x-2 md:space-x-3">
+            <div className="p-1.5 md:p-2 bg-green-100 rounded-lg flex-shrink-0">
+              <Shield className="w-4 h-4 md:w-6 md:h-6 text-green-600" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold">
+            <div className="min-w-0">
+              <h3 className="text-base md:text-lg font-semibold">
                 {admins.filter(a => a.adminRole !== 'super-admin').length}
               </h3>
-              <p className="text-sm text-muted-foreground">Regular Admins</p>
+              <p className="text-xs md:text-sm text-muted-foreground truncate">Regular Admins</p>
             </div>
           </div>
         </div>
@@ -288,66 +292,75 @@ const AdminManagement = () => {
 
       {/* Current Admins List */}
       <div className="card-premium mb-8">
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <Shield className="w-5 h-5" />
+        <h2 className="text-lg md:text-xl font-bold mb-4 flex items-center gap-2">
+          <Shield className="w-4 h-4 md:w-5 md:h-5" />
           Current Admins
         </h2>
 
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {admins.map((admin) => (
             <div
               key={admin.id}
-              className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition"
+              className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
             >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                  {admin.name.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-semibold text-lg">{admin.name}</p>
-                    {admin.adminRole === 'super-admin' ? (
-                      <Badge className="bg-purple-100 text-purple-800 flex items-center gap-1">
-                        <Crown className="w-3 h-3" />
-                        Super Admin
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-blue-100 text-blue-800">
-                        Admin
-                      </Badge>
-                    )}
+              {/* Admin Info Section */}
+              <div className="p-3 md:p-4">
+                <div className="flex items-start gap-2.5 md:gap-4">
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white text-lg md:text-xl font-bold flex-shrink-0">
+                    {admin.name.charAt(0).toUpperCase()}
                   </div>
-                  <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-                    <p>📧 {admin.email || 'No email'}</p>
-                    <p>📱 {admin.phone}</p>
-                    <p>📅 Joined {formatTimestamp(admin.joinDate)}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start gap-2 mb-1.5">
+                      <p className="font-semibold text-sm md:text-lg flex-1 truncate">{admin.name}</p>
+                      {admin.adminRole === 'super-admin' ? (
+                        <Badge className="bg-purple-100 text-purple-800 flex items-center gap-1 text-[10px] md:text-xs px-1.5 py-0 flex-shrink-0">
+                          <Crown className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                          <span className="hidden sm:inline">Super Admin</span>
+                          <span className="sm:hidden">Super</span>
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-blue-100 text-blue-800 text-[10px] md:text-xs px-1.5 py-0 flex-shrink-0">
+                          Admin
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-0.5 md:gap-1 text-[11px] md:text-sm text-muted-foreground">
+                      <p className="truncate">📧 {admin.email || 'No email'}</p>
+                      <p>📱 {admin.phone}</p>
+                      <p className="hidden sm:block">📅 Joined {formatTimestamp(admin.joinDate)}</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div>
-                {admin.adminRole === 'super-admin' ? (
-                  <div className="flex items-center gap-2 text-purple-600">
-                    <Shield className="w-5 h-5" />
-                    <span className="font-semibold">Protected</span>
+              {/* Action Section */}
+              {admin.adminRole === 'super-admin' ? (
+                <div className="border-t border-gray-100 bg-purple-50/50 px-3 py-2 md:px-4">
+                  <div className="flex items-center justify-center gap-2 text-purple-600">
+                    <Shield className="w-4 h-4 md:w-5 md:h-5" />
+                    <span className="font-semibold text-xs md:text-sm">Protected</span>
                   </div>
-                ) : (
+                </div>
+              ) : (
+                <div className="border-t border-gray-100 bg-gray-50/50 px-2.5 py-2 md:px-4">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleDemoteFromAdmin(admin.id, admin.name, admin.adminRole || undefined)}
                     disabled={processing === admin.id}
-                    className="text-red-600 hover:text-red-700"
+                    className="w-full flex items-center justify-center gap-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 bg-white h-8 text-xs"
                   >
                     {processing === admin.id ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
                     ) : (
-                      <UserMinus className="w-4 h-4 mr-2" />
+                      <>
+                        <UserMinus className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        <span className="font-medium">Remove Admin</span>
+                      </>
                     )}
-                    Remove Admin
                   </Button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
