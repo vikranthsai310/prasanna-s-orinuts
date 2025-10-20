@@ -1,4 +1,31 @@
-# SPA routing - redirect all non-API and non-asset requests to index.html
-/api/* /api/:splat 200
-/assets/* /assets/:splat 200
-/* /index.html 200
+# Netlify Redirects for SPA (Single Page Application)
+# https://docs.netlify.com/routing/redirects/
+
+# Redirect API routes (if you have serverless functions)
+/api/*  /.netlify/functions/:splat  200
+
+# Serve static assets directly
+/assets/*  /assets/:splat  200
+
+# Fonts
+/fonts/*  /fonts/:splat  200
+
+# Images
+/images/*  /images/:splat  200
+/*.png  /:splat.png  200
+/*.jpg  /:splat.jpg  200
+/*.jpeg  /:splat.jpeg  200
+/*.svg  /:splat.svg  200
+/*.webp  /:splat.webp  200
+/*.ico  /:splat.ico  200
+
+# Manifest and service worker
+/manifest.json  /manifest.json  200
+/sw.js  /sw.js  200
+
+# Robots and sitemap
+/robots.txt  /robots.txt  200
+/sitemap.xml  /sitemap.xml  200
+
+# SPA fallback - redirect all other requests to index.html for client-side routing
+/*  /index.html  200
