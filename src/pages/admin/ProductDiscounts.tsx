@@ -303,85 +303,98 @@ const ProductDiscounts = () => {
             const discountedPrice = calculateDiscountedPrice(originalPrice, discount.discountPercentage);
 
             return (
-              <Card key={discount.id} className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex gap-4 flex-1">
+              <Card key={discount.id} className="overflow-hidden">
+                {/* Product Info Section */}
+                <div className="p-3 md:p-6">
+                  <div className="flex gap-2.5 md:gap-4">
                     {/* Product Image */}
                     {product?.image && (
                       <img 
                         src={product.image} 
                         alt={discount.productName}
-                        className="w-20 h-20 object-cover rounded-lg"
+                        className="w-14 h-14 md:w-20 md:h-20 object-cover rounded-lg flex-shrink-0"
                       />
                     )}
                     
                     {/* Product Info */}
-                    <div className="flex-1">
-                      <div className="flex items-start gap-3 mb-2">
-                        <h3 className="text-lg font-semibold">{discount.productName}</h3>
-                        <Badge variant={discount.isActive ? 'default' : 'secondary'}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3 className="text-sm md:text-lg font-semibold line-clamp-2 flex-1">{discount.productName}</h3>
+                        <Badge variant={discount.isActive ? 'default' : 'secondary'} className="text-[10px] md:text-xs flex-shrink-0 px-1.5 py-0">
                           {discount.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                      <div className="grid grid-cols-3 gap-2 md:gap-4 mt-2 md:mt-3">
                         <div>
-                          <p className="text-sm text-muted-foreground">Discount</p>
-                          <p className="text-2xl font-bold text-secondary flex items-center gap-1">
+                          <p className="text-[10px] md:text-sm text-muted-foreground">Discount</p>
+                          <p className="text-base md:text-2xl font-bold text-secondary flex items-center gap-0.5 md:gap-1">
                             {discount.discountPercentage}%
-                            <Percent className="w-5 h-5" />
+                            <Percent className="w-3 h-3 md:w-5 md:h-5" />
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground">Original Price</p>
-                          <p className="text-lg font-medium line-through text-muted-foreground">
-                            ₹{originalPrice.toFixed(2)}
+                          <p className="text-[10px] md:text-sm text-muted-foreground">Original</p>
+                          <p className="text-xs md:text-lg font-medium line-through text-muted-foreground">
+                            ₹{originalPrice.toFixed(0)}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground">Discounted Price</p>
-                          <p className="text-lg font-bold text-green-600">
-                            ₹{discountedPrice.toFixed(2)}
+                          <p className="text-[10px] md:text-sm text-muted-foreground">Discounted</p>
+                          <p className="text-xs md:text-lg font-bold text-green-600">
+                            ₹{discountedPrice.toFixed(0)}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex gap-4 mt-3 text-sm text-muted-foreground">
-                        <span>Product ID: {discount.id.slice(0, 8)}...</span>
-                        <span>•</span>
-                        <span>Updated: {discount.updatedAt.toDate().toLocaleDateString()}</span>
+                      <div className="flex flex-wrap gap-x-2 md:gap-x-4 gap-y-1 mt-2 md:mt-3 text-[10px] md:text-sm text-muted-foreground">
+                        <span>ID: {discount.id.slice(0, 6)}...</span>
+                        <span className="hidden sm:inline">•</span>
+                        <span className="hidden sm:inline">Updated: {discount.updatedAt.toDate().toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2 ml-4">
+                {/* Actions - Separated section */}
+                <div className="border-t border-gray-100 bg-gray-50/50 px-2.5 py-2 md:px-6 md:py-3">
+                  <div className="flex items-center gap-1.5 md:gap-2 justify-center md:justify-start">
                     <Button
                       variant="outline"
-                      size="icon"
+                      size="sm"
                       onClick={() => handleToggleStatus(discount.id, discount.isActive)}
+                      className="flex-1 md:flex-none flex items-center justify-center gap-1 bg-white hover:bg-gray-50 h-8 text-xs"
                       title={discount.isActive ? 'Deactivate' : 'Activate'}
                     >
                       {discount.isActive ? (
-                        <ToggleRight className="w-4 h-4 text-green-500" />
+                        <>
+                          <ToggleRight className="w-3.5 h-3.5 md:w-4 md:h-4 text-green-500" />
+                          <span className="font-medium">Active</span>
+                        </>
                       ) : (
-                        <ToggleLeft className="w-4 h-4 text-gray-500" />
+                        <>
+                          <ToggleLeft className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-500" />
+                          <span className="font-medium">Inactive</span>
+                        </>
                       )}
                     </Button>
                     <Button
                       variant="outline"
-                      size="icon"
+                      size="sm"
                       onClick={() => handleOpenDialog(discount)}
+                      className="flex-1 md:flex-none flex items-center justify-center gap-1 bg-white hover:bg-gray-50 h-8 text-xs"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                      <span className="font-medium">Edit</span>
                     </Button>
                     <Button
                       variant="outline"
-                      size="icon"
+                      size="sm"
                       onClick={() => handleDelete(discount.id)}
-                      className="text-red-600 hover:text-red-700"
+                      className="flex-1 md:flex-none flex items-center justify-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 bg-white h-8 text-xs"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                      <span className="font-medium">Delete</span>
                     </Button>
                   </div>
                 </div>
