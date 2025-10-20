@@ -388,91 +388,108 @@ export default function AdminCouponsPage() {
           </Card>
         ) : (
           coupons.map((coupon) => (
-            <Card key={coupon.id} className="p-6 hover:shadow-lg transition-shadow">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  {/* Coupon Code & Status */}
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-xl font-bold text-primary">{coupon.code}</h3>
-                    {coupon.isActive ? (
-                      <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-                        <CheckCircle2 className="w-3 h-3" /> Active
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                        <XCircle className="w-3 h-3" /> Inactive
-                      </span>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyCode(coupon.code)}
-                      className="h-7 px-2"
-                    >
-                      <Copy className="w-3 h-3" />
-                    </Button>
-                  </div>
-
-                  {/* Description */}
-                  {coupon.description && (
-                    <p className="text-gray-600 text-sm mb-3">{coupon.description}</p>
+            <Card key={coupon.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              {/* Coupon Info Section */}
+              <div className="p-3 md:p-6">
+                {/* Coupon Code & Status */}
+                <div className="flex items-center flex-wrap gap-2 mb-2">
+                  <h3 className="text-lg md:text-xl font-bold text-primary">{coupon.code}</h3>
+                  {coupon.isActive ? (
+                    <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-[10px] md:text-xs rounded-full">
+                      <CheckCircle2 className="w-3 h-3" /> Active
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 text-[10px] md:text-xs rounded-full">
+                      <XCircle className="w-3 h-3" /> Inactive
+                    </span>
                   )}
-
-                  {/* Discount Info */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Discount:</span>
-                      <p className="font-semibold">
-                        {coupon.discountType === 'percentage'
-                          ? `${coupon.discountValue}%`
-                          : `₹${coupon.discountValue}`}
-                        {coupon.maxDiscountAmount > 0 && (
-                          <span className="text-xs text-gray-500"> (max ₹{coupon.maxDiscountAmount})</span>
-                        )}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Min Order:</span>
-                      <p className="font-semibold">
-                        {coupon.minOrderAmount ? `₹${coupon.minOrderAmount}` : 'None'}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Usage:</span>
-                      <p className="font-semibold">
-                        {coupon.usageCount}/{coupon.usageLimit || '∞'}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Valid Until:</span>
-                      <p className="font-semibold">{new Date(coupon.validUntil).toLocaleDateString()}</p>
-                    </div>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyCode(coupon.code)}
+                    className="h-6 md:h-7 px-2"
+                  >
+                    <Copy className="w-3 h-3" />
+                  </Button>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-2 ml-4">
+                {/* Description */}
+                {coupon.description && (
+                  <p className="text-gray-600 text-xs md:text-sm mb-2 md:mb-3 line-clamp-2">{coupon.description}</p>
+                )}
+
+                {/* Discount Info */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 text-xs md:text-sm">
+                  <div>
+                    <span className="text-gray-500 text-[10px] md:text-xs">Discount:</span>
+                    <p className="font-semibold text-xs md:text-sm">
+                      {coupon.discountType === 'percentage'
+                        ? `${coupon.discountValue}%`
+                        : `₹${coupon.discountValue}`}
+                      {coupon.maxDiscountAmount > 0 && (
+                        <span className="text-[9px] md:text-xs text-gray-500 block md:inline">
+                          <span className="hidden md:inline"> (</span>max ₹{coupon.maxDiscountAmount}<span className="hidden md:inline">)</span>
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 text-[10px] md:text-xs">Min Order:</span>
+                    <p className="font-semibold text-xs md:text-sm">
+                      {coupon.minOrderAmount ? `₹${coupon.minOrderAmount}` : 'None'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 text-[10px] md:text-xs">Usage:</span>
+                    <p className="font-semibold text-xs md:text-sm">
+                      {coupon.usageCount}/{coupon.usageLimit || '∞'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 text-[10px] md:text-xs">Valid Until:</span>
+                    <p className="font-semibold text-xs md:text-sm">{new Date(coupon.validUntil).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons - Separated section */}
+              <div className="border-t border-gray-100 bg-gray-50/50 px-2.5 py-2 md:px-6 md:py-3">
+                <div className="flex items-center gap-1.5 md:gap-2 justify-center md:justify-start">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => toggleActive(coupon)}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-1 bg-white hover:bg-gray-50 h-8 text-xs"
                   >
-                    {coupon.isActive ? 'Deactivate' : 'Activate'}
+                    {coupon.isActive ? (
+                      <>
+                        <XCircle className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        <span className="font-medium">Deactivate</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        <span className="font-medium">Activate</span>
+                      </>
+                    )}
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleEdit(coupon)}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-1 bg-white hover:bg-gray-50 h-8 text-xs"
                   >
-                    <Edit className="w-4 h-4" />
+                    <Edit className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                    <span className="font-medium">Edit</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleDelete(coupon.id!)}
-                    className="text-red-600 hover:text-red-700"
+                    className="flex-1 md:flex-none flex items-center justify-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 bg-white h-8 text-xs"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                    <span className="font-medium">Delete</span>
                   </Button>
                 </div>
               </div>
