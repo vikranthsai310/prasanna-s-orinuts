@@ -266,32 +266,32 @@ const AdminOrders = () => {
 
       {/* Order Details Modal */}
       <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-[95vw] md:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Order Details</DialogTitle>
+            <DialogTitle className="text-lg md:text-xl">Order Details</DialogTitle>
           </DialogHeader>
           
           {selectedOrder && (
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {/* Order Info */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Order ID</p>
-                  <p className="font-medium font-mono">{selectedOrder.id}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Order ID</p>
+                  <p className="font-medium font-mono text-xs md:text-sm break-all">{selectedOrder.id}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Date</p>
-                  <p className="font-medium">{formatDate(selectedOrder.createdAt)}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Date</p>
+                  <p className="font-medium text-xs md:text-sm">{formatDate(selectedOrder.createdAt)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Status</p>
-                  <Badge className={`${getStatusColor(selectedOrder.orderStatus)} text-white border-0`}>
+                  <p className="text-xs md:text-sm text-muted-foreground">Status</p>
+                  <Badge className={`${getStatusColor(selectedOrder.orderStatus)} text-white border-0 text-xs`}>
                     {selectedOrder.orderStatus.toUpperCase()}
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Payment</p>
-                  <Badge variant={selectedOrder.paymentStatus === 'paid' ? 'default' : 'outline'}>
+                  <p className="text-xs md:text-sm text-muted-foreground">Payment</p>
+                  <Badge variant={selectedOrder.paymentStatus === 'paid' ? 'default' : 'outline'} className="text-xs">
                     {selectedOrder.paymentStatus.toUpperCase()}
                   </Badge>
                 </div>
@@ -300,26 +300,26 @@ const AdminOrders = () => {
               {/* Tracking Info */}
               {selectedOrder.trackingId && (
                 <div>
-                  <p className="text-sm text-muted-foreground">Tracking ID</p>
-                  <p className="font-medium">{selectedOrder.trackingId}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Tracking ID</p>
+                  <p className="font-medium text-sm md:text-base break-all">{selectedOrder.trackingId}</p>
                 </div>
               )}
               
               {/* Customer Info */}
               <div>
-                <h3 className="font-medium mb-2">Customer Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-accent/10 p-4 rounded-md">
+                <h3 className="font-medium mb-2 text-sm md:text-base">Customer Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 bg-accent/10 p-3 md:p-4 rounded-md">
                   <div>
-                    <p className="text-sm text-muted-foreground">Name</p>
-                    <p>{selectedOrder.shippingAddress.name}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">Name</p>
+                    <p className="text-sm md:text-base">{selectedOrder.shippingAddress.name}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Contact</p>
-                    <p>{selectedOrder.shippingAddress.phone}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">Contact</p>
+                    <p className="text-sm md:text-base">{selectedOrder.shippingAddress.phone}</p>
                   </div>
                   <div className="md:col-span-2">
-                    <p className="text-sm text-muted-foreground">Shipping Address</p>
-                    <p>
+                    <p className="text-xs md:text-sm text-muted-foreground">Shipping Address</p>
+                    <p className="text-sm md:text-base">
                       {selectedOrder.shippingAddress.street}, {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} - {selectedOrder.shippingAddress.pincode}
                     </p>
                   </div>
@@ -328,50 +328,92 @@ const AdminOrders = () => {
               
               {/* Order Items */}
               <div>
-                <h3 className="font-medium mb-2">Order Items</h3>
+                <h3 className="font-medium mb-2 text-sm md:text-base">Order Items</h3>
                 <div className="bg-accent/10 rounded-md overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-accent/20">
-                      <tr>
-                        <th className="text-left py-2 px-4">Item</th>
-                        <th className="text-left py-2 px-4">Weight</th>
-                        <th className="text-right py-2 px-4">Price</th>
-                        <th className="text-right py-2 px-4">Qty</th>
-                        <th className="text-right py-2 px-4">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedOrder.items.map((item, index) => (
-                        <tr key={index} className="border-t border-border">
-                          <td className="py-2 px-4">
-                            <div className="flex items-center space-x-2">
-                              <img 
-                                src={item.image || '/placeholder.svg'} 
-                                alt={item.name} 
-                                className="w-8 h-8 object-cover rounded-md"
-                              />
-                              <span>{item.name}</span>
-                            </div>
-                          </td>
-                          <td className="py-2 px-4">{item.weight}</td>
-                          <td className="py-2 px-4 text-right">₹{item.price}</td>
-                          <td className="py-2 px-4 text-right">{item.quantity || 1}</td>
-                          <td className="py-2 px-4 text-right">₹{(item.price * (item.quantity || 1))}</td>
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-accent/20">
+                        <tr>
+                          <th className="text-left py-2 px-4 text-sm">Item</th>
+                          <th className="text-left py-2 px-4 text-sm">Weight</th>
+                          <th className="text-right py-2 px-4 text-sm">Price</th>
+                          <th className="text-right py-2 px-4 text-sm">Qty</th>
+                          <th className="text-right py-2 px-4 text-sm">Total</th>
                         </tr>
-                      ))}
-                      <tr className="border-t border-t-2 border-border">
-                        <td colSpan={4} className="py-2 px-4 text-right font-medium">Total</td>
-                        <td className="py-2 px-4 text-right font-bold">₹{selectedOrder.totalAmount}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {selectedOrder.items.map((item, index) => (
+                          <tr key={index} className="border-t border-border">
+                            <td className="py-2 px-4">
+                              <div className="flex items-center space-x-2">
+                                <img 
+                                  src={item.image || '/placeholder.svg'} 
+                                    alt={item.name} 
+                                  className="w-8 h-8 object-cover rounded-md"
+                                />
+                                <span className="text-sm">{item.name}</span>
+                              </div>
+                            </td>
+                            <td className="py-2 px-4 text-sm">{item.weight}</td>
+                            <td className="py-2 px-4 text-right text-sm">₹{item.price}</td>
+                            <td className="py-2 px-4 text-right text-sm">{item.quantity || 1}</td>
+                            <td className="py-2 px-4 text-right text-sm">₹{(item.price * (item.quantity || 1))}</td>
+                          </tr>
+                        ))}
+                        <tr className="border-t border-t-2 border-border">
+                          <td colSpan={4} className="py-2 px-4 text-right font-medium text-sm">Total</td>
+                          <td className="py-2 px-4 text-right font-bold text-sm">₹{selectedOrder.totalAmount}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile Card View */}
+                  <div className="md:hidden space-y-3 p-3">
+                    {selectedOrder.items.map((item, index) => (
+                      <div key={index} className="bg-white p-3 rounded-lg border border-border">
+                        <div className="flex items-start gap-3 mb-2">
+                          <img 
+                            src={item.image || '/placeholder.svg'} 
+                            alt={item.name} 
+                            className="w-12 h-12 object-cover rounded-md flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{item.name}</p>
+                            <p className="text-xs text-muted-foreground">{item.weight}</p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div>
+                            <p className="text-muted-foreground">Price</p>
+                            <p className="font-medium">₹{item.price}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Qty</p>
+                            <p className="font-medium">{item.quantity || 1}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Total</p>
+                            <p className="font-medium">₹{(item.price * (item.quantity || 1))}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="bg-accent/20 p-3 rounded-lg flex justify-between items-center">
+                      <span className="font-medium text-sm">Total Amount</span>
+                      <span className="font-bold text-base">₹{selectedOrder.totalAmount}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
               
-              <DialogFooter>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
                 {selectedOrder.orderStatus === 'shipped' && !selectedOrder.trackingId && (
                   <Button 
                     variant="outline" 
+                    size="sm"
+                    className="w-full sm:w-auto"
                     onClick={() => {
                       setIsDetailsModalOpen(false);
                       setIsTrackingModalOpen(true);
@@ -380,12 +422,12 @@ const AdminOrders = () => {
                     Add Tracking
                   </Button>
                 )}
-                <Button variant="outline" className="ml-2">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   <FileText className="w-4 h-4 mr-2" />
                   Print Invoice
                 </Button>
                 <DialogClose asChild>
-                  <Button>Close</Button>
+                  <Button size="sm" className="w-full sm:w-auto">Close</Button>
                 </DialogClose>
               </DialogFooter>
             </div>
