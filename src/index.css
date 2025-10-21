@@ -311,7 +311,7 @@ img[src="data:;base64,="] {
     margin-right: 4px;
   }
 
-  /* Quick add button - Fix overlapping issue */
+  /* Quick add button - Mobile visible, Desktop hover */
   .quick-add-btn {
     position: absolute;
     bottom: 0;
@@ -322,7 +322,7 @@ img[src="data:;base64,="] {
     text-align: center;
     padding: 0.75rem;
     font-weight: 500;
-    transform: translateY(100%);
+    transform: translateY(0); /* Always visible on mobile */
     transition: transform 0.3s ease;
     z-index: 10;
     cursor: pointer;
@@ -330,8 +330,15 @@ img[src="data:;base64,="] {
     border-bottom-right-radius: 16px;
   }
 
-  .glassmorphic-card:hover .quick-add-btn {
-    transform: translateY(0);
+  /* Desktop only: hide by default, show on hover */
+  @media (min-width: 768px) {
+    .quick-add-btn {
+      transform: translateY(100%);
+    }
+
+    .glassmorphic-card:hover .quick-add-btn {
+      transform: translateY(0);
+    }
   }
 
   /* Price tag */
