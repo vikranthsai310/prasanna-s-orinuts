@@ -110,7 +110,6 @@ const AdminManagement = () => {
           adminRole: 'super-admin',
           updatedAt: new Date()
         });
-        console.log(`✅ Updated ${superAdmin.name} to super-admin role`);
       }
 
       toast({

@@ -88,7 +88,6 @@ const ProfileCompletionDialog = ({ isOpen, onClose, onComplete }: ProfileComplet
 
     try {
       const fullPhone = `+91${formData.phone}`;
-      console.log('Sending OTP to:', fullPhone);
       
       const verificationId = await sendOTP(fullPhone);
       
@@ -211,7 +210,6 @@ const ProfileCompletionDialog = ({ isOpen, onClose, onComplete }: ProfileComplet
       try {
         (window as any).recaptchaVerifier.clear();
       } catch (e) {
-        console.log('Error cleaning reCAPTCHA on dialog close:', e);
       }
       (window as any).recaptchaVerifier = null;
     }

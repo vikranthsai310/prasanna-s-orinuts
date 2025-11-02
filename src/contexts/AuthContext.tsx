@@ -59,13 +59,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Listen for auth state changes
   useEffect(() => {
-    console.log('🔧 Setting up auth state listener...');
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log('👤 Auth state changed:', firebaseUser ? `User ${firebaseUser.uid}` : 'No user');
-      
       if (firebaseUser) {
         try {
-          console.log('📋 Getting user data from Firestore for UID:', firebaseUser.uid);
           // Get user data from Firestore
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           
@@ -75,7 +71,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             
             // CHECK IF USER IS SUSPENDED - Sign them out immediately
             if (userData.isSuspended === true) {
-              console.log('🚫 User is suspended, signing out...');
               await signOut(auth);
               setUser(null);
               setIsLoading(false);
@@ -88,7 +83,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             
             // Update Firestore if phone is verified but not marked as such
             if (shouldBeVerified && !currentlyVerified) {
-              console.log('🔄 Updating phoneVerified status in Firestore');
               await updateDoc(doc(db, 'users', firebaseUser.uid), {
                 phoneVerified: true,
                 updatedAt: new Date()
@@ -108,11 +102,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               addresses: userData.addresses || [],
               createdAt: userData.createdAt?.toDate() || new Date()
             };
-            console.log('✅ User object created:', userObject);
             setUser(userObject);
           } else {
             // User doesn't exist in Firestore yet - will be created after name input
-            console.log('⚠️ User not found in Firestore, waiting for profile completion');
             setUser({
               id: firebaseUser.uid,
               phone: firebaseUser.phoneNumber || '',
@@ -136,7 +128,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } else {
         // User is signed out
-        console.log('🚪 User signed out, clearing user state');
         setUser(null);
       }
       setIsLoading(false);
@@ -148,25 +139,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const sendOTP = async (phone: string): Promise<void> => {
     // Prevent duplicate requests
     if (isOTPBeingSent) {
-      console.log('⚠️ OTP request already in progress, please wait...');
       throw new Error('OTP request in progress. Please wait.');
     }
 
     try {
-      console.log('📱 Sending OTP to:', phone);
       isOTPBeingSent = true;
       setIsLoading(true);
 
       // AGGRESSIVE CLEANUP - Clear everything
-      console.log('🧹 Starting aggressive cleanup...');
       
       // 1. Clear any existing verifier
       if ((window as any).recaptchaVerifier) {
         try {
-          console.log('Clearing existing verifier...');
           (window as any).recaptchaVerifier.clear();
         } catch (e) {
-          console.log('Verifier clear error (ignored):', e);
         }
         (window as any).recaptchaVerifier = null;
       }
@@ -183,7 +169,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       container.remove();
       
       // 4. Remove all reCAPTCHA widgets and badges from entire document
-      console.log('Removing all reCAPTCHA elements...');
       const badges = document.querySelectorAll('.grecaptcha-badge');
       badges.forEach(badge => badge.remove());
       
@@ -194,7 +179,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await new Promise(resolve => setTimeout(resolve, 500));
       
       // 6. Create a fresh container
-      console.log('Creating fresh container...');
       const newContainer = document.createElement('div');
       newContainer.id = 'recaptcha-container';
       document.body.appendChild(newContainer);
@@ -202,23 +186,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // 7. Wait a bit more
       await new Promise(resolve => setTimeout(resolve, 200));
       
-      console.log('🔐 Creating new reCAPTCHA verifier...');
       
       // Create fresh reCAPTCHA verifier
       const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         size: 'invisible',
         callback: () => {
-          console.log('✅ reCAPTCHA solved');
         },
         'expired-callback': () => {
-          console.log('⏰ reCAPTCHA expired');
           // Clear on expiration
           if ((window as any).recaptchaVerifier) {
             try {
               (window as any).recaptchaVerifier.clear();
               (window as any).recaptchaVerifier = null;
             } catch (e) {
-              console.log('Error clearing expired reCAPTCHA:', e);
             }
           }
         },
@@ -229,12 +209,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       (window as any).recaptchaVerifier = recaptchaVerifier;
 
-      console.log('📤 Sending OTP via Firebase...');
       
       // Send OTP
       confirmationResult = await signInWithPhoneNumber(auth, phone, recaptchaVerifier);
       
-      console.log('✅ OTP sent successfully to:', phone);
       
     } catch (error: any) {
       console.error('❌ Error sending OTP:', error);
@@ -244,7 +222,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           (window as any).recaptchaVerifier.clear();
         } catch (e) {
-          console.log('Error clearing reCAPTCHA after error:', e);
         }
         (window as any).recaptchaVerifier = null;
       }
@@ -269,7 +246,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const verifyOTP = async (otp: string): Promise<void> => {
     try {
-      console.log('🔐 Verifying OTP...');
       setIsLoading(true);
 
       if (!confirmationResult) {
@@ -278,7 +254,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Verify OTP
       const result = await confirmationResult.confirm(otp);
-      console.log('✅ OTP verified successfully:', result.user.uid);
 
       // Firebase auth state listener will handle the rest
       
@@ -299,7 +274,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const updateUserName = async (name: string): Promise<void> => {
     try {
-      console.log('💾 Updating user name...');
       setIsLoading(true);
 
       if (!auth.currentUser) {
@@ -336,7 +310,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Update Firebase Auth profile
       await firebaseUpdateProfile(auth.currentUser, { displayName: name });
 
-      console.log('✅ User name updated successfully');
 
       // Update local user state
       setUser(prev => prev ? { ...prev, name } : null);
@@ -351,7 +324,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      console.log('👋 Logging out...');
       await signOut(auth);
       setUser(null);
       confirmationResult = null;
@@ -361,12 +333,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           (window as any).recaptchaVerifier.clear();
         } catch (e) {
-          console.log('Error clearing reCAPTCHA on logout:', e);
         }
         (window as any).recaptchaVerifier = null;
       }
       
-      console.log('✅ Logged out successfully');
     } catch (error) {
       console.error('❌ Logout error:', error);
       throw error;

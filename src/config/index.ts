@@ -44,7 +44,10 @@ export const validateConfig = () => {
   }
   
   if (errors.length > 0) {
-    console.warn('Configuration validation errors:', errors);
+    // Only log errors in development
+    if (import.meta.env.DEV) {
+      console.error('❌ Configuration errors:', errors.join(', '));
+    }
     return false;
   }
   

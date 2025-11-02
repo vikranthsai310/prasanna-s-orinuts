@@ -11,8 +11,6 @@ async function handler(req, res) {
   }
 
   try {
-    console.log('🔐 Track shipment request from user:', req.user.uid);
-    
     let waybill;
     
     if (req.method === 'GET') {
@@ -32,8 +30,6 @@ async function handler(req, res) {
       throw new Error('Delhivery API token is not configured');
     }
 
-    console.log(`📦 Tracking shipment: ${waybill}`);
-
     const response = await fetch(
       `${DELHIVERY_API_URL}/v1/packages/json/?waybill=${waybill}&token=${DELHIVERY_API_TOKEN}`,
       {
@@ -50,8 +46,6 @@ async function handler(req, res) {
     }
 
     const result = await response.json();
-    
-    console.log('✅ Tracking data received:', JSON.stringify(result, null, 2));
 
     // Process tracking data
     let trackingData = null;

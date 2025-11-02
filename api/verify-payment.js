@@ -18,46 +18,38 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
         projectId: process.env.FIREBASE_PROJECT_ID || "orinut-494cc"
       });
       db = getFirestore(app);
-      console.log('✅ Firebase Admin initialized successfully');
     } else {
       const { getFirestore } = await import('firebase-admin/firestore');
       db = getFirestore();
     }
   } catch (error) {
-    console.error('❌ Firebase Admin initialization failed:', error);
+    console.error('❌ Firebase Admin initialization failed:', error.message);
   }
-} else {
-  console.log('⚠️ No Firebase service account key provided');
 }
 
 async function handler(req, res) {
-  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    console.log('🔐 Payment verification request from user:', req.user.uid);
-    
     const { orderId, paymentId, signature, receipt } = req.body;
 
     // Validate the data
     if (!orderId || !paymentId || !signature) {
-      console.error('❌ Missing required parameters:', { orderId, paymentId, signature });
       return res.status(400).json({ error: 'Missing required payment verification parameters' });
     }
 
-    // 🔐 Verify user owns the order (if receipt/orderId provided)
+    // Verify user owns the order (if receipt/orderId provided)
     if (receipt && db) {
       try {
         const orderDoc = await db.collection('orders').doc(receipt).get();
         if (orderDoc.exists) {
           const orderData = orderDoc.data();
           verifyOwnership(req.user, orderData.userId);
-          console.log('✅ User ownership verified for order:', receipt);
         }
       } catch (ownershipError) {
-        console.error('❌ Ownership verification failed:', ownershipError.message);
+        console.error('❌ Payment ownership verification failed:', ownershipError.message);
         return res.status(403).json({ 
           error: 'Forbidden',
           message: 'You do not have permission to verify this payment'
@@ -65,61 +57,37 @@ async function handler(req, res) {
       }
     }
 
-    // Get the Razorpay secret key - must be configured in environment
+    // Get the Razorpay secret key
     const secret = process.env.RAZORPAY_KEY_SECRET;
     
     if (!secret) {
-      console.error('CRITICAL: RAZORPAY_KEY_SECRET not configured');
+      console.error('❌ RAZORPAY_KEY_SECRET not configured');
       return res.status(500).json({ 
         error: 'Server configuration error. Please contact support.',
         isValid: false 
       });
     }
     
-    // Create a signature using the orderId and paymentId
+    // Create and verify signature
     const expectedSignature = crypto
       .createHmac('sha256', secret)
       .update(orderId + '|' + paymentId)
       .digest('hex');
     
-    console.log('Expected signature:', expectedSignature);
-    console.log('Received signature:', signature);
-    
-    // Compare the generated signature with the one received from Razorpay
     const isSignatureValid = expectedSignature === signature;
-    console.log('Signature validation result:', isSignatureValid);
 
-    if (isSignatureValid) {
-      // Payment signature is valid
-      console.log('✅ Payment signature verified successfully');
-      
-      // Note: In development without Firebase Admin, we'll return success
-      // and let the frontend update the order status
-      if (db) {
-        try {
-          // Update database if Firebase Admin is available
-          const receiptId = req.body.receipt;
-          console.log('Receipt ID for database update:', receiptId);
-          
-          if (receiptId) {
-            const orderRef = db.collection('orders').doc(receiptId);
-            await orderRef.update({
-              paymentStatus: 'paid',
-              paymentId: paymentId,
-              razorpayOrderId: orderId,
-              updatedAt: new Date().toISOString()
-            });
-            console.log('Order payment status updated successfully:', receiptId);
-          }
-        } catch (dbError) {
-          console.error('Error updating order status in database:', dbError);
-          // Continue even if database update fails - payment is still verified
-        }
-      } else {
-        console.log('Firebase Admin not available, payment verified but order status will be updated by frontend');
+    if (isSignatureValid && db && receipt) {
+      try {
+        const orderRef = db.collection('orders').doc(receipt);
+        await orderRef.update({
+          paymentStatus: 'paid',
+          paymentId: paymentId,
+          razorpayOrderId: orderId,
+          updatedAt: new Date().toISOString()
+        });
+      } catch (dbError) {
+        console.error('❌ Order status update failed:', dbError.message);
       }
-    } else {
-      console.error('❌ Signature validation failed');
     }
 
     return res.status(200).json({ 

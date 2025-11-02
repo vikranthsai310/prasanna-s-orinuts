@@ -86,8 +86,6 @@ async function handler(req, res) {
   }
 
   try {
-    console.log('🔐 Calculate shipping request from user:', req.user?.uid || 'unknown');
-
     const {
       pickupPincode,
       deliveryPincode,
@@ -117,8 +115,6 @@ async function handler(req, res) {
         error: 'Invalid weight. Weight must be a positive number.',
       });
     }
-
-    console.log(`📦 Calculating shipping from ${pickupPincode} to ${deliveryPincode}, weight: ${weightNum}kg, COD: ${cod}`);
 
     // Check serviceability
     const serviceability = await checkServiceability(
@@ -190,8 +186,6 @@ async function handler(req, res) {
         prepaidAvailable: pincodeData.pre_paid === 'Y',
       },
     };
-
-    console.log('✅ Shipping calculation successful:', response);
 
     return res.status(200).json(response);
   } catch (error) {

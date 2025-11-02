@@ -80,7 +80,6 @@ const App = () => {
               <ScrollToTop />
               <ImagePreloader 
                 preloadAll={false} 
-                onComplete={(stats) => console.log('🎯 Image preloading complete:', stats)}
               />
               <Suspense fallback={<LoadingFallback />}>
                 <Layout>

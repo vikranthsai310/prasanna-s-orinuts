@@ -49,8 +49,6 @@ async function handler(req, res) {
   }
 
   try {
-    console.log('🔐 Create shipment request from user:', req.user.uid);
-    
     const { order } = req.body;
 
     // Validate the data
@@ -134,8 +132,6 @@ async function handler(req, res) {
       },
     };
 
-    console.log('📦 Creating Delhivery shipment:', JSON.stringify(formData, null, 2));
-
     // Create shipment in Delhivery
     const response = await fetch(`${DELHIVERY_API_URL}/cmu/create.json`, {
       method: 'POST',
@@ -154,8 +150,6 @@ async function handler(req, res) {
     }
 
     const result = await response.json();
-    
-    console.log('✅ Delhivery shipment created:', JSON.stringify(result, null, 2));
 
     // Check if shipment was successful
     if (!result.success && result.error) {

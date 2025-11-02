@@ -63,14 +63,10 @@ const ProductDiscounts = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      console.log('🔄 Loading discounts and products...');
       const [discountsData, productsData] = await Promise.all([
         getAllDiscounts(),
         getAllProducts()
       ]);
-      console.log('✅ Loaded discounts:', discountsData.length);
-      console.log('✅ Loaded products:', productsData.length);
-      console.log('📦 Products:', productsData);
       setDiscounts(discountsData);
       setProducts(productsData);
     } catch (error) {
@@ -82,8 +78,6 @@ const ProductDiscounts = () => {
   };
 
   const handleOpenDialog = (discount?: ProductDiscount) => {
-    console.log('🔓 Opening dialog, available products:', availableProducts.length);
-    console.log('📦 Available products:', availableProducts);
     if (discount) {
       setEditingDiscount(discount);
       setSelectedProductId(discount.id);
@@ -433,7 +427,6 @@ const ProductDiscounts = () => {
                   <Select
                     value={selectedProductId}
                     onValueChange={(value) => {
-                      console.log('🎯 Selected product:', value);
                       setSelectedProductId(value);
                     }}
                     disabled={!!editingDiscount}

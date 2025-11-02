@@ -36,17 +36,36 @@ export const logger = {
   },
 
   /**
-   * Warning level logging - always shown
+   * Warning level logging - only in development
+   * In production, warnings are silent unless critical
    */
   warn: (...args: any[]) => {
-    console.warn('[WARN]', ...args);
+    if (isDevelopment) {
+      console.warn('[WARN]', ...args);
+    }
   },
 
   /**
-   * Error level logging - always shown
+   * Error level logging - always shown with professional formatting
    */
-  error: (...args: any[]) => {
-    console.error('[ERROR]', ...args);
+  error: (context: string, error?: any, additionalData?: any) => {
+    if (isProduction) {
+      // Production: Clean, minimal error format
+      const timestamp = new Date().toISOString().split('T')[1].slice(0, 8);
+      const errorMsg = error?.message || error || 'Unknown error';
+      console.error(`[${timestamp}] ❌ ${context}: ${errorMsg}`);
+      
+      // Only show additional data if explicitly marked as critical
+      if (additionalData?.critical) {
+        console.error('Critical:', additionalData.data);
+      }
+    } else {
+      // Development: Full verbose error logging
+      console.error(`[ERROR] ${context}:`, error);
+      if (additionalData) {
+        console.error('Additional Data:', additionalData);
+      }
+    }
   },
 
   /**

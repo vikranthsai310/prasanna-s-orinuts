@@ -81,16 +81,12 @@ export const AIAssistant = ({ onFillNutritionalInfo, onFillDescription, productN
       const lowerMessage = inputMessage.toLowerCase();
       const productContext = productName ? `for ${productName}` : '';
       
-      console.log('Processing message:', lowerMessage);
-      console.log('Product context:', productContext);
       
       if (lowerMessage.includes('nutrition') || lowerMessage.includes('calories') || lowerMessage.includes('protein')) {
         const productToSearch = productName || inputMessage;
-        console.log('Fetching nutrition for:', productToSearch);
         const data = await getNutritionalInfo(productToSearch);
         
         if (data) {
-          console.log('Nutrition data received:', data);
           const nutritionText = `Nutritional Information ${productContext}:\n\nCalories: ${data.calories} kcal\nProtein: ${data.protein}g\nFat: ${data.fat}g\nCarbs: ${data.carbs}g\nFiber: ${data.fiber}g\n\nWould you like me to fill these values in the form?`;
           
           setMessages(prev => [...prev, {
@@ -103,11 +99,9 @@ export const AIAssistant = ({ onFillNutritionalInfo, onFillDescription, productN
         }
       } else if (lowerMessage.includes('description') || lowerMessage.includes('write') || lowerMessage.includes('describe')) {
         const productToDescribe = productName || inputMessage;
-        console.log('Generating description for:', productToDescribe);
         const description = await getProductDescription(productToDescribe);
         
         if (description) {
-          console.log('Description generated:', description);
           setMessages(prev => [...prev, {
             role: 'assistant',
             content: `Here's a product description ${productContext}:\n\n${description}\n\nYou can copy and paste this into the description field!`,
@@ -118,11 +112,9 @@ export const AIAssistant = ({ onFillNutritionalInfo, onFillDescription, productN
         }
       } else {
         // General question
-        console.log('Asking AI assistant:', inputMessage);
         const response = await askAIAssistant(inputMessage);
         
         if (response) {
-          console.log('AI response received:', response);
           setMessages(prev => [...prev, {
             role: 'assistant',
             content: response,

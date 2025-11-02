@@ -18,16 +18,13 @@ const ImagePreloader = ({ onComplete, preloadAll = false }: ImagePreloaderProps)
 
         if (preloadAll) {
           // Preload all Firebase images
-          console.log('🔄 Preloading all Firebase Storage images...');
           await preloadFirebaseImages();
         } else {
           // Preload only critical images for faster initial load
-          console.log('⚡ Preloading critical images...');
           await preloadCriticalImages();
         }
 
         const stats = getCacheStats();
-        console.log('📊 Preload complete. Stats:', stats);
         
         setProgress(100);
         setIsPreloading(false);

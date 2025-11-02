@@ -63,7 +63,6 @@ const Profile = () => {
   // Update profile data when user data changes
   useEffect(() => {
     if (user) {
-      console.log('Profile: User data loaded:', user);
       setProfileData({
         name: user.name || '',
         email: user.email || '',
