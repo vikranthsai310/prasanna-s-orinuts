@@ -457,8 +457,16 @@ export const getCouponStats = async (): Promise<{
       totalDiscountGiven,
       mostUsedCoupon
     };
-  } catch (error) {
-    console.error('Error getting coupon stats:', error);
+  } catch (error: any) {
+    // Only log in development or show professional error in production
+    if (import.meta.env.DEV) {
+      console.error('Error getting coupon stats:', error);
+    } else if (error?.code === 'permission-denied') {
+      console.error('❌ Coupon stats: Admin access required');
+    } else {
+      console.error('❌ Failed to load coupon statistics');
+    }
+    
     return {
       totalCoupons: 0,
       activeCoupons: 0,

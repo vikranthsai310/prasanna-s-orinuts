@@ -210,6 +210,11 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
     
+    // Allow collection queries for coupon usage (admins only for stats)
+    match /couponUsage {
+      allow list: if isAdmin(); // Admins can query all usage for statistics
+    }
+    
     // ============================================
     // DENY ALL OTHER COLLECTIONS
     // ============================================

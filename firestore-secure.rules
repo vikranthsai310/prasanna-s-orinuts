@@ -240,6 +240,38 @@ service cloud.firestore {
     }
     
     // ============================================
+    // COUPON USAGE TRACKING
+    // ============================================
+    match /couponUsage/{usageId} {
+      // Users can read their own coupon usage (if not suspended), admins can read all
+      allow read: if isSignedIn() && 
+                     ((resource.data.userId == request.auth.uid && isNotSuspended()) || 
+                      isAdmin() || 
+                      isAdminEmail() ||
+                      isAdminPhone());
+      
+      // Only non-suspended users can create usage records (when order is placed)
+      allow create: if isSignedIn() && 
+                       isNotSuspended() &&
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Only admins can update/delete usage records
+      allow update, delete: if isAdmin() || isAdminEmail() || isAdminPhone();
+    }
+    
+    // Allow collection queries for coupon usage (admins only for stats)
+    match /couponUsage {
+      allow list: if isAdmin() || isAdminEmail() || isAdminPhone();
+    }
+    
+    // ============================================
+    // ANALYTICS COLLECTION (Admin only)
+    // ============================================
+    match /analytics/{document=**} {
+      allow read, write: if isAdmin() || isAdminEmail() || isAdminPhone();
+    }
+    
+    // ============================================
     // DENY ALL OTHER COLLECTIONS
     // ============================================
     match /{document=**} {
