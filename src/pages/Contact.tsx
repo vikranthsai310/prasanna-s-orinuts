@@ -11,14 +11,42 @@ const Contact = () => {
     email: '',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Message sent!",
-      description: "We'll get back to you within 24 hours."
-    });
-    setFormData({ name: '', email: '', message: '' });
+    setIsSubmitting(true);
+
+    try {
+      // Create mailto link as fallback
+      const subject = encodeURIComponent(`Contact Form: Message from ${formData.name}`);
+      const body = encodeURIComponent(
+        `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
+      );
+      const mailtoLink = `mailto:prasannasorinuts@gmail.com?subject=${subject}&body=${body}`;
+      
+      // Open default email client
+      window.location.href = mailtoLink;
+      
+      toast({
+        title: "Opening email client",
+        description: "Your default email application will open with the message pre-filled."
+      });
+      
+      // Clear form after a delay
+      setTimeout(() => {
+        setFormData({ name: '', email: '', message: '' });
+      }, 1000);
+
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to open email client. Please email us directly at prasannasorinuts@gmail.com",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -80,8 +108,8 @@ const Contact = () => {
               />
             </div>
             
-            <Button type="submit" className="w-full btn-primary">
-              Send Message
+            <Button type="submit" className="w-full btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? 'Opening...' : 'Send Message'}
             </Button>
           </form>
         </div>
@@ -96,7 +124,7 @@ const Contact = () => {
                 <Phone className="w-5 h-5 text-secondary" />
                 <div>
                   <p className="font-medium">Phone</p>
-                  <p className="text-muted-foreground">+91 9876543210</p>
+                  <p className="text-muted-foreground">+91 6301308477</p>
                 </div>
               </div>
               
@@ -104,41 +132,19 @@ const Contact = () => {
                 <Mail className="w-5 h-5 text-secondary" />
                 <div>
                   <p className="font-medium">Email</p>
-                  <p className="text-muted-foreground">support@prasannaorinut.com</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <MapPin className="w-5 h-5 text-secondary" />
-                <div>
-                  <p className="font-medium">Address</p>
-                  <p className="text-muted-foreground">
-                    123 Business District<br />
-                    Mumbai, Maharashtra 400001
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <Clock className="w-5 h-5 text-secondary" />
-                <div>
-                  <p className="font-medium">Business Hours</p>
-                  <p className="text-muted-foreground">
-                    Mon - Sat: 9:00 AM - 6:00 PM<br />
-                    Sunday: Closed
-                  </p>
+                  <p className="text-muted-foreground">prasannasorinuts@gmail.com</p>
                 </div>
               </div>
             </div>
           </div>
-          
+        
           <div className="card-premium">
             <h3 className="font-semibold text-lg mb-4">Quick Contact</h3>
             
             <div className="space-y-3">
               <Button 
                 className="w-full justify-start bg-green-500 hover:bg-green-600 text-white"
-                onClick={() => window.open('https://wa.me/919876543210', '_blank')}
+                onClick={() => window.open('https://wa.me/916301308477', '_blank')}
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Chat on WhatsApp
@@ -147,7 +153,7 @@ const Contact = () => {
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
-                onClick={() => window.location.href = 'tel:+919876543210'}
+                onClick={() => window.location.href = 'tel:+916301308477'}
               >
                 <Phone className="w-4 h-4 mr-2" />
                 Call Now
