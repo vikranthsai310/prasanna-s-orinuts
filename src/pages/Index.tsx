@@ -123,8 +123,8 @@ const Index = () => {
     <div className="animate-fade-in">
       {/* SEO */}
       <SEO
-        title="Buy Premium Dry Fruits Online India | Prasanna's Orinuts - Fresh Almonds, Cashews, Walnuts, Dates"
-        description="India's #1 Premium Dry Fruits Store ✓ Buy Fresh California Almonds, Jumbo Cashews, Kashmir Walnuts, Afghani Dates ✓ 100% Natural ✓ No Additives ✓ Free Shipping on Orders Above ₹500 ✓ Same Day Delivery in Hyderabad ✓ Best Quality at Wholesale Prices | Order Now!"
+        title="Buy Premium Dry Fruits Online India | Prasanna's Orinuts"
+        description="Buy Fresh California Almonds, Jumbo Cashews, Kashmir Walnuts, Afghani Dates ✓ 100% Natural ✓ No Additives ✓ Free Shipping"
         keywords={['buy dry fruits online india', 'premium dry fruits', 'fresh almonds online', 'cashews online', 'walnuts online', 'dates online', 'dry fruits home delivery', 'organic dry fruits', 'buy nuts online', 'dry fruits wholesale', 'best dry fruits store india', 'healthy snacks online', 'protein rich dry fruits', 'weight loss dry fruits', 'immunity boosting dry fruits']}
         canonicalUrl="https://prasannasorinuts.com"
         type="website"

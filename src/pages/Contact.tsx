@@ -1,8 +1,9 @@
 
 import { useState } from 'react';
-import { Mail, Phone, MessageCircle, MapPin, Clock } from 'lucide-react';
+import { Mail, Phone, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import SEO from '@/components/SEO';
 
 const Contact = () => {
   const { toast } = useToast();
@@ -55,13 +56,19 @@ const Contact = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 animate-fade-in">
-      <div className="text-center mb-12">
-        <h1 className="font-playfair text-3xl md:text-4xl font-bold mb-4">Contact Us</h1>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Have questions about our products or need assistance? We're here to help!
-        </p>
-      </div>
+    <>
+      <SEO
+        title="Contact Us - Prasanna's Orinuts"
+        description="Get in touch with Prasanna's Orinuts for premium quality dry fruits. Phone: +91 6301308477 | Email: prasannasorinuts@gmail.com"
+        canonicalUrl="https://prasannasorinuts.com/contact"
+      />
+      <div className="container mx-auto px-4 py-8 animate-fade-in">
+        <div className="text-center mb-12">
+          <h1 className="font-playfair text-3xl md:text-4xl font-bold mb-4">Contact Us</h1>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Have questions about our products or need assistance? We're here to help!
+          </p>
+        </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Contact Form */}
@@ -162,7 +169,8 @@ const Contact = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
