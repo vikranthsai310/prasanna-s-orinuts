@@ -58,33 +58,24 @@ export const businessConfig = {
 export const businessOptions = {
   // Customer service
   support: {
-    phone: '+91-9876543210',
-    email: 'support@prasannaorinut.com',
-    whatsapp: '919876543210',
-    workingHours: '9 AM - 6 PM (Mon-Sat)'
+    phone: '+91-6301308477',
+    email: 'prasannasorinuts@gmail.com',
+    whatsapp: '916301308477'
   },
 
   // Company information
   company: {
-    name: 'Prasanna Premium Orchard',
-    legalName: 'Prasanna Premium Orchard Pvt. Ltd.',
-    address: {
-      line1: '123 Orchard Street',
-      line2: 'Premium District',
-      city: 'New Delhi',
-      state: 'Delhi',
-      pincode: '110001',
-      country: 'India'
-    },
+    name: 'prasannasorinuts',
+    legalName: 'prasannasorinuts',
     gst: 'GST_NUMBER_HERE',
     fssai: 'FSSAI_LICENSE_HERE'
   },
 
   // Social media links
   social: {
-    facebook: 'https://facebook.com/prasannaorchard',
-    instagram: 'https://instagram.com/prasannaorchard',
-    twitter: 'https://twitter.com/prasannaorchard',
-    youtube: 'https://youtube.com/prasannaorchard'
+    facebook: 'https://facebook.com/prasannasorinuts',
+    instagram: 'https://instagram.com/prasannasorinuts',
+    twitter: 'https://twitter.com/prasannasorinuts',
+    youtube: 'https://youtube.com/prasannasorinuts'
   }
 };

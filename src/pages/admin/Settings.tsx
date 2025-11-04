@@ -9,9 +9,8 @@ const AdminSettings = () => {
   const { toast } = useToast();
   const [businessInfo, setBusinessInfo] = useState({
     businessName: "Prasanna's Orinuts",
-    address: '123 Business District, Mumbai, Maharashtra 400001',
-    phone: '+91 9876543210',
-    email: 'support@prasannaorinuts.com',
+    phone: '+91 6301308477',
+    email: 'prasannasorinuts@gmail.com',
     gst: 'GST123456789'
   });
 
@@ -64,17 +63,6 @@ const AdminSettings = () => {
                 type="text"
                 name="businessName"
                 value={businessInfo.businessName}
-                onChange={handleBusinessInfoChange}
-                className="input-field w-full"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1">Business Address</label>
-              <input
-                type="text"
-                name="address"
-                value={businessInfo.address}
                 onChange={handleBusinessInfoChange}
                 className="input-field w-full"
               />
