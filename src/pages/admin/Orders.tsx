@@ -21,7 +21,6 @@ import {
 } from '@/services/orderService';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 
 const AdminOrders = () => {
   const { toast } = useToast();
@@ -145,84 +144,115 @@ const AdminOrders = () => {
     setIsDetailsModalOpen(true);
   };
 
-  const downloadInvoice = (order: Order) => {
-    const doc = new jsPDF();
-    
-    // Add company header
-    doc.setFontSize(20);
-    doc.setTextColor(139, 90, 43); // Brown color
-    doc.text("Prasanna's Orinuts", 105, 20, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Premium Dry Fruits & Nuts', 105, 27, { align: 'center' });
-    doc.text('www.prasannasorinuts.com', 105, 32, { align: 'center' });
-    
-    // Add invoice title
-    doc.setFontSize(16);
-    doc.setTextColor(0, 0, 0);
-    doc.text('INVOICE', 105, 45, { align: 'center' });
-    
-    // Add order details
-    doc.setFontSize(10);
-    doc.text(`Order ID: ${order.id}`, 20, 55);
-    doc.text(`Date: ${formatDate(order.createdAt)}`, 20, 62);
-    doc.text(`Payment Status: ${order.paymentStatus.toUpperCase()}`, 20, 69);
-    doc.text(`Order Status: ${order.orderStatus.toUpperCase()}`, 20, 76);
-    
-    // Add customer details
-    doc.setFontSize(12);
-    doc.text('Customer Information', 20, 90);
-    doc.setFontSize(10);
-    doc.text(`Name: ${order.shippingAddress.name}`, 20, 98);
-    doc.text(`Phone: ${order.shippingAddress.phone}`, 20, 105);
-    doc.text(`Address: ${order.shippingAddress.street}`, 20, 112);
-    doc.text(`${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.pincode}`, 20, 119);
-    
-    // Add items table
-    const tableData = order.items.map(item => [
-      item.name,
-      item.weight || 'N/A',
-      `₹${item.price}`,
-      item.quantity.toString(),
-      `₹${item.price * item.quantity}`
-    ]);
-    
-    // Use jspdf-autotable (plugin extends jsPDF)
-    (doc as any).autoTable({
-      startY: 130,
-      head: [['Item', 'Weight', 'Price', 'Qty', 'Total']],
-      body: tableData,
-      theme: 'striped',
-      headStyles: { fillColor: [139, 90, 43] },
-      styles: { fontSize: 10 },
-      columnStyles: {
-        0: { cellWidth: 60 },
-        1: { cellWidth: 30 },
-        2: { cellWidth: 30 },
-        3: { cellWidth: 20 },
-        4: { cellWidth: 30 }
-      }
-    });
-    
-    // Add total
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-    doc.setFontSize(12);
-    doc.text(`Total Amount: ₹${order.totalAmount}`, 140, finalY, { align: 'right' });
-    
-    // Add footer
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Thank you for your purchase!', 105, 280, { align: 'center' });
-    doc.text('For any queries, contact us at support@prasannasorinuts.com', 105, 285, { align: 'center' });
-    
-    // Save the PDF
-    doc.save(`Invoice-${order.id}.pdf`);
-    
-    toast({
-      title: "Invoice Downloaded",
-      description: "Invoice PDF has been downloaded successfully"
-    });
+  const downloadInvoice = async (order: Order) => {
+    try {
+      const doc = new jsPDF();
+      
+      // Add company header
+      doc.setFontSize(20);
+      doc.setTextColor(139, 90, 43); // Brown color
+      doc.text("Prasanna's Orinuts", 105, 20, { align: 'center' });
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Premium Dry Fruits & Nuts', 105, 27, { align: 'center' });
+      doc.text('www.prasannasorinuts.com', 105, 32, { align: 'center' });
+      
+      // Add invoice title
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text('INVOICE', 105, 45, { align: 'center' });
+      
+      // Add order details
+      doc.setFontSize(10);
+      doc.text(`Order ID: ${order.id}`, 20, 55);
+      doc.text(`Date: ${formatDate(order.createdAt)}`, 20, 62);
+      doc.text(`Payment Status: ${order.paymentStatus.toUpperCase()}`, 20, 69);
+      doc.text(`Order Status: ${order.orderStatus.toUpperCase()}`, 20, 76);
+      
+      // Add customer details
+      doc.setFontSize(12);
+      doc.text('Customer Information', 20, 90);
+      doc.setFontSize(10);
+      doc.text(`Name: ${order.shippingAddress.name}`, 20, 98);
+      doc.text(`Phone: ${order.shippingAddress.phone}`, 20, 105);
+      doc.text(`Address: ${order.shippingAddress.street}`, 20, 112);
+      doc.text(`${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.pincode}`, 20, 119);
+      
+      // Add items table header
+      let yPos = 135;
+      doc.setFontSize(10);
+      doc.setTextColor(139, 90, 43);
+      doc.setFont(undefined, 'bold');
+      
+      // Draw header background
+      doc.setFillColor(245, 245, 245);
+      doc.rect(15, yPos - 5, 180, 7, 'F');
+      
+      // Header text
+      doc.text('Item', 20, yPos);
+      doc.text('Weight', 90, yPos);
+      doc.text('Price', 120, yPos);
+      doc.text('Qty', 145, yPos);
+      doc.text('Total', 165, yPos);
+      
+      yPos += 7;
+      doc.setTextColor(0, 0, 0);
+      doc.setFont(undefined, 'normal');
+      
+      // Draw line under header
+      doc.setDrawColor(200, 200, 200);
+      doc.line(15, yPos, 195, yPos);
+      yPos += 5;
+      
+      // Add items
+      order.items.forEach((item, index) => {
+        // Alternate row background
+        if (index % 2 === 0) {
+          doc.setFillColor(250, 250, 250);
+          doc.rect(15, yPos - 4, 180, 6, 'F');
+        }
+        
+        doc.text(item.name.substring(0, 30), 20, yPos);
+        doc.text(item.weight || 'N/A', 90, yPos);
+        doc.text(`₹${item.price}`, 120, yPos);
+        doc.text(item.quantity.toString(), 145, yPos);
+        doc.text(`₹${item.price * item.quantity}`, 165, yPos);
+        yPos += 6;
+      });
+      
+      // Draw line before total
+      yPos += 3;
+      doc.setLineWidth(0.5);
+      doc.line(15, yPos, 195, yPos);
+      yPos += 8;
+      
+      // Add total
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text(`Total Amount: ₹${order.totalAmount}`, 165, yPos, { align: 'right' })
+      
+      // Add footer
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Thank you for your purchase!', 105, 280, { align: 'center' });
+      doc.text('For any queries, contact us at support@prasannasorinuts.com', 105, 285, { align: 'center' });
+      
+      // Save the PDF
+      doc.save(`Invoice-${order.id}.pdf`);
+      
+      toast({
+        title: "Invoice Downloaded",
+        description: "Invoice PDF has been downloaded successfully"
+      });
+    } catch (error) {
+      console.error('Invoice generation error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate invoice. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const formatDate = (timestamp: any) => {
