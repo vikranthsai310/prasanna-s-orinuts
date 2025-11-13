@@ -16,15 +16,49 @@ export async function getAuthToken(forceRefresh: boolean = false): Promise<strin
   const currentUser = auth.currentUser;
   
   if (!currentUser) {
+    logger.error('❌ Firebase currentUser is null - user not authenticated');
+    logger.error('❌ Auth state:', { 
+      currentUser: null, 
+      authInitialized: !!auth,
+      timestamp: new Date().toISOString()
+    });
     throw new Error('User not authenticated. Please log in.');
   }
 
   try {
+    logger.debug('🔑 Requesting Firebase ID token...', { 
+      uid: currentUser.uid,
+      email: currentUser.email,
+      forceRefresh 
+    });
+    
     const token = await currentUser.getIdToken(forceRefresh);
-    logger.debug('✅ Firebase ID token retrieved successfully');
+    
+    if (!token || token.trim() === '') {
+      logger.error('❌ Firebase returned empty token');
+      throw new Error('Received empty authentication token');
+    }
+    
+    logger.debug('✅ Firebase ID token retrieved successfully', {
+      tokenLength: token.length,
+      uid: currentUser.uid
+    });
     return token;
-  } catch (error) {
-    logger.error('❌ Failed to get Firebase ID token:', error);
+  } catch (error: any) {
+    logger.error('❌ Failed to get Firebase ID token:', {
+      error: error.message,
+      code: error.code,
+      uid: currentUser?.uid,
+      email: currentUser?.email
+    });
+    
+    // Provide more specific error messages
+    if (error.code === 'auth/network-request-failed') {
+      throw new Error('Network error. Please check your internet connection and try again.');
+    } else if (error.code === 'auth/user-token-expired') {
+      throw new Error('Your session has expired. Please log in again.');
+    }
+    
     throw new Error('Failed to retrieve authentication token. Please try again.');
   }
 }
@@ -62,7 +96,15 @@ export async function authenticatedFetch(
   options: RequestInit = {}
 ): Promise<Response> {
   try {
+    logger.debug('🌐 Making authenticated request to:', url);
+    
     const headers = await getAuthHeaders();
+    
+    logger.debug('📤 Request headers prepared:', {
+      url,
+      method: options.method || 'GET',
+      hasAuth: !!headers['Authorization']
+    });
     
     const response = await fetch(url, {
       ...options,
@@ -72,30 +114,62 @@ export async function authenticatedFetch(
       },
     });
 
+    logger.debug('📥 Response received:', {
+      url,
+      status: response.status,
+      statusText: response.statusText
+    });
+
     // Handle authentication errors
     if (response.status === 401) {
-      logger.warn('⚠️ Authentication failed, trying with refreshed token...');
+      logger.warn('⚠️ 401 Unauthorized - Authentication failed, trying with refreshed token...');
       
-      // Try once more with a fresh token
-      const freshHeaders = await getAuthHeaders();
-      const retryResponse = await fetch(url, {
-        ...options,
-        headers: {
-          ...freshHeaders,
-          ...(options.headers || {}),
-        },
-      });
+      // Try once more with a fresh token (force refresh)
+      try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+          logger.error('❌ User is no longer authenticated');
+          throw new Error('User session expired. Please log in again.');
+        }
+        
+        // Force token refresh
+        await currentUser.getIdToken(true);
+        logger.debug('🔄 Token refreshed, retrying request...');
+        
+        const freshHeaders = await getAuthHeaders();
+        const retryResponse = await fetch(url, {
+          ...options,
+          headers: {
+            ...freshHeaders,
+            ...(options.headers || {}),
+          },
+        });
 
-      if (retryResponse.status === 401) {
+        logger.debug('📥 Retry response received:', {
+          url,
+          status: retryResponse.status,
+          statusText: retryResponse.statusText
+        });
+
+        if (retryResponse.status === 401) {
+          logger.error('❌ Authentication failed even after token refresh');
+          throw new Error('Authentication failed. Please log in again.');
+        }
+
+        return retryResponse;
+      } catch (refreshError: any) {
+        logger.error('❌ Token refresh failed:', refreshError);
         throw new Error('Authentication failed. Please log in again.');
       }
-
-      return retryResponse;
     }
 
     return response;
-  } catch (error) {
-    logger.error('❌ Authenticated fetch failed:', error);
+  } catch (error: any) {
+    logger.error('❌ Authenticated fetch failed:', {
+      url,
+      error: error.message,
+      code: error.code
+    });
     throw error;
   }
 }

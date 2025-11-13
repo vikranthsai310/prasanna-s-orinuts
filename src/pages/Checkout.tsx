@@ -312,6 +312,38 @@ const Checkout = () => {
       return;
     }
     
+    // Verify Firebase auth state before proceeding
+    console.log('🔐 Verifying Firebase authentication...');
+    const { auth } = await import('@/lib/firebase');
+    const currentUser = auth.currentUser;
+    
+    if (!currentUser) {
+      console.error('❌ Firebase currentUser is null - user may have been logged out');
+      toast({
+        title: "Session Expired",
+        description: "Your session has expired. Please log in again to continue.",
+        variant: "destructive"
+      });
+      navigate('/auth');
+      return;
+    }
+    
+    // Try to get a fresh ID token to verify authentication works
+    try {
+      console.log('🔑 Fetching fresh authentication token...');
+      await currentUser.getIdToken(true); // Force refresh
+      console.log('✅ Authentication token obtained successfully');
+    } catch (tokenError) {
+      console.error('❌ Failed to get authentication token:', tokenError);
+      toast({
+        title: "Authentication Error",
+        description: "Unable to verify your session. Please log in again.",
+        variant: "destructive"
+      });
+      navigate('/auth');
+      return;
+    }
+    
     if (!razorpayLoaded) {
       console.log('❌ Razorpay not loaded');
       const errorMessage = isMobile 
@@ -479,11 +511,36 @@ const Checkout = () => {
           setIsProcessing(false);
         }
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Order creation failed:', error);
+      
+      // Check for specific authentication errors
+      let errorTitle = "Order Creation Failed";
+      let errorDescription = "We couldn't create your order. Please try again.";
+      
+      if (error?.message?.includes('not authenticated') || 
+          error?.message?.includes('Please log in') ||
+          error?.statusCode === 401) {
+        errorTitle = "Authentication Required";
+        errorDescription = "Your session has expired. Please log in again to continue.";
+        
+        // Redirect to login after showing error
+        setTimeout(() => {
+          navigate('/auth');
+        }, 2000);
+      } else if (error?.statusCode === 403) {
+        errorTitle = "Access Denied";
+        errorDescription = "You don't have permission to complete this action.";
+      } else if (error?.message?.includes('Payment gateway')) {
+        errorTitle = "Payment Gateway Error";
+        errorDescription = error.message;
+      } else if (error?.message) {
+        errorDescription = error.message;
+      }
+      
       toast({
-        title: "Order Creation Failed",
-        description: "We couldn't create your order. Please try again.",
+        title: errorTitle,
+        description: errorDescription,
         variant: "destructive"
       });
       setIsProcessing(false);

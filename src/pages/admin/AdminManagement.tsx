@@ -139,8 +139,9 @@ const AdminManagement = () => {
     try {
       await promoteToAdmin(userId, 'admin');
       toast({
-        title: 'Admin Added',
-        description: `${userName} is now an admin.`,
+        title: 'Admin Added Successfully! ✅',
+        description: `${userName} is now an admin. IMPORTANT: They must LOG OUT and LOG BACK IN for admin permissions to take effect.`,
+        duration: 8000,
       });
       await fetchData();
     } catch (error) {
@@ -174,8 +175,9 @@ const AdminManagement = () => {
     try {
       await demoteFromAdmin(userId);
       toast({
-        title: 'Admin Removed',
-        description: `${userName} is no longer an admin.`,
+        title: 'Admin Removed Successfully! ✅',
+        description: `${userName} is no longer an admin. They must LOG OUT and LOG BACK IN for changes to take effect.`,
+        duration: 8000,
       });
       await fetchData();
     } catch (error) {

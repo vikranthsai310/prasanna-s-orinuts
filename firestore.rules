@@ -16,22 +16,24 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
     
-    // Check if user is admin (using phone number)
-    function isAdminPhone() {
-      return isSignedIn() && 
-             request.auth.token.phone_number in ['+918555856366', '+916301308477'];
-    }
-    
-    // Check if user is admin from user document (for existing users)
-    function isAdminFromDoc() {
+    // Check if user is admin (by checking Firestore document - FULLY DYNAMIC!)
+    function isAdmin() {
       return isSignedIn() && 
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
     
-    // Combined admin check
-    function isAdmin() {
-      return isAdminPhone() || isAdminFromDoc();
+    // Check if user is Super Admin (by checking adminRole in Firestore document)
+    function isSuperAdmin() {
+      return isSignedIn() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('adminRole', null) == 'super-admin';
+    }
+    
+    // Backup: Check if phone is super admin phone (for initial setup only)
+    function isSuperAdminPhone() {
+      return isSignedIn() && 
+        request.auth.token.phone_number in ['+916301308477', '+918555856366'];
     }
     
     // Validate string length

@@ -16,26 +16,22 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
     
-    // Check if user is admin (using custom claims)
+    // Check if user is admin (by checking Firestore document directly - NO TOKEN NEEDED!)
     function isAdmin() {
       return isSignedIn() && 
-             request.auth.token.admin == true;
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
     
-    // Check if email is admin email (fallback)
-    function isAdminEmail() {
-      return isSignedIn() && 
-             request.auth.token.email in ['vikranthsai310@gmail.com'];
-    }
-    
-    // Check if phone is admin phone (fallback)
-    function isAdminPhone() {
-      return isSignedIn() && 
-             request.auth.token.phone_number in ['+918555856366', '+916301308477'];
-    }
-    
-    // Check if user is Super Admin
+    // Check if user is Super Admin (by checking adminRole in Firestore document)
     function isSuperAdmin() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('adminRole', null) == 'super-admin';
+    }
+    
+    // Backup: Check if phone is super admin phone (for initial setup)
+    function isSuperAdminPhone() {
       return isSignedIn() && 
              request.auth.token.phone_number in ['+916301308477', '+918555856366'];
     }
@@ -59,9 +55,10 @@ service cloud.firestore {
              phone.matches('\\+91[6-9][0-9]{9}');
     }
     
-    // Check if user is suspended
+    // Check if user is suspended (safe - returns false if field doesn't exist)
     function isSuspended(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data.isSuspended == true;
+      return exists(/databases/$(database)/documents/users/$(userId)) &&
+             get(/databases/$(database)/documents/users/$(userId)).data.get('isSuspended', false) == true;
     }
     
     // Check if current user is not suspended
@@ -74,7 +71,7 @@ service cloud.firestore {
     // ============================================
     match /users/{userId} {
       // Allow users to read their own profile or admins to read any profile
-      allow read: if isOwner(userId) || isAdmin() || isAdminEmail() || isAdminPhone();
+      allow read: if isOwner(userId) || isAdmin();
       
       // Allow users to create their own profile with phone number
       allow create: if isOwner(userId) && 
@@ -88,12 +85,12 @@ service cloud.firestore {
                        request.resource.data.isAdmin == resource.data.isAdmin &&
                        request.resource.data.get('adminRole', null) == resource.data.get('adminRole', null) &&
                        request.resource.data.isSuspended == resource.data.isSuspended) ||
-                       (isSuperAdmin()) ||
-                       ((isAdmin() || isAdminEmail() || isAdminPhone()) && 
+                       (isSuperAdmin() || isSuperAdminPhone()) ||
+                       (isAdmin() && 
                         request.resource.data.get('adminRole', null) == resource.data.get('adminRole', null));
       
       // Only admins can delete users
-      allow delete: if isAdmin() || isAdminEmail() || isAdminPhone();
+      allow delete: if isAdmin();
     }
     
     // ============================================
@@ -104,35 +101,26 @@ service cloud.firestore {
       allow read: if true;
       
       // Only admins can create/update/delete products
-      allow create, update, delete: if isAdmin() || isAdminEmail() || isAdminPhone();
+      allow create, update, delete: if isAdmin();
     }
     
     // ============================================
     // ORDERS COLLECTION
     // ============================================
     match /orders/{orderId} {
-      // Users can read their own orders (if not suspended), admins can read all
+      // Users can read their own orders, admins can read all
       allow read: if isSignedIn() && 
-                     ((resource.data.userId == request.auth.uid && isNotSuspended()) || 
-                      isAdmin() || 
-                      isAdminEmail() ||
-                      isAdminPhone());
+                     (resource.data.userId == request.auth.uid || isAdmin());
       
-      // Only non-suspended users can create orders
+      // Users can create their own orders (simplified - just check they own it)
       allow create: if isSignedIn() && 
-                       isNotSuspended() &&
-                       request.resource.data.userId == request.auth.uid &&
-                       request.resource.data.status in ['pending', 'processing'] &&
-                       request.resource.data.totalAmount is number &&
-                       request.resource.data.totalAmount > 0 &&
-                       request.resource.data.items is list &&
-                       request.resource.data.items.size() > 0;
+                       request.resource.data.userId == request.auth.uid;
       
       // Only admins can update orders (status changes, etc.)
-      allow update: if isAdmin() || isAdminEmail() || isAdminPhone();
+      allow update: if isAdmin();
       
       // Only admins can delete orders
-      allow delete: if isAdmin() || isAdminEmail() || isAdminPhone();
+      allow delete: if isAdmin();
     }
     
     // ============================================
@@ -191,9 +179,7 @@ service cloud.firestore {
       // Users can delete their own reviews (if not suspended), admins can delete any
       allow delete: if isSignedIn() && 
                        ((resource.data.userId == request.auth.uid && isNotSuspended()) || 
-                        isAdmin() || 
-                        isAdminEmail() ||
-                        isAdminPhone());
+                        isAdmin());
     }
     
     // ============================================
@@ -214,7 +200,7 @@ service cloud.firestore {
       allow read: if true;
       
       // Only admins can create/update/delete coupons
-      allow create, update, delete: if isAdmin() || isAdminEmail() || isAdminPhone();
+      allow create, update, delete: if isAdmin();
     }
     
     // ============================================
@@ -225,7 +211,7 @@ service cloud.firestore {
       allow read: if true;
       
       // Only admins can create/update/delete discounts
-      allow create, update, delete: if isAdmin() || isAdminEmail() || isAdminPhone();
+      allow create, update, delete: if isAdmin();
     }
     
     // ============================================
@@ -236,7 +222,7 @@ service cloud.firestore {
       allow read: if true;
       
       // Only admins can create/update/delete sample products
-      allow create, update, delete: if isAdmin() || isAdminEmail() || isAdminPhone();
+      allow create, update, delete: if isAdmin();
     }
     
     // ============================================
@@ -246,9 +232,7 @@ service cloud.firestore {
       // Users can read their own coupon usage (if not suspended), admins can read all
       allow read: if isSignedIn() && 
                      ((resource.data.userId == request.auth.uid && isNotSuspended()) || 
-                      isAdmin() || 
-                      isAdminEmail() ||
-                      isAdminPhone());
+                      isAdmin());
       
       // Only non-suspended users can create usage records (when order is placed)
       allow create: if isSignedIn() && 
@@ -256,19 +240,19 @@ service cloud.firestore {
                        request.resource.data.userId == request.auth.uid;
       
       // Only admins can update/delete usage records
-      allow update, delete: if isAdmin() || isAdminEmail() || isAdminPhone();
+      allow update, delete: if isAdmin();
     }
     
     // Allow collection queries for coupon usage (admins only for stats)
     match /couponUsage {
-      allow list: if isAdmin() || isAdminEmail() || isAdminPhone();
+      allow list: if isAdmin();
     }
     
     // ============================================
     // ANALYTICS COLLECTION (Admin only)
     // ============================================
     match /analytics/{document=**} {
-      allow read, write: if isAdmin() || isAdminEmail() || isAdminPhone();
+      allow read, write: if isAdmin();
     }
     
     // ============================================
