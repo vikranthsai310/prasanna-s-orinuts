@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, Eye, Loader2, FileText } from 'lucide-react';
+import { Search, Filter, Eye, Loader2, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,6 +20,8 @@ import {
   Order
 } from '@/services/orderService';
 import { useToast } from '@/hooks/use-toast';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const AdminOrders = () => {
   const { toast } = useToast();
@@ -141,6 +143,85 @@ const AdminOrders = () => {
   const openOrderDetails = (order: Order) => {
     setSelectedOrder(order);
     setIsDetailsModalOpen(true);
+  };
+
+  const downloadInvoice = (order: Order) => {
+    const doc = new jsPDF();
+    
+    // Add company header
+    doc.setFontSize(20);
+    doc.setTextColor(139, 90, 43); // Brown color
+    doc.text("Prasanna's Orinuts", 105, 20, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Premium Dry Fruits & Nuts', 105, 27, { align: 'center' });
+    doc.text('www.prasannasorinuts.com', 105, 32, { align: 'center' });
+    
+    // Add invoice title
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.text('INVOICE', 105, 45, { align: 'center' });
+    
+    // Add order details
+    doc.setFontSize(10);
+    doc.text(`Order ID: ${order.id}`, 20, 55);
+    doc.text(`Date: ${formatDate(order.createdAt)}`, 20, 62);
+    doc.text(`Payment Status: ${order.paymentStatus.toUpperCase()}`, 20, 69);
+    doc.text(`Order Status: ${order.orderStatus.toUpperCase()}`, 20, 76);
+    
+    // Add customer details
+    doc.setFontSize(12);
+    doc.text('Customer Information', 20, 90);
+    doc.setFontSize(10);
+    doc.text(`Name: ${order.shippingAddress.name}`, 20, 98);
+    doc.text(`Phone: ${order.shippingAddress.phone}`, 20, 105);
+    doc.text(`Address: ${order.shippingAddress.street}`, 20, 112);
+    doc.text(`${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.pincode}`, 20, 119);
+    
+    // Add items table
+    const tableData = order.items.map(item => [
+      item.name,
+      item.weight || 'N/A',
+      `₹${item.price}`,
+      item.quantity.toString(),
+      `₹${item.price * item.quantity}`
+    ]);
+    
+    (doc as any).autoTable({
+      startY: 130,
+      head: [['Item', 'Weight', 'Price', 'Qty', 'Total']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [139, 90, 43] },
+      styles: { fontSize: 10 },
+      columnStyles: {
+        0: { cellWidth: 60 },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 20 },
+        4: { cellWidth: 30 }
+      }
+    });
+    
+    // Add total
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.text(`Total Amount: ₹${order.totalAmount}`, 140, finalY, { align: 'right' });
+    
+    // Add footer
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Thank you for your purchase!', 105, 280, { align: 'center' });
+    doc.text('For any queries, contact us at support@prasannasorinuts.com', 105, 285, { align: 'center' });
+    
+    // Save the PDF
+    doc.save(`Invoice-${order.id}.pdf`);
+    
+    toast({
+      title: "Invoice Downloaded",
+      description: "Invoice PDF has been downloaded successfully"
+    });
   };
 
   const formatDate = (timestamp: any) => {
@@ -422,9 +503,14 @@ const AdminOrders = () => {
                     Add Tracking
                   </Button>
                 )}
-                <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                  <FileText className="w-4 h-4 mr-2" />
-                  Print Invoice
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full sm:w-auto"
+                  onClick={() => downloadInvoice(selectedOrder)}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Invoice
                 </Button>
                 <DialogClose asChild>
                   <Button size="sm" className="w-full sm:w-auto">Close</Button>
