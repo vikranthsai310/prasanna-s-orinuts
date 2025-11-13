@@ -188,6 +188,7 @@ const AdminOrders = () => {
       `₹${item.price * item.quantity}`
     ]);
     
+    // Use jspdf-autotable (it extends the jsPDF instance)
     (doc as any).autoTable({
       startY: 130,
       head: [['Item', 'Weight', 'Price', 'Qty', 'Total']],
