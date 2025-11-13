@@ -122,6 +122,21 @@ export async function authenticatedFetch(
 
     // Handle authentication errors
     if (response.status === 401) {
+      // Try to get response body for debugging
+      let errorDetails = 'No details available';
+      try {
+        const errorBody = await response.clone().json();
+        errorDetails = JSON.stringify(errorBody);
+        logger.error('⚠️ 401 Response body:', errorBody);
+      } catch {
+        try {
+          errorDetails = await response.clone().text();
+          logger.error('⚠️ 401 Response text:', errorDetails);
+        } catch {
+          logger.error('⚠️ Could not read 401 response body');
+        }
+      }
+      
       logger.warn('⚠️ 401 Unauthorized - Authentication failed, trying with refreshed token...');
       
       // Try once more with a fresh token (force refresh)
@@ -129,14 +144,27 @@ export async function authenticatedFetch(
         const currentUser = auth.currentUser;
         if (!currentUser) {
           logger.error('❌ User is no longer authenticated');
+          logger.error('❌ auth.currentUser is null');
           throw new Error('User session expired. Please log in again.');
         }
         
+        logger.debug('🔄 Current user exists:', {
+          uid: currentUser.uid,
+          email: currentUser.email,
+          emailVerified: currentUser.emailVerified
+        });
+        
         // Force token refresh
-        await currentUser.getIdToken(true);
-        logger.debug('🔄 Token refreshed, retrying request...');
+        logger.debug('🔑 Forcing token refresh...');
+        const newToken = await currentUser.getIdToken(true);
+        logger.debug('✅ New token obtained:', {
+          length: newToken.length,
+          preview: newToken.substring(0, 50) + '...'
+        });
         
         const freshHeaders = await getAuthHeaders();
+        logger.debug('🔄 Retrying request with fresh token...');
+        
         const retryResponse = await fetch(url, {
           ...options,
           headers: {
@@ -152,13 +180,29 @@ export async function authenticatedFetch(
         });
 
         if (retryResponse.status === 401) {
+          // Get error details from retry
+          let retryErrorDetails = 'No details available';
+          try {
+            const retryErrorBody = await retryResponse.clone().json();
+            retryErrorDetails = JSON.stringify(retryErrorBody);
+            logger.error('❌ Retry 401 Response body:', retryErrorBody);
+          } catch {
+            logger.error('❌ Could not read retry 401 response body');
+          }
+          
           logger.error('❌ Authentication failed even after token refresh');
-          throw new Error('Authentication failed. Please log in again.');
+          logger.error('❌ Server says:', retryErrorDetails);
+          throw new Error(`Authentication failed. Server response: ${retryErrorDetails}`);
         }
 
+        logger.debug('✅ Retry successful!');
         return retryResponse;
       } catch (refreshError: any) {
-        logger.error('❌ Token refresh failed:', refreshError);
+        logger.error('❌ Token refresh failed:', {
+          message: refreshError.message,
+          code: refreshError.code,
+          name: refreshError.name
+        });
         throw new Error('Authentication failed. Please log in again.');
       }
     }

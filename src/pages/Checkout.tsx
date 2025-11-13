@@ -314,11 +314,22 @@ const Checkout = () => {
     
     // Verify Firebase auth state before proceeding
     console.log('🔐 Verifying Firebase authentication...');
+    console.log('🔐 Context user:', { id: user?.id, email: user?.email, name: user?.name });
+    
     const { auth } = await import('@/lib/firebase');
     const currentUser = auth.currentUser;
     
+    console.log('🔐 Firebase currentUser:', {
+      exists: !!currentUser,
+      uid: currentUser?.uid,
+      email: currentUser?.email,
+      emailVerified: currentUser?.emailVerified
+    });
+    
     if (!currentUser) {
       console.error('❌ Firebase currentUser is null - user may have been logged out');
+      console.error('❌ Auth context user:', user);
+      console.error('❌ This indicates an auth state mismatch!');
       toast({
         title: "Session Expired",
         description: "Your session has expired. Please log in again to continue.",
@@ -331,10 +342,14 @@ const Checkout = () => {
     // Try to get a fresh ID token to verify authentication works
     try {
       console.log('🔑 Fetching fresh authentication token...');
-      await currentUser.getIdToken(true); // Force refresh
+      const token = await currentUser.getIdToken(true); // Force refresh
       console.log('✅ Authentication token obtained successfully');
-    } catch (tokenError) {
+      console.log('🔑 Token preview:', token.substring(0, 50) + '...');
+      console.log('🔑 Token length:', token.length);
+    } catch (tokenError: any) {
       console.error('❌ Failed to get authentication token:', tokenError);
+      console.error('❌ Error code:', tokenError.code);
+      console.error('❌ Error message:', tokenError.message);
       toast({
         title: "Authentication Error",
         description: "Unable to verify your session. Please log in again.",
@@ -398,7 +413,22 @@ const Checkout = () => {
       }
 
       console.log('💰 Creating Razorpay order...');
-      // Create a Razorpay order
+      console.log('💰 Order details:', {
+        userId: currentUser.uid,
+        userEmail: currentUser.email,
+        itemsCount: items.length,
+        totalPrice
+      });
+      
+      // Double-check auth one more time before API call
+      console.log('🔐 Final auth check before creating order...');
+      const finalToken = await currentUser.getIdToken(false); // Get cached token
+      console.log('✅ Final token check passed:', {
+        hasToken: !!finalToken,
+        tokenLength: finalToken.length
+      });
+      
+      // Create a Razorpay order - use currentUser.uid (already verified)
       const orderId = await createRazorpayOrder(
         items,
         totalPrice,
@@ -411,7 +441,7 @@ const Checkout = () => {
           state: formData.state,
           pincode: formData.pincode
         },
-        user.id // Pass the authenticated user's Firebase UID
+        currentUser.uid // Use the verified Firebase UID
       );
       
       console.log('🚀 Opening Razorpay checkout modal...');
