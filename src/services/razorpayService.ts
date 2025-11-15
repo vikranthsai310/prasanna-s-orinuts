@@ -19,10 +19,14 @@ export const createRazorpayOrderOnServer = async (
   notes: Record<string, string> = {}
 ): Promise<{ id: string }> => {
   try {
-    console.log('🔐 Creating authenticated Razorpay order on server...');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🔐 [RAZORPAY SERVICE] Creating authenticated order');
     console.log('💰 Amount:', amount);
     console.log('💳 Currency:', currency);
     console.log('🧾 Receipt:', receipt);
+    console.log('📝 Notes:', notes);
+    console.log('🌐 API Endpoint:', API_ENDPOINTS.PAYMENT.CREATE_ORDER);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     const requestData: RazorpayOrderRequest = {
       amount,
@@ -31,15 +35,23 @@ export const createRazorpayOrderOnServer = async (
       notes,
     };
     
+    console.log('📤 [RAZORPAY SERVICE] Sending request to API...');
     const response = await apiService.post<RazorpayOrderResponse>(
       API_ENDPOINTS.PAYMENT.CREATE_ORDER,
       requestData
     );
 
-    console.log('✅ Razorpay order created successfully:', response.data);
+    console.log('✅ [RAZORPAY SERVICE] Order created successfully:', response.data);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     return response.data as { id: string };
   } catch (error: any) {
-    console.error('❌ Error creating Razorpay order:', error);
+    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.error('❌ [RAZORPAY SERVICE] Error creating order');
+    console.error('   Error message:', error.message);
+    console.error('   Status code:', error.statusCode);
+    console.error('   Response data:', error.data);
+    console.error('   Full error:', error);
+    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     // Provide more specific error messages
     if (error.statusCode === 400) {
@@ -54,6 +66,11 @@ export const createRazorpayOrderOnServer = async (
     } else if (error.statusCode === 403) {
       console.error('❌ 403 Forbidden - Permission denied');
       throw new Error('You do not have permission to perform this action.');
+    } else if (error.statusCode === 500) {
+      console.error('❌ 500 Server Error - Backend issue');
+      console.error('  - Check Vercel logs for detailed error');
+      console.error('  - Verify environment variables are set correctly');
+      throw new Error(`Server error: ${error.message || 'Payment gateway error'}`);
     }
     
     throw error;
