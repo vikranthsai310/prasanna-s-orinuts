@@ -11,6 +11,7 @@ import { sampleStorage } from '@/utils/sampleStorage';
 import { toast } from '@/components/ui/use-toast';
 import { useDiscounts } from '@/hooks/useDiscounts';
 import { getAllProducts } from '@/services/productService';
+import { calculateShippingCharges } from '@/services/delhiveryFeesService';
 import type { Product } from '@/types';
 
 const Cart = () => {
@@ -19,6 +20,8 @@ const Cart = () => {
   const navigate = useNavigate();
   const [showProfileCompletion, setShowProfileCompletion] = useState(false);
   const [sampleProducts, setSampleProducts] = useState<Product[]>([]);
+  const [shippingCharges, setShippingCharges] = useState<number>(0);
+  const [loadingShipping, setLoadingShipping] = useState(true);
   const { calculatePricing } = useDiscounts();
 
   // Load sample products for adding to cart
@@ -33,6 +36,37 @@ const Cart = () => {
     };
     loadSampleProducts();
   }, []);
+
+  // Calculate shipping charges based on cart weight
+  useEffect(() => {
+    const calculateShipping = async () => {
+      if (items.length === 0) {
+        setShippingCharges(0);
+        setLoadingShipping(false);
+        return;
+      }
+
+      try {
+        setLoadingShipping(true);
+        // Calculate total weight from cart items
+        const totalWeight = items.reduce((sum, item) => {
+          const weight = parseFloat(item.weight.replace(/[^0-9.]/g, '')) / 1000; // Convert to kg
+          return sum + (weight * item.quantity);
+        }, 0);
+
+        // For now, assume non-metro (can be updated based on user's address later)
+        const result = await calculateShippingCharges(totalWeight, false);
+        setShippingCharges(result.total);
+      } catch (error) {
+        console.error('Error calculating shipping:', error);
+        setShippingCharges(0);
+      } finally {
+        setLoadingShipping(false);
+      }
+    };
+
+    calculateShipping();
+  }, [items]);
 
   // Calculate total savings
   const calculateTotalSavings = () => {
@@ -151,7 +185,7 @@ const Cart = () => {
               </div>
               <div className="text-center">
                 <Truck className="w-8 h-8 mx-auto mb-2 text-secondary" strokeWidth={1.5} />
-                <p className="text-xs text-muted-foreground">Free Delivery</p>
+                <p className="text-xs text-muted-foreground">Fast Delivery</p>
               </div>
               <div className="text-center">
                 <Shield className="w-8 h-8 mx-auto mb-2 text-secondary" strokeWidth={1.5} />
@@ -411,10 +445,16 @@ const Cart = () => {
                 
                 <div className="flex items-center justify-between text-base">
                   <div className="flex items-center gap-2">
-                    <Truck className="w-4 h-4 text-green-600" />
+                    <Truck className="w-4 h-4 text-secondary" />
                     <span className="text-muted-foreground">Shipping</span>
                   </div>
-                  <span className="font-semibold text-green-600">FREE</span>
+                  {loadingShipping ? (
+                    <span className="text-sm text-muted-foreground">Calculating...</span>
+                  ) : shippingCharges > 0 ? (
+                    <span className="font-semibold text-secondary">₹{shippingCharges}</span>
+                  ) : (
+                    <span className="font-semibold text-green-600">FREE</span>
+                  )}
                 </div>
                 
                 <div className="flex items-center justify-between text-base pt-2 border-t border-border/50">
@@ -428,7 +468,7 @@ const Cart = () => {
                 <div className="border-t-2 border-secondary/20 pt-4 mt-4">
                   <div className="flex justify-between items-center">
                     <span className="font-playfair text-xl font-semibold">Total</span>
-                    <span className="font-playfair text-3xl font-bold text-secondary">₹{totalPrice.toLocaleString()}</span>
+                    <span className="font-playfair text-3xl font-bold text-secondary">₹{(totalPrice + shippingCharges).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -437,7 +477,9 @@ const Cart = () => {
                 <div className="flex items-start gap-3">
                   <Truck className="w-5 h-5 text-secondary mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold mb-1 text-foreground">Free Express Delivery</p>
+                    <p className="text-sm font-semibold mb-1 text-foreground">
+                      {shippingCharges > 0 ? 'Express Delivery' : 'Free Express Delivery'}
+                    </p>
                     <p className="text-xs text-muted-foreground leading-relaxed">
                       Estimated delivery: <span className="font-semibold text-foreground">3-5 business days</span>
                     </p>
