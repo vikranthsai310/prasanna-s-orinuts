@@ -11,6 +11,7 @@ import { getUserAddresses, type Address } from '@/services/addressService';
 import { Check, ChevronDown, Edit, Gift } from 'lucide-react';
 import { sampleStorage } from '@/utils/sampleStorage';
 import { ADDRESS_TYPES, AddressType, addAddress } from '@/services/addressService';
+import { validateAndGetLocation } from '@/utils/telanganaPincodeService';
 import {
   Select,
   SelectContent,
@@ -223,8 +224,63 @@ const Checkout = () => {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
     
+    // Handle pincode changes with Telangana validation
+    if (name === 'pincode' && value.length === 6) {
+      handlePincodeValidation(value);
+    }
+    
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+  
+  const handlePincodeValidation = async (pincode: string) => {
+    try {
+      const result = await validateAndGetLocation(pincode);
+      
+      if (result.success && result.data) {
+        // Auto-fill city and state
+        setFormData(prev => ({
+          ...prev,
+          city: result.data!.city,
+          state: result.data!.state,
+          pincode: pincode
+        }));
+        
+        // Clear any previous errors
+        setErrors(prev => ({
+          ...prev,
+          pincode: '',
+          city: '',
+          state: ''
+        }));
+        
+        toast({
+          title: "Pincode Verified ✓",
+          description: `Delivery available in ${result.data.city}, ${result.data.state}`,
+        });
+      } else {
+        // Clear city and state if pincode is invalid
+        setFormData(prev => ({
+          ...prev,
+          city: '',
+          state: '',
+          pincode: pincode
+        }));
+        
+        setErrors(prev => ({
+          ...prev,
+          pincode: result.error || 'Pincode not serviceable'
+        }));
+        
+        toast({
+          title: "Delivery Not Available",
+          description: result.error || 'We currently deliver only within Telangana',
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error validating pincode:', error);
     }
   };
   
@@ -821,9 +877,9 @@ const Checkout = () => {
                     type="text"
                     name="city"
                     value={formData.city}
-                    onChange={handleInputChange}
-                    className={`input-field w-full ${errors.city ? 'border-destructive' : ''}`}
-                    placeholder="City"
+                    readOnly
+                    className={`input-field w-full bg-gray-50 cursor-not-allowed ${errors.city ? 'border-destructive' : ''}`}
+                    placeholder="Auto-filled from pincode"
                   />
                   {errors.city && <p className="text-destructive text-sm mt-1">{errors.city}</p>}
                 </div>
@@ -834,9 +890,9 @@ const Checkout = () => {
                     type="text"
                     name="state"
                     value={formData.state}
-                    onChange={handleInputChange}
-                    className={`input-field w-full ${errors.state ? 'border-destructive' : ''}`}
-                    placeholder="State"
+                    readOnly
+                    className={`input-field w-full bg-gray-50 cursor-not-allowed ${errors.state ? 'border-destructive' : ''}`}
+                    placeholder="Auto-filled from pincode"
                   />
                   {errors.state && <p className="text-destructive text-sm mt-1">{errors.state}</p>}
                 </div>
@@ -849,10 +905,15 @@ const Checkout = () => {
                     value={formData.pincode}
                     onChange={handleInputChange}
                     className={`input-field w-full ${errors.pincode ? 'border-destructive' : ''}`}
-                    placeholder="6-digit pincode"
+                    placeholder="Enter 6-digit Telangana pincode"
                     maxLength={6}
                   />
                   {errors.pincode && <p className="text-destructive text-sm mt-1">{errors.pincode}</p>}
+                  {!errors.pincode && formData.pincode.length > 0 && formData.pincode.length < 6 && (
+                    <p className="text-muted-foreground text-xs mt-1">
+                      ℹ️ We deliver only within Telangana
+                    </p>
+                  )}
                 </div>
               </div>
               
