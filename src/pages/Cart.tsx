@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Minus, ShoppingBag, Package, Truck, Shield, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,13 +10,29 @@ import CartWeightSelector from '@/components/CartWeightSelector';
 import { sampleStorage } from '@/utils/sampleStorage';
 import { toast } from '@/components/ui/use-toast';
 import { useDiscounts } from '@/hooks/useDiscounts';
+import { getAllProducts } from '@/services/productService';
+import type { Product } from '@/types';
 
 const Cart = () => {
   const { items, updateQuantity, removeItem, totalPrice, addItem, updateItemWeight } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showProfileCompletion, setShowProfileCompletion] = useState(false);
+  const [sampleProducts, setSampleProducts] = useState<Product[]>([]);
   const { calculatePricing } = useDiscounts();
+
+  // Load sample products for adding to cart
+  useEffect(() => {
+    const loadSampleProducts = async () => {
+      try {
+        const products = await getAllProducts();
+        setSampleProducts(products.slice(0, 6));
+      } catch (error) {
+        console.error('Error loading sample products:', error);
+      }
+    };
+    loadSampleProducts();
+  }, []);
 
   // Calculate total savings
   const calculateTotalSavings = () => {
@@ -37,19 +53,6 @@ const Cart = () => {
 
   const addSamplesToCart = () => {
     const selectedSamples = sampleStorage.getSelectedSamples();
-    const [sampleProducts, setSampleProducts] = useState<Product[]>([]);
-  
-  useEffect(() => {
-    const loadSampleProducts = async () => {
-      try {
-        const products = await getAllProducts();
-        setSampleProducts(products.slice(0, 6));
-      } catch (error) {
-        console.error('Error loading sample products:', error);
-      }
-    };
-    loadSampleProducts();
-  }, []);
     
     selectedSamples.forEach(selectedSample => {
       const product = sampleProducts.find(p => p.id === selectedSample.id);
