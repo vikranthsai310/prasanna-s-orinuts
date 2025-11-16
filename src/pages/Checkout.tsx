@@ -1023,20 +1023,20 @@ const Checkout = () => {
                 </div>
               </div>
             ) : (
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                   onKeyPress={(e) => e.key === 'Enter' && handleApplyCoupon()}
                   placeholder="Enter coupon code"
-                  className="input-field flex-1"
+                  className="input-field flex-1 min-w-0"
                   disabled={isApplyingCoupon}
                 />
                 <Button
                   onClick={handleApplyCoupon}
                   disabled={isApplyingCoupon || !couponCode.trim()}
-                  className="btn-secondary whitespace-nowrap"
+                  className="btn-secondary whitespace-nowrap flex-shrink-0 w-full sm:w-auto"
                 >
                   {isApplyingCoupon ? 'Applying...' : 'Apply'}
                 </Button>
