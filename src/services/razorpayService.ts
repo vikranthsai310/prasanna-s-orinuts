@@ -28,8 +28,27 @@ export const createRazorpayOrderOnServer = async (
     console.log('🌐 API Endpoint:', API_ENDPOINTS.PAYMENT.CREATE_ORDER);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
+    // Validate amount before sending
+    if (!amount || amount <= 0) {
+      console.error('❌ Invalid amount:', amount);
+      throw new Error('Order amount must be greater than 0');
+    }
+    
+    if (amount > 10000000) {
+      console.error('❌ Amount too large:', amount);
+      throw new Error('Order amount exceeds maximum limit');
+    }
+    
+    if (!receipt || receipt.length === 0) {
+      console.error('❌ Receipt/Order ID missing');
+      throw new Error('Order ID is required');
+    }
+    
+    // Round amount to 2 decimal places to avoid floating point issues
+    const validAmount = Math.round(amount * 100) / 100;
+    
     const requestData: RazorpayOrderRequest = {
-      amount,
+      amount: validAmount,
       currency,
       receipt,
       notes,

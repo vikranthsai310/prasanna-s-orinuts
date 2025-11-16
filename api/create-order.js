@@ -65,6 +65,24 @@ async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid amount' });
     }
 
+    // Additional validations
+    if (amount > 10000000) { // 1 crore limit
+      logger.warn('CREATE-ORDER', `Amount too large: ${amount}`);
+      return res.status(400).json({ error: 'Amount exceeds maximum limit' });
+    }
+
+    if (!receipt || receipt.length === 0) {
+      logger.warn('CREATE-ORDER', 'Receipt/Order ID missing');
+      return res.status(400).json({ error: 'Order ID is required' });
+    }
+
+    // Validate currency
+    const validCurrencies = ['INR', 'USD', 'EUR', 'GBP'];
+    if (!validCurrencies.includes(currency)) {
+      logger.warn('CREATE-ORDER', `Invalid currency: ${currency}`);
+      return res.status(400).json({ error: 'Invalid currency' });
+    }
+
     // Add user information to order notes
     const enrichedNotes = {
       ...notes,
@@ -82,12 +100,26 @@ async function handler(req, res) {
       payment_capture: 1 // Auto-capture payment
     };
     
-    logger.debug('CREATE-ORDER', 'Creating Razorpay order', {
+    logger.debug('CREATE-ORDER', 'Creating Razorpay order with params', {
       amount: orderParams.amount,
+      amountInRupees: amount,
       currency: orderParams.currency,
       receipt: orderParams.receipt,
-      payment_capture: orderParams.payment_capture
+      payment_capture: orderParams.payment_capture,
+      notesCount: Object.keys(orderParams.notes).length
     });
+
+    // Validate amount is not 0 after conversion
+    if (orderParams.amount === 0 || orderParams.amount < 100) {
+      logger.error('CREATE-ORDER', 'Amount too small after conversion', {
+        originalAmount: amount,
+        convertedAmount: orderParams.amount,
+        minimumRequired: 100
+      });
+      return res.status(400).json({ 
+        error: 'Order amount is too small. Minimum amount is ₹1.00' 
+      });
+    }
 
     const razorpayInstance = getRazorpayInstance();
     const order = await razorpayInstance.orders.create(orderParams);
