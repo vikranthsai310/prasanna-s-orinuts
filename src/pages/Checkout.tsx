@@ -12,6 +12,7 @@ import { Check, ChevronDown, Edit, Gift } from 'lucide-react';
 import { sampleStorage } from '@/utils/sampleStorage';
 import { ADDRESS_TYPES, AddressType, addAddress } from '@/services/addressService';
 import { validateAndGetLocation } from '@/utils/telanganaPincodeService';
+import { calculateShippingCharges } from '@/services/delhiveryFeesService';
 import {
   Select,
   SelectContent,
@@ -48,6 +49,11 @@ const Checkout = () => {
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [selectedSamples, setSelectedSamples] = useState(sampleStorage.getSelectedSamples());
   
+  // Shipping charges state
+  const [shippingCharges, setShippingCharges] = useState<number>(0);
+  const [shippingBreakdown, setShippingBreakdown] = useState<Record<string, number>>({});
+  const [loadingShipping, setLoadingShipping] = useState(false);
+  
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
@@ -67,6 +73,41 @@ const Checkout = () => {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Calculate shipping charges based on cart weight
+  useEffect(() => {
+    const calculateShipping = async () => {
+      if (items.length === 0) {
+        setShippingCharges(0);
+        setShippingBreakdown({});
+        setLoadingShipping(false);
+        return;
+      }
+
+      try {
+        setLoadingShipping(true);
+        // Calculate total weight from cart items (excluding free samples)
+        const totalWeight = items.reduce((sum, item) => {
+          if (item.price === 0) return sum; // Skip free samples
+          const weight = parseFloat(item.weight.replace(/[^0-9.]/g, '')) / 1000; // Convert to kg
+          return sum + (weight * item.quantity);
+        }, 0);
+
+        // For now, assume non-metro (can be updated based on user's address later)
+        const result = await calculateShippingCharges(totalWeight, false);
+        setShippingCharges(result.total);
+        setShippingBreakdown(result.breakdown);
+      } catch (error) {
+        console.error('Error calculating shipping:', error);
+        setShippingCharges(0);
+        setShippingBreakdown({});
+      } finally {
+        setLoadingShipping(false);
+      }
+    };
+
+    calculateShipping();
+  }, [items]);
 
   // Load Razorpay script on component mount
   useEffect(() => {
@@ -476,8 +517,13 @@ const Checkout = () => {
         userId: currentUser.uid,
         userEmail: currentUser.email,
         itemsCount: items.length,
-        totalPrice
+        subtotal: totalPrice,
+        shippingCharges,
+        totalWithShipping: totalPrice + shippingCharges
       });
+      
+      // Calculate final amount including shipping
+      const finalAmount = totalPrice + shippingCharges;
       
       // Double-check auth one more time before API call
       console.log('🔐 Final auth check before creating order...');
@@ -490,7 +536,7 @@ const Checkout = () => {
       // Create a Razorpay order - use currentUser.uid (already verified)
       const orderId = await createRazorpayOrder(
         items,
-        totalPrice,
+        finalAmount,
         {
           name: formData.name,
           email: formData.email,
@@ -507,7 +553,7 @@ const Checkout = () => {
       // Open Razorpay checkout
       openRazorpayCheckout(
         orderId,
-        totalPrice,
+        finalAmount,
         {
           name: formData.name,
           email: formData.email,
@@ -1060,11 +1106,28 @@ const Checkout = () => {
             )}
             <div className="flex justify-between">
               <span>Shipping</span>
-              <span className="text-green-600">Free</span>
+              {loadingShipping ? (
+                <span className="text-sm text-muted-foreground">Calculating...</span>
+              ) : shippingCharges > 0 ? (
+                <span className="text-secondary">₹{shippingCharges}</span>
+              ) : (
+                <span className="text-green-600">Free</span>
+              )}
             </div>
+            {/* Shipping Breakdown */}
+            {!loadingShipping && shippingCharges > 0 && Object.keys(shippingBreakdown).length > 0 && (
+              <div className="pl-4 space-y-1 text-sm">
+                {Object.entries(shippingBreakdown).map(([key, value]) => (
+                  <div key={key} className="flex justify-between text-muted-foreground">
+                    <span className="text-xs">• {key}</span>
+                    <span className="text-xs font-medium">₹{value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="flex justify-between text-lg font-semibold border-t pt-2">
               <span>Total</span>
-              <span className="text-secondary">₹{finalTotal.toLocaleString()}</span>
+              <span className="text-secondary">₹{(finalTotal + shippingCharges).toLocaleString()}</span>
             </div>
             {appliedCoupon && discount > 0 && (
               <div className="text-sm text-green-600 text-right">
