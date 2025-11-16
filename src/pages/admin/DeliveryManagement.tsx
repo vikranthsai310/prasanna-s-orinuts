@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Truck, Package, CheckCircle, Clock, AlertCircle, MapPin, Phone, User } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { createDelhiveryOrder, scheduleDelhiveryPickup, trackDelhiveryShipment } from '@/services/delhiveryService';
+import { createDelhiveryShipment, trackShipment } from '@/services/delhiveryService';
 
 interface Order {
   id: string;
@@ -127,30 +127,38 @@ const DeliveryManagement = () => {
       }, 0);
 
       // Create Delhivery shipment
-      const delhiveryResponse = await createDelhiveryOrder({
-        orderId: order.id,
+      const delhiveryResponse = await createDelhiveryShipment({
         name: order.shippingAddress.name,
-        phone: order.shippingAddress.phone,
-        address: order.shippingAddress.street,
+        add: order.shippingAddress.street,
+        pin: order.shippingAddress.pincode,
         city: order.shippingAddress.city,
         state: order.shippingAddress.state,
-        pincode: order.shippingAddress.pincode,
-        weight: totalWeight,
-        paymentMode: order.paymentMethod === 'cod' ? 'COD' : 'Prepaid',
-        codAmount: order.paymentMethod === 'cod' ? order.totalAmount : 0,
-        items: order.items
+        country: 'India',
+        phone: order.shippingAddress.phone,
+        order: order.id,
+        payment_mode: order.paymentMethod === 'cod' ? 'COD' : 'Prepaid',
+        return_pin: '500001', // Your return pincode
+        return_city: 'Hyderabad',
+        return_phone: '1234567890',
+        return_add: 'Your return address',
+        return_state: 'Telangana',
+        return_country: 'India',
+        products_desc: order.items.map(i => i.name).join(', '),
+        cod_amount: order.paymentMethod === 'cod' ? order.totalAmount.toString() : '0',
+        total_amount: order.totalAmount.toString(),
+        seller_add: 'Your seller address',
+        seller_name: 'Prasanna Orinuts',
+        quantity: order.items.reduce((sum, item) => sum + item.quantity, 0).toString(),
+        weight: totalWeight.toString(),
+        shipping_mode: 'Surface'
       });
-
-      // Schedule pickup
-      await scheduleDelhiveryPickup(delhiveryResponse.waybill);
 
       // Update order in database
       const orderRef = doc(db, 'orders', order.id);
       await updateDoc(orderRef, {
         deliveryMethod: 'delhivery',
         orderStatus: 'processing',
-        delhiveryWaybill: delhiveryResponse.waybill,
-        trackingUrl: delhiveryResponse.trackingUrl,
+        delhiveryWaybill: delhiveryResponse.waybill || '',
         updatedAt: Timestamp.now()
       });
 
@@ -174,11 +182,11 @@ const DeliveryManagement = () => {
 
   const handleTrackShipment = async (waybill: string) => {
     try {
-      const tracking = await trackDelhiveryShipment(waybill);
+      const tracking = await trackShipment(waybill);
       
       toast({
         title: 'Tracking Information',
-        description: `Status: ${tracking.status}\nLocation: ${tracking.location || 'N/A'}`,
+        description: `Status: ${tracking.status || 'N/A'}\nLocation: ${tracking.current_location || 'N/A'}`,
       });
     } catch (error) {
       console.error('Error tracking shipment:', error);
