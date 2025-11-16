@@ -279,8 +279,8 @@ const Cart = () => {
                     </Button>
                   </div>
                   
-                  {/* Weight Selector Row - Separate to prevent overlap */}
-                  <div className="relative z-10">
+                  {/* Weight Selector Row - Pushes content down when open */}
+                  <div>
                     <CartWeightSelector
                       productId={item.id}
                       currentWeight={item.weight}
@@ -346,7 +346,7 @@ const Cart = () => {
                   </div>
                   
                   {/* Product Details */}
-                  <div className="flex-1 min-w-0 relative z-10">
+                  <div className="flex-1 min-w-0">
                     <h3 className="font-playfair text-lg font-semibold mb-3 text-foreground">{item.name}</h3>
                     
                     {/* Weight Selector */}

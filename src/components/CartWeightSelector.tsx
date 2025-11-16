@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { getProductById } from '@/services/productService';
 import { Product } from '@/types';
@@ -14,6 +14,7 @@ const CartWeightSelector = ({ productId, currentWeight, onWeightChange }: CartWe
   const [isOpen, setIsOpen] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
   const { calculatePricing } = useDiscounts();
+  const containerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const loadProduct = async () => {
@@ -26,6 +27,23 @@ const CartWeightSelector = ({ productId, currentWeight, onWeightChange }: CartWe
     };
     loadProduct();
   }, [productId]);
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
   
   if (!product) {
     return (
@@ -50,7 +68,7 @@ const CartWeightSelector = ({ productId, currentWeight, onWeightChange }: CartWe
   };
 
   return (
-    <div className="relative w-full max-w-[200px]">
+    <div ref={containerRef} className="w-full max-w-[200px]">
       {/* Label */}
       <label className="text-[10px] font-semibold text-[#6B5750] mb-1 block uppercase tracking-wider">
         Weight
@@ -65,21 +83,13 @@ const CartWeightSelector = ({ productId, currentWeight, onWeightChange }: CartWe
         <ChevronDown className={`w-4 h-4 text-[#C99700] transition-transform group-hover:scale-110 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Dropdown Menu */}
+      {/* Dropdown Menu - Now part of document flow */}
       {isOpen && (
-        <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={() => setIsOpen(false)}
-          />
-          
-          {/* Dropdown */}
-          <div className="absolute top-full mt-2 left-0 right-0 bg-white border-2 border-[#E0DCD7] rounded-xl shadow-2xl z-50 animate-scale-in overflow-hidden">
-            <div className="p-2 max-h-[320px] overflow-y-auto">
-              <div className="text-[10px] font-semibold text-[#6B5750] px-3 py-2 uppercase tracking-wider">
-                Select Weight
-              </div>
+        <div className="mt-2 bg-white border-2 border-[#E0DCD7] rounded-xl shadow-2xl overflow-hidden animate-scale-in">
+          <div className="p-2 max-h-[320px] overflow-y-auto">
+            <div className="text-[10px] font-semibold text-[#6B5750] px-3 py-2 uppercase tracking-wider">
+              Select Weight
+            </div>
               {weights.map((weight) => {
                 const originalPrice = product.prices[weight];
                 const pricing = calculatePricing(productId, originalPrice);
@@ -125,9 +135,8 @@ const CartWeightSelector = ({ productId, currentWeight, onWeightChange }: CartWe
                   </button>
                 );
               })}
-            </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
