@@ -429,6 +429,11 @@ export default function DelhiveryFeesPage() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground mt-1">Select how this fee should be applied in calculations</p>
+                {formData.feeType === 'packaging' && (
+                  <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded text-xs text-blue-700 dark:text-blue-300">
+                    💡 <strong>Tip:</strong> Packaging fees are typically set to "All Areas" since every order needs packing materials regardless of location.
+                  </div>
+                )}
               </div>
 
               <div>
