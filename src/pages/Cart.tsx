@@ -228,18 +228,18 @@ const Cart = () => {
               return (
               <div 
                 key={`${item.id}-${item.weight}`} 
-                className="group bg-card border border-border/50 rounded-xl p-4 lg:p-6 shadow-sm hover:shadow-xl hover:border-secondary/30 transition-all duration-300 hover:-translate-y-1"
+                className="group bg-card border border-border/50 rounded-xl p-4 lg:p-6 shadow-sm hover:shadow-xl hover:border-secondary/30 transition-all duration-300"
               >
                 {/* Mobile Layout */}
                 <div className="flex flex-col sm:hidden gap-4">
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-3">
                     {/* Product Image */}
-                    <div className="relative flex-shrink-0 bg-accent rounded-xl">
-                      <div className="absolute inset-0 bg-secondary/10 rounded-xl blur-md group-hover:blur-lg transition-all"></div>
+                    <div className="relative flex-shrink-0 bg-accent rounded-lg overflow-hidden">
+                      <div className="absolute inset-0 bg-secondary/10 blur-sm group-hover:blur-md transition-all"></div>
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="relative w-24 h-24 object-cover rounded-xl shadow-md"
+                        className="relative w-20 h-20 object-cover"
                         loading="lazy"
                         decoding="async"
                       />
@@ -247,38 +247,48 @@ const Cart = () => {
                     
                     {/* Product Details */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-playfair text-lg font-semibold mb-2 leading-tight text-foreground">{item.name}</h3>
-                      
-                      {/* Weight Selector */}
-                      <div className="mb-2">
-                        <CartWeightSelector
-                          productId={item.id}
-                          currentWeight={item.weight}
-                          onWeightChange={(newWeight, newPrice) => 
-                            updateItemWeight(item.id, item.weight, newWeight, newPrice)
-                          }
-                        />
-                      </div>
+                      <h3 className="font-playfair text-base font-semibold mb-2 leading-snug text-foreground pr-8">{item.name}</h3>
                       
                       {/* Price with Discount */}
                       {pricing.hasDiscount ? (
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                            <div className="relative">
-                              <span className="text-sm text-muted-foreground/80">₹{originalPrice}</span>
-                              <div className="absolute top-1/2 left-0 w-full h-[1.5px] bg-red-500/70 transform -rotate-12"></div>
-                            </div>
-                            <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-2 py-0.5 rounded-full">
-                              <span className="font-bold text-[10px] tracking-wide">{pricing.discountPercentage}% OFF</span>
-                            </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="relative">
+                            <span className="text-xs text-muted-foreground/80">₹{originalPrice}</span>
+                            <div className="absolute top-1/2 left-0 w-full h-[1px] bg-red-500/70 transform -rotate-12"></div>
                           </div>
-                          <p className="font-bold text-lg text-[#C99700]">
+                          <p className="font-bold text-base text-[#C99700]">
                             ₹{item.price.toLocaleString()}
                           </p>
+                          <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-1.5 py-0.5 rounded-full">
+                            <span className="font-bold text-[9px] tracking-wide">{pricing.discountPercentage}% OFF</span>
+                          </div>
                         </div>
                       ) : (
-                        <p className="text-secondary font-bold text-lg">₹{item.price.toLocaleString()}</p>
+                        <p className="text-secondary font-bold text-base">₹{item.price.toLocaleString()}</p>
                       )}
+                    </div>
+                    
+                    {/* Delete Button - Top Right */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeItem(item.id, item.weight)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 flex-shrink-0 rounded-lg transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                  
+                  {/* Weight Selector Row - Separate to prevent overlap */}
+                  <div className="relative z-10">
+                    <CartWeightSelector
+                      productId={item.id}
+                      currentWeight={item.weight}
+                      onWeightChange={(newWeight, newPrice) => 
+                        updateItemWeight(item.id, item.weight, newWeight, newPrice)
+                      }
+                    />
+                  </div>
                     </div>
                     
                     {/* Delete Button - Top Right */}
@@ -334,25 +344,25 @@ const Cart = () => {
                 </div>
 
                 {/* Desktop/Tablet Layout */}
-                <div className="hidden sm:flex items-center gap-6">
+                <div className="hidden sm:flex items-start gap-6">
                   {/* Product Image */}
-                  <div className="relative flex-shrink-0 bg-accent rounded-xl">
-                    <div className="absolute inset-0 bg-secondary/10 rounded-xl blur-md group-hover:blur-lg transition-all"></div>
+                  <div className="relative flex-shrink-0 bg-accent rounded-lg overflow-hidden">
+                    <div className="absolute inset-0 bg-secondary/10 blur-sm group-hover:blur-md transition-all"></div>
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="relative w-28 h-28 object-cover rounded-xl shadow-md"
+                      className="relative w-24 h-24 object-cover"
                       loading="lazy"
                       decoding="async"
                     />
                   </div>
                   
                   {/* Product Details */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-playfair text-xl font-semibold mb-3 text-foreground">{item.name}</h3>
+                  <div className="flex-1 min-w-0 relative z-10">
+                    <h3 className="font-playfair text-lg font-semibold mb-3 text-foreground">{item.name}</h3>
                     
                     {/* Weight Selector */}
-                    <div className="mb-3">
+                    <div className="mb-3 max-w-[200px]">
                       <CartWeightSelector
                         productId={item.id}
                         currentWeight={item.weight}
@@ -364,58 +374,58 @@ const Cart = () => {
                     
                     {/* Price with Discount */}
                     {pricing.hasDiscount ? (
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <div className="relative">
-                          <span className="text-base text-muted-foreground/80">₹{originalPrice}</span>
-                          <div className="absolute top-1/2 left-0 w-full h-[1.5px] bg-red-500/70 transform -rotate-12"></div>
+                          <span className="text-sm text-muted-foreground/80">₹{originalPrice}</span>
+                          <div className="absolute top-1/2 left-0 w-full h-[1px] bg-red-500/70 transform -rotate-12"></div>
                         </div>
-                        <p className="font-bold text-lg text-[#C99700]">
+                        <p className="font-bold text-base text-[#C99700]">
                           ₹{item.price.toLocaleString()}
                         </p>
-                        <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-2 py-1 rounded-full">
-                          <span className="font-bold text-xs tracking-wide">{pricing.discountPercentage}% OFF</span>
+                        <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-2 py-0.5 rounded-full">
+                          <span className="font-bold text-[10px] tracking-wide">{pricing.discountPercentage}% OFF</span>
                         </div>
-                        <span className="text-sm text-muted-foreground font-normal">per unit</span>
+                        <span className="text-xs text-muted-foreground font-normal">per unit</span>
                       </div>
                     ) : (
-                      <p className="text-secondary font-bold text-lg">₹{item.price.toLocaleString()} <span className="text-sm text-muted-foreground font-normal">per unit</span></p>
+                      <p className="text-secondary font-bold text-base">₹{item.price.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">per unit</span></p>
                     )}
                   </div>
                   
                   {/* Quantity Controls - Hide for free samples */}
                   {item.price === 0 ? (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                      <span className="text-sm font-semibold text-green-700 dark:text-green-300">FREE SAMPLE</span>
+                    <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800 flex-shrink-0">
+                      <span className="text-xs font-semibold text-green-700 dark:text-green-300">FREE SAMPLE</span>
                       <span className="text-xs text-muted-foreground">(Qty: {item.quantity})</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1 flex-shrink-0">
+                    <div className="flex items-center gap-0.5 bg-muted/30 rounded-lg p-0.5 flex-shrink-0">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => updateQuantity(item.id, item.weight, item.quantity - 1)}
-                        className="h-10 w-10 p-0 hover:bg-secondary/10 hover:text-secondary rounded-lg"
+                        className="h-9 w-9 p-0 hover:bg-secondary/10 hover:text-secondary rounded-lg transition-colors"
                         disabled={item.quantity <= 1}
                       >
-                        <Minus className="w-5 h-5" />
+                        <Minus className="w-4 h-4" />
                       </Button>
-                      <span className="w-14 text-center font-semibold text-lg">{item.quantity}</span>
+                      <span className="w-12 text-center font-semibold text-base">{item.quantity}</span>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => updateQuantity(item.id, item.weight, item.quantity + 1)}
-                        className="h-10 w-10 p-0 hover:bg-secondary/10 hover:text-secondary rounded-lg"
+                        className="h-9 w-9 p-0 hover:bg-secondary/10 hover:text-secondary rounded-lg transition-colors"
                       >
-                        <Plus className="w-5 h-5" />
+                        <Plus className="w-4 h-4" />
                       </Button>
                     </div>
                   )}
                   
                   {/* Price and Delete */}
-                  <div className="flex flex-col items-end gap-3 min-w-[120px] flex-shrink-0">
+                  <div className="flex flex-col items-end gap-2 min-w-[110px] flex-shrink-0">
                     <div className="text-right">
-                      <p className="text-xs text-muted-foreground mb-1">Total Price</p>
-                      <p className="font-bold text-2xl text-secondary">
+                      <p className="text-[10px] text-muted-foreground mb-0.5 uppercase tracking-wide">Total</p>
+                      <p className="font-bold text-xl text-secondary">
                         {item.price === 0 ? 'FREE' : `₹${(item.price * item.quantity).toLocaleString()}`}
                       </p>
                     </div>
@@ -423,10 +433,10 @@ const Cart = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => removeItem(item.id, item.weight)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 px-4 rounded-lg transition-all"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 px-3 rounded-lg transition-colors"
                     >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Remove
+                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                      <span className="text-xs">Remove</span>
                     </Button>
                   </div>
                 </div>
