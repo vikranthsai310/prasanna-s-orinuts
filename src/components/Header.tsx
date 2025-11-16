@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Home, Package, LogOut, Settings, BarChart3, Tag, Shield, Truck } from 'lucide-react';
+import { ShoppingCart, User, Home, Package, LogOut, Settings, BarChart3, Tag, Shield, Truck, DollarSign } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -270,6 +270,13 @@ const Header = () => {
                           <Package className="mr-2 h-4 w-4 text-amber-700" />
                           <span>Manage Samples</span>
                         </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => navigate('/admin/delhivery-fees')}
+                          className="hover:bg-amber-50 cursor-pointer"
+                        >
+                          <DollarSign className="mr-2 h-4 w-4 text-amber-700" />
+                          <span>Delhivery Fees</span>
+                        </DropdownMenuItem>
                       </>
                     )}
                     
@@ -463,6 +470,17 @@ const Header = () => {
                     >
                       <Package className="h-5 w-5 text-amber-700 group-hover:text-amber-900" />
                       <span className="text-base">Manage Samples</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        navigate('/admin/delhivery-fees');
+                        setIsMenuOpen(false);
+                      }}
+                      className="flex items-center space-x-4 px-4 py-3 rounded-xl text-amber-900 hover:bg-amber-100/80 transition-all duration-200 w-full group"
+                    >
+                      <DollarSign className="h-5 w-5 text-amber-700 group-hover:text-amber-900" />
+                      <span className="text-base">Delhivery Fees</span>
                     </button>
                   </div>
                 )}
