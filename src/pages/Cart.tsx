@@ -21,6 +21,7 @@ const Cart = () => {
   const [showProfileCompletion, setShowProfileCompletion] = useState(false);
   const [sampleProducts, setSampleProducts] = useState<Product[]>([]);
   const [shippingCharges, setShippingCharges] = useState<number>(0);
+  const [shippingBreakdown, setShippingBreakdown] = useState<Record<string, number>>({});
   const [loadingShipping, setLoadingShipping] = useState(true);
   const { calculatePricing } = useDiscounts();
 
@@ -57,9 +58,11 @@ const Cart = () => {
         // For now, assume non-metro (can be updated based on user's address later)
         const result = await calculateShippingCharges(totalWeight, false);
         setShippingCharges(result.total);
+        setShippingBreakdown(result.breakdown);
       } catch (error) {
         console.error('Error calculating shipping:', error);
         setShippingCharges(0);
+        setShippingBreakdown({});
       } finally {
         setLoadingShipping(false);
       }
@@ -456,6 +459,18 @@ const Cart = () => {
                     <span className="font-semibold text-green-600">FREE</span>
                   )}
                 </div>
+                
+                {/* Shipping Breakdown */}
+                {!loadingShipping && shippingCharges > 0 && Object.keys(shippingBreakdown).length > 0 && (
+                  <div className="pl-6 space-y-2 text-sm">
+                    {Object.entries(shippingBreakdown).map(([key, value]) => (
+                      <div key={key} className="flex justify-between text-muted-foreground">
+                        <span className="text-xs">• {key}</span>
+                        <span className="text-xs font-medium">₹{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 
                 <div className="flex items-center justify-between text-base pt-2 border-t border-border/50">
                   <div className="flex items-center gap-2">

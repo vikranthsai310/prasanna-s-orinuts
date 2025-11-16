@@ -185,6 +185,19 @@ export const calculateShippingCharges = async (
       total += weightCharge;
     }
     
+    // Packaging fee (if applicable to all or based on location)
+    const packagingFee = activeFees.find(f => 
+      f.feeType === 'packaging' && 
+      (f.applicableFor === 'all' || 
+       (f.applicableFor === 'metro' && isMetro) ||
+       (f.applicableFor === 'non_metro' && !isMetro))
+    );
+    
+    if (packagingFee) {
+      breakdown['Packaging'] = packagingFee.amount;
+      total += packagingFee.amount;
+    }
+    
     return { total: Math.round(total), breakdown };
   } catch (error) {
     console.error('Error calculating shipping charges:', error);
