@@ -143,13 +143,14 @@ export default function DelhiveryFeesPage() {
 
   const handleDelete = async (feeId: string) => {
     try {
+      console.log('Attempting to delete fee:', feeId);
       await deleteDelhiveryFee(feeId);
       toast.success('Fee deleted successfully!');
-      loadFees();
+      await loadFees();
       setDeletingFeeId(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting fee:', error);
-      toast.error('Failed to delete fee');
+      toast.error(error.message || 'Failed to delete fee. Please check your permissions.');
     }
   };
 
@@ -334,7 +335,14 @@ export default function DelhiveryFeesPage() {
                   <Button 
                     variant="destructive" 
                     size="sm"
-                    onClick={() => setDeletingFeeId(fee.id!)}
+                    onClick={() => {
+                      if (!fee.id) {
+                        toast.error('Cannot delete: Fee ID is missing');
+                        return;
+                      }
+                      setDeletingFeeId(fee.id);
+                    }}
+                    disabled={!fee.id}
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -503,18 +511,28 @@ export default function DelhiveryFeesPage() {
       <AlertDialog open={!!deletingFeeId} onOpenChange={() => setDeletingFeeId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Fee Configuration?</AlertDialogTitle>
             <AlertDialogDescription>
+              {deletingFeeId && (
+                <span className="block mb-2 font-medium text-foreground">
+                  {fees.find(f => f.id === deletingFeeId)?.name}
+                </span>
+              )}
               This will permanently delete this fee configuration. This action cannot be undone.
+              The fee will no longer be used in shipping calculations.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deletingFeeId && handleDelete(deletingFeeId)}
+              onClick={() => {
+                if (deletingFeeId) {
+                  handleDelete(deletingFeeId);
+                }
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              Yes, Delete Fee
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
