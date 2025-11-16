@@ -104,25 +104,12 @@ const telanganaPincodes: Record<string, { city: string; district: string }> = {
   '500091': { city: 'Hyderabad', district: 'Hyderabad' },
   '500092': { city: 'Hyderabad', district: 'Hyderabad' },
   '500093': { city: 'Hyderabad', district: 'Hyderabad' },
-  '500094': { city: 'Hyderabad', district: 'Hyderabad' },
   '500095': { city: 'Hyderabad', district: 'Hyderabad' },
   '500096': { city: 'Hyderabad', district: 'Hyderabad' },
   
-  // Secunderabad
-  '500003': { city: 'Secunderabad', district: 'Hyderabad' },
-  '500009': { city: 'Secunderabad', district: 'Hyderabad' },
-  '500011': { city: 'Secunderabad', district: 'Hyderabad' },
-  '500015': { city: 'Secunderabad', district: 'Hyderabad' },
-  '500025': { city: 'Secunderabad', district: 'Hyderabad' },
-  '500026': { city: 'Secunderabad', district: 'Hyderabad' },
-  '500094': { city: 'Secunderabad', district: 'Hyderabad' },
-  
   // Rangareddy District
-  '501301': { city: 'Shamshabad', district: 'Rangareddy' },
-  '501401': { city: 'Chevella', district: 'Rangareddy' },
   '501501': { city: 'Tandur', district: 'Rangareddy' },
   '501503': { city: 'Vikarabad', district: 'Rangareddy' },
-  '501505': { city: 'Mominpet', district: 'Rangareddy' },
   '501512': { city: 'Kodangal', district: 'Rangareddy' },
   
   // Medchal-Malkajgiri District
