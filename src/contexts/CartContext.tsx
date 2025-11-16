@@ -3,6 +3,7 @@ import { createContext, useContext, useState, ReactNode, useEffect } from 'react
 import { useAuth } from './AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { validateCoupon, type Coupon } from '@/services/couponService';
+import { getProductById } from '@/services/productService';
 
 export interface CartItem {
   id: string;
@@ -151,41 +152,121 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [items, user?.id, isInitialized, isLoading]);
 
-  const addItem = (newItem: Omit<CartItem, 'quantity'>, quantity: number = 1) => {
-    setItems(prev => {
-      const existingItem = prev.find(item => 
+  const addItem = async (newItem: Omit<CartItem, 'quantity'>, quantity: number = 1) => {
+    try {
+      // Fetch product to check stock
+      const product = await getProductById(newItem.id);
+      
+      if (!product) {
+        toast({
+          title: "Product not found",
+          description: "This product is no longer available.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Check current quantity in cart
+      const existingItem = items.find(item => 
         item.id === newItem.id && item.weight === newItem.weight
       );
       
-      if (existingItem) {
-        return prev.map(item =>
-          item.id === newItem.id && item.weight === newItem.weight
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
+      const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
+      const newTotalQuantity = currentQuantityInCart + quantity;
+
+      // Validate against stock
+      if (newTotalQuantity > product.stock) {
+        toast({
+          title: "Stock Limit Exceeded",
+          description: `Only ${product.stock} units available in stock. You already have ${currentQuantityInCart} in your cart.`,
+          variant: "destructive"
+        });
+        return;
       }
-      
-      return [...prev, { ...newItem, quantity }];
-    });
+
+      setItems(prev => {
+        if (existingItem) {
+          return prev.map(item =>
+            item.id === newItem.id && item.weight === newItem.weight
+              ? { ...item, quantity: newTotalQuantity }
+              : item
+          );
+        }
+        
+        return [...prev, { ...newItem, quantity }];
+      });
+
+      toast({
+        title: "Added to cart",
+        description: `${newItem.name} has been added to your cart.`,
+      });
+    } catch (error) {
+      console.error('Error adding item to cart:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const removeItem = (id: string, weight: string) => {
     setItems(prev => prev.filter(item => !(item.id === id && item.weight === weight)));
   };
 
-  const updateQuantity = (id: string, weight: string, quantity: number) => {
+  const updateQuantity = async (id: string, weight: string, quantity: number) => {
     if (quantity <= 0) {
       removeItem(id, weight);
       return;
     }
+
+    try {
+      // Fetch product to check stock
+      const product = await getProductById(id);
+      
+      if (!product) {
+        toast({
+          title: "Product not found",
+          description: "This product is no longer available.",
+          variant: "destructive"
+        });
+        removeItem(id, weight);
+        return;
+      }
+
+      // Validate against stock
+      if (quantity > product.stock) {
+        toast({
+          title: "Stock Limit Exceeded",
+          description: `Only ${product.stock} units available in stock.`,
+          variant: "destructive"
+        });
+        // Set to maximum available stock
+        setItems(prev =>
+          prev.map(item =>
+            item.id === id && item.weight === weight
+              ? { ...item, quantity: product.stock }
+              : item
+          )
+        );
+        return;
+      }
     
-    setItems(prev =>
-      prev.map(item =>
-        item.id === id && item.weight === weight
-          ? { ...item, quantity }
-          : item
-      )
-    );
+      setItems(prev =>
+        prev.map(item =>
+          item.id === id && item.weight === weight
+            ? { ...item, quantity }
+            : item
+        )
+      );
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update quantity. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const updateItemWeight = (id: string, oldWeight: string, newWeight: string, newPrice: number) => {
