@@ -124,7 +124,7 @@ const Index = () => {
       {/* SEO */}
       <SEO
         title="Buy Premium Dry Fruits Online India | Prasanna's Orinuts"
-        description="Buy Fresh California Almonds, Jumbo Cashews, Kashmir Walnuts, Afghani Dates ✓ 100% Natural ✓ No Additives ✓ Free Shipping"
+        description="Buy Fresh Premium Almonds, Jumbo Cashews, Kashmir Walnuts, Afghani Dates ✓ 100% Natural ✓ No Additives ✓ Telangana Delivery"
         keywords={['buy dry fruits online india', 'premium dry fruits', 'fresh almonds online', 'cashews online', 'walnuts online', 'dates online', 'dry fruits home delivery', 'organic dry fruits', 'buy nuts online', 'dry fruits wholesale', 'best dry fruits store india', 'healthy snacks online', 'protein rich dry fruits', 'weight loss dry fruits', 'immunity boosting dry fruits']}
         canonicalUrl="https://prasannasorinuts.com"
         type="website"
@@ -170,7 +170,7 @@ const Index = () => {
                 </div>
                 <h3 className="fruit-title text-center">Premium Almonds</h3>
                 <p className="fruit-description text-center sequential-fade">
-                  <span className="golden-text">California-sourced</span> almonds with perfect crunch
+                  <span className="golden-text">Premium quality</span> almonds with perfect crunch
                 </p>
                 <div className="flex flex-wrap justify-center mt-2 sequential-fade">
                   <div className="benefit-badge">
@@ -287,7 +287,7 @@ const Index = () => {
                 </div>
                 <h3 className="fruit-title text-center">Premium Almonds</h3>
                 <p className="fruit-description text-center sequential-fade">
-                  <span className="golden-text">California-sourced</span> almonds with perfect crunch
+                  <span className="golden-text">Premium quality</span> almonds with perfect crunch
                 </p>
                 <div className="flex flex-wrap justify-center mt-2 sequential-fade">
                   <div className="benefit-badge">

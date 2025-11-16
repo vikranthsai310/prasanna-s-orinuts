@@ -12,21 +12,21 @@ export const shippingConfig = {
 };
 
 export const shippingOptions = {
-  // Free shipping threshold
-  freeShippingThreshold: 500, // Rs. 500
+  // Shipping charges apply based on location
+  minimumOrderCharge: 50, // Rs. 50 for orders below certain amount
 
-  // Standard delivery times (using Delhivery's estimates)
+  // Standard delivery times (Telangana only)
   deliveryTimes: {
-    metro: '1-2 days',
-    tier1: '2-3 days',
-    tier2: '3-5 days',
-    rest: '5-7 days'
+    hyderabad: '1-2 days',
+    telanganaMetro: '2-3 days',
+    telanganaTier2: '3-5 days',
   },
 
-  // Serviceable states
-  serviceableStates: [
-    'Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Kolkata', 
-    'Hyderabad', 'Pune', 'Ahmedabad', 'Jaipur', 'Lucknow'
+  // Serviceable state
+  serviceableState: 'Telangana',
+  serviceableCities: [
+    'Hyderabad', 'Warangal', 'Nizamabad', 'Karimnagar', 
+    'Khammam', 'Nalgonda', 'Mahabubnagar', 'Adilabad', 'Medak'
   ]
 };
 

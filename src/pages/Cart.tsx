@@ -8,7 +8,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import ProfileCompletionDialog from '@/components/ProfileCompletionDialog';
 import CartWeightSelector from '@/components/CartWeightSelector';
 import { sampleStorage } from '@/utils/sampleStorage';
-import { mockProducts } from '@/data/mockProducts';
 import { toast } from '@/components/ui/use-toast';
 import { useDiscounts } from '@/hooks/useDiscounts';
 
@@ -38,7 +37,19 @@ const Cart = () => {
 
   const addSamplesToCart = () => {
     const selectedSamples = sampleStorage.getSelectedSamples();
-    const sampleProducts = mockProducts.slice(0, 6);
+    const [sampleProducts, setSampleProducts] = useState<Product[]>([]);
+  
+  useEffect(() => {
+    const loadSampleProducts = async () => {
+      try {
+        const products = await getAllProducts();
+        setSampleProducts(products.slice(0, 6));
+      } catch (error) {
+        console.error('Error loading sample products:', error);
+      }
+    };
+    loadSampleProducts();
+  }, []);
     
     selectedSamples.forEach(selectedSample => {
       const product = sampleProducts.find(p => p.id === selectedSample.id);

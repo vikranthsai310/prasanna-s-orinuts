@@ -1,14 +1,32 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Heart, ShoppingCart, Check, Shield, Award, Star } from 'lucide-react';
 import HeroSectionAnimated from '@/components/HeroSectionAnimated';
 import ProductCardAnimated from '@/components/ProductCardAnimated';
 import AnimatedButton from '@/components/AnimatedButton';
 import PageTransition from '@/components/PageTransition';
-import { mockProducts } from '@/data/mockProducts';
+import { getAllProducts } from '@/services/productService';
+import type { Product } from '@/types';
 
 const IndexAnimated = () => {
-  const featuredProducts = mockProducts.slice(0, 4);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const products = await getAllProducts();
+        setFeaturedProducts(products.slice(0, 4));
+      } catch (error) {
+        console.error('Error fetching featured products:', error);
+        setFeaturedProducts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   return (
     <PageTransition>
@@ -31,13 +49,24 @@ const IndexAnimated = () => {
 
             {/* Product Grid with Animated Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-12">
-              {featuredProducts.map((product, index) => (
-                <ProductCardAnimated 
-                  key={product.id} 
-                  product={product} 
-                  index={index}
-                />
-              ))}
+              {isLoading ? (
+                <div className="col-span-full text-center py-12">
+                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+                  <p className="mt-4 text-amber-800">Loading products...</p>
+                </div>
+              ) : featuredProducts.length > 0 ? (
+                featuredProducts.map((product, index) => (
+                  <ProductCardAnimated 
+                    key={product.id} 
+                    product={product} 
+                    index={index}
+                  />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-amber-800">No products available at the moment.</p>
+                </div>
+              )}
             </div>
 
             {/* Call to Action with Animated Button */}

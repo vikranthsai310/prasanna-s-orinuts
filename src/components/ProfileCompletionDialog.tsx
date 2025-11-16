@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { sampleStorage } from '@/utils/sampleStorage';
-import { mockProducts } from '@/data/mockProducts';
+import { getAllProducts } from '@/services/productService';
+import { Product } from '@/types';
 import {
   Dialog,
   DialogContent,
@@ -27,10 +28,22 @@ const ProfileCompletionDialog = ({ isOpen, onClose, onComplete }: ProfileComplet
   const { user, sendOTP, loginWithPhone } = useAuth();
   const { addItem, items } = useCart();
   const navigate = useNavigate();
+  const [sampleProducts, setSampleProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const products = await getAllProducts();
+        setSampleProducts(products.slice(0, 6));
+      } catch (error) {
+        console.error('Error fetching sample products:', error);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   const addSamplesToCart = () => {
     const selectedSamples = sampleStorage.getSelectedSamples();
-    const sampleProducts = mockProducts.slice(0, 6);
     
     selectedSamples.forEach(selectedSample => {
       const product = sampleProducts.find(p => p.id === selectedSample.id);

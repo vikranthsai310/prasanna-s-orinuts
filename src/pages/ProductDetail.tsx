@@ -5,7 +5,6 @@ import { ArrowLeft, ShoppingCart, Heart, Loader2, ChevronLeft, ChevronRight } fr
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockProducts } from '@/data/mockProducts';
 import { useCart } from '@/contexts/CartContext';
 import ProductCard from '@/components/ProductCard';
 import ProductStructuredData from '@/components/ProductStructuredData';
@@ -53,34 +52,10 @@ const ProductDetail = () => {
           setRelatedProducts(related);
         } else {
           setError('Product not found');
-          
-          // Fallback to mock data if product not found
-          const mockProduct = mockProducts.find(p => p.id === id);
-          if (mockProduct) {
-            setProduct(mockProduct);
-            
-            const mockRelated = mockProducts
-              .filter(p => p.id !== id && p.category === mockProduct.category)
-              .slice(0, 4);
-            
-            setRelatedProducts(mockRelated);
-          }
         }
       } catch (err) {
         console.error('Error fetching product:', err);
         setError('Failed to load product. Please try again later.');
-        
-        // Fallback to mock data if fetch fails
-        const mockProduct = mockProducts.find(p => p.id === id);
-        if (mockProduct) {
-          setProduct(mockProduct);
-          
-          const mockRelated = mockProducts
-            .filter(p => p.id !== id && p.category === mockProduct.category)
-            .slice(0, 4);
-          
-          setRelatedProducts(mockRelated);
-        }
       } finally {
         setIsLoading(false);
       }
@@ -132,7 +107,7 @@ const ProductDetail = () => {
       {product && (
         <SEO
           title={`Buy ${product.name} Online | Premium Quality | Best Price in India`}
-          description={`${product.description} ✓ 100% Natural ✓ Fresh & Hygienic ✓ Free Shipping ✓ Starting from ₹${product.prices['250g']} for 250g | Order Premium ${product.name} Today!`}
+          description={`${product.description} ✓ 100% Natural ✓ Fresh & Hygienic ✓ Delivery in Telangana ✓ Starting from ₹${product.prices['250g']} for 250g | Order Premium ${product.name} Today!`}
           keywords={[
             `buy ${product.name.toLowerCase()} online`,
             `${product.name.toLowerCase()} price`,

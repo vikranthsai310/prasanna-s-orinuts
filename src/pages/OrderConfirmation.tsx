@@ -140,7 +140,7 @@ const OrderConfirmation = () => {
             <Truck className="w-8 h-8 text-secondary" />
             <div className="text-left">
               <h3 className="font-semibold">Shipping</h3>
-              <p className="text-sm text-muted-foreground">Free shipping included</p>
+              <p className="text-sm text-muted-foreground">Shipping charges as applicable</p>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
-import { mockProducts } from '@/data/mockProducts';
+import { getProductById } from '@/services/productService';
+import { Product } from '@/types';
 import { useDiscounts } from '@/hooks/useDiscounts';
 
 interface CartWeightSelectorProps {
@@ -14,7 +15,19 @@ const CartWeightSelector = ({ productId, currentWeight, onWeightChange }: CartWe
   const { calculatePricing } = useDiscounts();
   
   // Find the product to get available weights and prices
-  const product = mockProducts.find(p => p.id === productId);
+  const [product, setProduct] = useState<Product | null>(null);
+  
+  useEffect(() => {
+    const loadProduct = async () => {
+      try {
+        const fetchedProduct = await getProductById(productId);
+        setProduct(fetchedProduct);
+      } catch (error) {
+        console.error('Error loading product:', error);
+      }
+    };
+    loadProduct();
+  }, [productId]);
   
   if (!product) return null;
 

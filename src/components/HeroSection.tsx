@@ -14,7 +14,7 @@ const HeroSection = () => {
       id: 'almond', 
       name: 'Premium Almonds', 
       image: FIREBASE_IMAGE_URLS.almond,
-      description: 'California-sourced almonds with perfect crunch',
+      description: 'Premium quality almonds with perfect crunch',
       benefits: ['Heart Health', 'Protein Rich'],
       colors: { primary: '#D2691E', secondary: '#F4A460' }
     },

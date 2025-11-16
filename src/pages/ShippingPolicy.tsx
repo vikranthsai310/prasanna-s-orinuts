@@ -31,7 +31,7 @@ const ShippingPolicy = () => {
           <section className="mb-8">
             <h2 className="font-playfair text-2xl font-semibold mb-4">Shipping Charges</h2>
             <ul className="list-disc pl-6 mb-4">
-              <li>Free shipping on orders above ₹500</li>
+              <li>Delivery only within Telangana state</li>
               <li>Standard shipping: ₹50 for orders below ₹500</li>
               <li>Express delivery: Additional ₹100</li>
               <li>Cash on delivery: Additional ₹25</li>

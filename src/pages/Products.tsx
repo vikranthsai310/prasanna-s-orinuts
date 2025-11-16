@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '@/components/ProductCard';
 import { SEO } from '@/components/SEO';
-import { mockProducts } from '@/data/mockProducts';
 import { Button } from '@/components/ui/button';
 import { getAllProducts, searchProducts } from '@/services/productService';
 import { Product } from '@/types/product';
@@ -25,22 +24,10 @@ const Products = () => {
         
         if (searchQuery) {
           // Search for products if search query exists
-          try {
-            fetchedProducts = await searchProducts(searchQuery);
-          } catch (error) {
-            // Fallback to searching mock products
-            fetchedProducts = mockProducts.filter(product =>
-              product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              product.description.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-          }
+          fetchedProducts = await searchProducts(searchQuery);
         } else {
           // Fetch all products if no search query
-          try {
-            fetchedProducts = await getAllProducts();
-          } catch (error) {
-            fetchedProducts = mockProducts;
-          }
+          fetchedProducts = await getAllProducts();
         }
         
         setProducts(fetchedProducts);
@@ -48,8 +35,7 @@ const Products = () => {
       } catch (err) {
         console.error('Error fetching products:', err);
         setError('Failed to load products. Please try again later.');
-        // Fallback to mock data if fetch fails
-        setProducts(mockProducts);
+        setProducts([]);
       } finally {
         setIsLoading(false);
       }
@@ -78,7 +64,7 @@ const Products = () => {
       {/* SEO */}
       <SEO
         title="Premium Dry Fruits & Nuts Online - Almonds, Cashews, Walnuts, Dates | Best Prices"
-        description="Shop Premium Quality Dry Fruits Online ✓ California Almonds ✓ Jumbo Cashews ✓ Kashmir Walnuts ✓ Afghani Dates ✓ Iranian Pistachios ✓ Golden Raisins ✓ 100% Natural ✓ Free Shipping ✓ Best Wholesale Prices in India"
+        description="Shop Premium Quality Dry Fruits Online ✓ Fresh Almonds ✓ Jumbo Cashews ✓ Kashmir Walnuts ✓ Afghani Dates ✓ Iranian Pistachios ✓ Golden Raisins ✓ 100% Natural ✓ Delivery in Telangana ✓ Best Prices in Hyderabad"
         keywords={['dry fruits online shopping', 'buy almonds online', 'buy cashews online', 'buy walnuts online', 'buy dates online', 'buy pistachios online', 'dry fruits shop near me', 'online dry fruits store', 'fresh dry fruits', 'premium nuts online']}
         canonicalUrl="https://prasannasorinuts.com/products"
         type="website"

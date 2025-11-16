@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { searchProducts } from '@/services/productService';
 import { Product } from '@/types/product';
-import { mockProducts } from '@/data/mockProducts';
 
 interface SearchBarProps {
   className?: string;
@@ -32,22 +31,13 @@ const SearchBar = ({ className = '', isMobile = false, isExpandable = false }: S
 
     setIsLoading(true);
     try {
-      // Try Firebase search first, fallback to mock data
-      let searchResults: Product[] = [];
-      try {
-        searchResults = await searchProducts(searchTerm);
-      } catch (error) {
-        // Fallback to searching mock products
-        searchResults = mockProducts.filter(product =>
-          product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          product.description.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      }
-      
+      const searchResults = await searchProducts(searchTerm);
       setResults(searchResults.slice(0, 5)); // Limit to 5 results
       setShowResults(true);
     } catch (error) {
       console.error('Search error:', error);
+      setResults([]);
+      setShowResults(false);
     } finally {
       setIsLoading(false);
     }

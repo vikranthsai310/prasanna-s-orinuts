@@ -2,15 +2,15 @@ export const faqData = {
   general: [
     {
       question: "Where can I buy premium dry fruits online in India?",
-      answer: "You can buy premium quality dry fruits online at Prasanna's Orinuts. We offer fresh California almonds, jumbo cashews, Kashmir walnuts, Afghani dates, and more with free shipping on orders above ₹500."
+      answer: "You can buy premium quality dry fruits online at Prasanna's Orinuts. We offer fresh premium almonds, jumbo cashews, Kashmir walnuts, Afghani dates, and more with delivery across Telangana."
     },
     {
       question: "Are your dry fruits 100% natural and organic?",
       answer: "Yes! All our dry fruits are 100% natural with no additives, preservatives, or artificial colors. We source directly from premium farms to ensure the highest quality."
     },
     {
-      question: "Do you offer free shipping on dry fruits?",
-      answer: "Yes, we offer free shipping on all orders above ₹500 across India. For orders below ₹500, minimal shipping charges apply."
+      question: "What areas do you deliver to?",
+      answer: "We currently deliver to all areas within Telangana state. Shipping charges are calculated based on your location and order value at checkout."
     },
     {
       question: "How fresh are the dry fruits?",
@@ -28,7 +28,7 @@ export const faqData = {
     },
     {
       question: "What is the price of almonds per kg?",
-      answer: "Premium California almonds start from ₹299 for 250g (₹1196/kg). Prices vary based on quality and quantity. Check our products page for current offers."
+      answer: "Premium quality almonds start from ₹299 for 250g (₹1196/kg). Prices vary based on quality and quantity. Check our products page for current offers."
     },
     {
       question: "Are Kashmir walnuts better than regular walnuts?",
