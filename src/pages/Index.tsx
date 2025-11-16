@@ -6,7 +6,7 @@ import ProductCard from '@/components/ProductCard';
 import HeroSection from '@/components/HeroSection';
 import WeightSelectionDialog from '@/components/WeightSelectionDialog';
 import { SEO } from '@/components/SEO';
-import { getBestSellerProducts } from '@/services/productService';
+import { getBestSellerProducts, getAllProducts } from '@/services/productService';
 import { Product } from '@/types/product';
 import { useEffect, useRef, useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
@@ -19,14 +19,44 @@ const Index = () => {
   const [particles, setParticles] = useState<Array<{id: number, style: React.CSSProperties}>>([]);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isWeightDialogOpen, setIsWeightDialogOpen] = useState(false);
+  
+  // Store products by category for quick access
+  const [almondProduct, setAlmondProduct] = useState<Product | null>(null);
+  const [cashewProduct, setCashewProduct] = useState<Product | null>(null);
+  const [walnutProduct, setWalnutProduct] = useState<Product | null>(null);
 
   // Fetch best seller products from Firestore
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
-        const products = await getBestSellerProducts();
-        setFeaturedProducts(products); // Show all best seller products
+        const [bestSellers, allProducts] = await Promise.all([
+          getBestSellerProducts(),
+          getAllProducts()
+        ]);
+        setFeaturedProducts(bestSellers); // Show best sellers in the featured section
+        
+        // Find specific products for Nature's Finest Selection from ALL products
+        // Match by name (case-insensitive) or category
+        const almond = allProducts.find(p => 
+          p.name.toLowerCase().includes('almond') || 
+          p.category?.toLowerCase() === 'almonds'
+        );
+        const cashew = allProducts.find(p => 
+          p.name.toLowerCase().includes('cashew') || 
+          p.category?.toLowerCase() === 'cashews'
+        );
+        const walnut = allProducts.find(p => 
+          p.name.toLowerCase().includes('walnut') || 
+          p.category?.toLowerCase() === 'walnuts'
+        );
+        
+        console.log('Products found:', { almond, cashew, walnut });
+        console.log('All products:', allProducts.map(p => ({ name: p.name, category: p.category, prices: p.prices })));
+        
+        setAlmondProduct(almond || null);
+        setCashewProduct(cashew || null);
+        setWalnutProduct(walnut || null);
       } catch (error) {
         console.error('Error fetching products:', error);
         toast({
@@ -110,13 +140,50 @@ const Index = () => {
   }, []);
 
   // Handle quick add to cart
-  const handleQuickAdd = (productName: string) => {
-    // Find the product by name
-    const product = featuredProducts.find(p => p.name === productName);
+  const handleQuickAdd = (productType: 'almond' | 'cashew' | 'walnut') => {
+    let product = null;
+    
+    switch(productType) {
+      case 'almond':
+        product = almondProduct;
+        break;
+      case 'cashew':
+        product = cashewProduct;
+        break;
+      case 'walnut':
+        product = walnutProduct;
+        break;
+    }
+    
     if (product) {
       setSelectedProduct(product);
       setIsWeightDialogOpen(true);
+    } else {
+      toast({
+        title: 'Product Not Available',
+        description: 'This product is currently not available. Please try again later.',
+        variant: 'destructive'
+      });
     }
+  };
+  
+  // Helper function to get price display
+  const getProductPrice = (product: Product | null): string => {
+    if (!product || !product.prices) {
+      return '₹--/kg'; // Show placeholder while loading
+    }
+    
+    // Use the 1kg price if available, otherwise calculate average
+    if (product.prices['1kg']) {
+      return `₹${product.prices['1kg']}/kg`;
+    }
+    
+    // Fallback: calculate average of all available prices
+    const prices = Object.values(product.prices).filter(p => p > 0);
+    if (prices.length === 0) return '₹999/kg';
+    
+    const avgPrice = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
+    return `₹${avgPrice}/kg`;
   };
 
   return (
@@ -159,7 +226,7 @@ const Index = () => {
             {/* Almond Card */}
             <div className="mobile-scroll-item reveal delay-1">
               <div className="glassmorphic-card">
-                <div className="price-tag">₹899/kg</div>
+                <div className="price-tag">{getProductPrice(almondProduct)}</div>
                 <div className="fruit-image-container">
                   <img 
                     src="/almond.png" 
@@ -182,13 +249,15 @@ const Index = () => {
                 </div>
                 {/* Update the button layout in the mobile view */}
                 <div className="mt-4 mb-6 text-center sequential-fade">
-                  <Link to="/products">
-                    <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
-                      Explore
-                    </Button>
-                  </Link>
+                  {almondProduct && (
+                    <Link to={`/products/${almondProduct.id}`}>
+                      <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
+                        Explore
+                      </Button>
+                    </Link>
+                  )}
                 </div>
-                <div className="quick-add-btn" onClick={() => handleQuickAdd("Premium Almonds")}>
+                <div className="quick-add-btn" onClick={() => handleQuickAdd('almond')}>
                   <ShoppingCart className="w-4 h-4 inline-block mr-2" /> Quick Add
                 </div>
               </div>
@@ -197,7 +266,7 @@ const Index = () => {
             {/* Cashew Card */}
             <div className="mobile-scroll-item reveal delay-2">
               <div className="glassmorphic-card">
-                <div className="price-tag">₹1099/kg</div>
+                <div className="price-tag">{getProductPrice(cashewProduct)}</div>
                 <div className="fruit-image-container">
                   <img 
                     src="/cashew.png" 
@@ -220,13 +289,15 @@ const Index = () => {
                 </div>
                 {/* Update the button layout in the mobile view */}
                 <div className="mt-4 mb-6 text-center sequential-fade">
-                  <Link to="/products">
-                    <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
-                      Explore
-                    </Button>
-                  </Link>
+                  {cashewProduct && (
+                    <Link to={`/products/${cashewProduct.id}`}>
+                      <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
+                        Explore
+                      </Button>
+                    </Link>
+                  )}
                 </div>
-                <div className="quick-add-btn" onClick={() => handleQuickAdd("Exotic Cashews")}>
+                <div className="quick-add-btn" onClick={() => handleQuickAdd('cashew')}>
                   <ShoppingCart className="w-4 h-4 inline-block mr-2" /> Quick Add
                 </div>
               </div>
@@ -235,7 +306,7 @@ const Index = () => {
             {/* Walnut Card */}
             <div className="mobile-scroll-item reveal delay-3">
               <div className="glassmorphic-card">
-                <div className="price-tag">₹1299/kg</div>
+                <div className="price-tag">{getProductPrice(walnutProduct)}</div>
                 <div className="fruit-image-container">
                   <img 
                     src="/walnut.png" 
@@ -258,13 +329,15 @@ const Index = () => {
                 </div>
                 {/* Update the button layout in the mobile view */}
                 <div className="mt-4 mb-6 text-center sequential-fade">
-                  <Link to="/products">
-                    <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
-                      Explore
-                    </Button>
-                  </Link>
+                  {walnutProduct && (
+                    <Link to={`/products/${walnutProduct.id}`}>
+                      <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
+                        Explore
+                      </Button>
+                    </Link>
+                  )}
                 </div>
-                <div className="quick-add-btn" onClick={() => handleQuickAdd("Organic Walnuts")}>
+                <div className="quick-add-btn" onClick={() => handleQuickAdd('walnut')}>
                   <ShoppingCart className="w-4 h-4 inline-block mr-2" /> Quick Add
                 </div>
               </div>
@@ -276,7 +349,7 @@ const Index = () => {
             {/* Almond Card */}
             <div className="reveal delay-1">
               <div className="glassmorphic-card">
-                <div className="price-tag">₹899/kg</div>
+                <div className="price-tag">{getProductPrice(almondProduct)}</div>
                 <div className="fruit-image-container">
                   <img 
                     src="/almond.png" 
@@ -299,13 +372,15 @@ const Index = () => {
                 </div>
                 {/* Update the button layout in the desktop view */}
                 <div className="mt-4 mb-6 text-center sequential-fade">
-                  <Link to="/products">
-                    <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
-                      Explore
-                    </Button>
-                  </Link>
+                  {almondProduct && (
+                    <Link to={`/products/${almondProduct.id}`}>
+                      <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
+                        Explore
+                      </Button>
+                    </Link>
+                  )}
                 </div>
-                <div className="quick-add-btn" onClick={() => handleQuickAdd("Premium Almonds")}>
+                <div className="quick-add-btn" onClick={() => handleQuickAdd('almond')}>
                   <ShoppingCart className="w-4 h-4 inline-block mr-2" /> Quick Add
                 </div>
               </div>
@@ -314,7 +389,7 @@ const Index = () => {
             {/* Cashew Card */}
             <div className="reveal delay-2">
               <div className="glassmorphic-card">
-                <div className="price-tag">₹1099/kg</div>
+                <div className="price-tag">{getProductPrice(cashewProduct)}</div>
                 <div className="fruit-image-container">
                   <img 
                     src="/cashew.png" 
@@ -337,13 +412,15 @@ const Index = () => {
                 </div>
                 {/* Update the button layout in the desktop view */}
                 <div className="mt-4 mb-6 text-center sequential-fade">
-                  <Link to="/products">
-                    <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
-                      Explore
-                    </Button>
-                  </Link>
+                  {cashewProduct && (
+                    <Link to={`/products/${cashewProduct.id}`}>
+                      <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
+                        Explore
+                      </Button>
+                    </Link>
+                  )}
                 </div>
-                <div className="quick-add-btn" onClick={() => handleQuickAdd("Exotic Cashews")}>
+                <div className="quick-add-btn" onClick={() => handleQuickAdd('cashew')}>
                   <ShoppingCart className="w-4 h-4 inline-block mr-2" /> Quick Add
                 </div>
               </div>
@@ -352,7 +429,7 @@ const Index = () => {
             {/* Walnut Card */}
             <div className="reveal delay-3">
               <div className="glassmorphic-card">
-                <div className="price-tag">₹1299/kg</div>
+                <div className="price-tag">{getProductPrice(walnutProduct)}</div>
                 <div className="fruit-image-container">
                   <img 
                     src="/walnut.png" 
@@ -375,13 +452,15 @@ const Index = () => {
                 </div>
                 {/* Update the button layout in the desktop view */}
                 <div className="mt-4 mb-6 text-center sequential-fade">
-                  <Link to="/products">
-                    <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
-                      Explore
-                    </Button>
-                  </Link>
+                  {walnutProduct && (
+                    <Link to={`/products/${walnutProduct.id}`}>
+                      <Button variant="outline" size="sm" className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
+                        Explore
+                      </Button>
+                    </Link>
+                  )}
                 </div>
-                <div className="quick-add-btn" onClick={() => handleQuickAdd("Organic Walnuts")}>
+                <div className="quick-add-btn" onClick={() => handleQuickAdd('walnut')}>
                   <ShoppingCart className="w-4 h-4 inline-block mr-2" /> Quick Add
                 </div>
               </div>
