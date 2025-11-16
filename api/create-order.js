@@ -9,28 +9,35 @@ console.log('   RAZORPAY_KEY_ID exists:', !!process.env.RAZORPAY_KEY_ID);
 console.log('   RAZORPAY_KEY_ID value:', process.env.RAZORPAY_KEY_ID ? `${process.env.RAZORPAY_KEY_ID.substring(0, 8)}...` : 'NOT SET');
 console.log('   RAZORPAY_KEY_SECRET exists:', !!process.env.RAZORPAY_KEY_SECRET);
 console.log('   RAZORPAY_KEY_SECRET length:', process.env.RAZORPAY_KEY_SECRET?.length || 0);
+console.log('   FIREBASE_SERVICE_ACCOUNT_KEY exists:', !!process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-// Validate environment variables
-if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-  console.error('❌ [CREATE-ORDER] CRITICAL: Razorpay credentials not configured!');
-  console.error('   Available env vars:', Object.keys(process.env).filter(k => k.includes('RAZOR')));
-  throw new Error('CRITICAL: Razorpay credentials not configured in environment variables');
-}
+// Initialize Razorpay lazily to avoid startup errors
+let razorpay = null;
 
-console.log('✅ [CREATE-ORDER] Razorpay credentials validated');
+function getRazorpayInstance() {
+  if (razorpay) {
+    return razorpay;
+  }
 
-// Initialize Razorpay with environment variables ONLY
-let razorpay;
-try {
-  razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET
-  });
-  console.log('✅ [CREATE-ORDER] Razorpay instance created successfully');
-} catch (initError) {
-  console.error('❌ [CREATE-ORDER] Failed to initialize Razorpay:', initError);
-  throw initError;
+  // Validate environment variables
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    console.error('❌ [CREATE-ORDER] CRITICAL: Razorpay credentials not configured!');
+    console.error('   Available env vars:', Object.keys(process.env).filter(k => k.includes('RAZOR')));
+    throw new Error('Payment gateway not configured. Please contact support.');
+  }
+
+  try {
+    razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET
+    });
+    console.log('✅ [CREATE-ORDER] Razorpay instance created successfully');
+    return razorpay;
+  } catch (initError) {
+    console.error('❌ [CREATE-ORDER] Failed to initialize Razorpay:', initError);
+    throw new Error('Payment gateway initialization failed. Please contact support.');
+  }
 }
 
 async function handler(req, res) {
@@ -85,7 +92,8 @@ async function handler(req, res) {
       payment_capture: orderParams.payment_capture
     });
 
-    const order = await razorpay.orders.create(orderParams);
+    const razorpayInstance = getRazorpayInstance();
+    const order = await razorpayInstance.orders.create(orderParams);
 
     console.log('✅ [CREATE-ORDER] Order created successfully:', {
       id: order.id,
@@ -112,11 +120,25 @@ async function handler(req, res) {
     console.error('   Full Error:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
     console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
-    return res.status(500).json({ 
-      error: 'Failed to create order',
+    // Provide user-friendly error messages
+    const statusCode = error.statusCode || 500;
+    let errorMessage = 'Failed to create order';
+    
+    if (error.message.includes('Payment gateway not configured')) {
+      errorMessage = 'Payment service is temporarily unavailable. Please try again later.';
+    } else if (error.message.includes('Payment gateway initialization failed')) {
+      errorMessage = 'Unable to process payment at this time. Please contact support.';
+    } else if (error.code === 'BAD_REQUEST_ERROR') {
+      errorMessage = 'Invalid payment information. Please check your details and try again.';
+    } else if (statusCode >= 500) {
+      errorMessage = 'Server error processing payment. Please try again.';
+    }
+    
+    return res.status(statusCode).json({ 
+      error: errorMessage,
       message: error.message,
-      code: error.code || 'UNKNOWN_ERROR',
-      statusCode: error.statusCode,
+      code: error.code || 'PAYMENT_ERROR',
+      statusCode: statusCode,
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }

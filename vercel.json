@@ -48,8 +48,8 @@
     }
   ],
   "env": {
-    "RAZORPAY_KEY_ID": "rzp_live_DBSSTbBMD0V8N9",
-    "RAZORPAY_KEY_SECRET": "PSAZ07MfVPmBeux0JqpX7aEl",
+    "RAZORPAY_KEY_ID": "rzp_live_Rg5FYFB1P2T4wv",
+    "RAZORPAY_KEY_SECRET": "g7Np7KdqfPgMPEPd6gr7Ohnf",
     "FIREBASE_API_KEY": "AIzaSyCFGNw-QaL0NeajxgjMcuOxCXzeeHX1nwY",
     "FIREBASE_AUTH_DOMAIN": "orinut-494cc.firebaseapp.com",
     "FIREBASE_PROJECT_ID": "orinut-494cc",

@@ -132,6 +132,17 @@ export function requireAuth(handler, options = {}) {
         return;
       }
 
+      // Check if Firebase Admin can be initialized
+      const auth = initializeFirebaseAdmin();
+      if (!auth) {
+        console.error('❌ Firebase Admin not configured - returning 503');
+        return res.status(503).json({
+          error: 'Service Unavailable',
+          message: 'Authentication service is not configured. Please contact support.',
+          code: 'AUTH_SERVICE_UNAVAILABLE'
+        });
+      }
+
       // Verify authentication token
       const user = await verifyAuthToken(req);
       
@@ -151,11 +162,12 @@ export function requireAuth(handler, options = {}) {
       
     } catch (error) {
       console.error('❌ Authentication failed:', error.message);
+      console.error('   Stack:', error.stack);
       
       // Return appropriate HTTP status
       return res.status(401).json({ 
         error: 'Unauthorized',
-        message: error.message,
+        message: error.message || 'Authentication required',
         code: 'AUTH_REQUIRED',
         details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
