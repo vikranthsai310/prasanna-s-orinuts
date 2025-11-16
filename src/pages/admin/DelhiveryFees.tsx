@@ -63,6 +63,7 @@ export default function DelhiveryFeesPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingFee, setEditingFee] = useState<DelhiveryFee | null>(null);
   const [deletingFeeId, setDeletingFeeId] = useState<string | null>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState<Omit<DelhiveryFee, 'id' | 'createdAt' | 'updatedAt'>>({
@@ -83,11 +84,12 @@ export default function DelhiveryFeesPage() {
       setLoading(true);
       const data = await getAllDelhiveryFees();
       
-      // Initialize default fees if none exist
-      if (data.length === 0) {
+      // Only initialize default fees on first load if collection is empty
+      if (data.length === 0 && !hasInitialized) {
         await initializeDefaultFees();
         const newData = await getAllDelhiveryFees();
         setFees(newData);
+        setHasInitialized(true);
         toast.success('Default fees initialized');
       } else {
         setFees(data);
@@ -378,8 +380,8 @@ export default function DelhiveryFeesPage() {
             </DialogTitle>
             <DialogDescription>
               {editingFee 
-                ? 'Update the fee details below' 
-                : 'Add a new Delhivery shipping fee configuration'}
+                ? 'Update the fee details below. Active fees are automatically used in shipping calculations.' 
+                : 'Add a new Delhivery shipping fee. Configure rates for different scenarios like base charges, weight-based pricing, or location-based fees.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -391,9 +393,10 @@ export default function DelhiveryFeesPage() {
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., Metro Base Rate"
+                  placeholder="e.g., Metro City Base Rate, Heavy Package Surcharge"
                   required
                 />
+                <p className="text-xs text-muted-foreground mt-1">Give this fee a descriptive name for easy identification</p>
               </div>
 
               <div className="col-span-2">
@@ -417,14 +420,15 @@ export default function DelhiveryFeesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="base_rate">Base Rate</SelectItem>
-                    <SelectItem value="per_kg_metro">Per KG (Metro)</SelectItem>
-                    <SelectItem value="per_kg_non_metro">Per KG (Non-Metro)</SelectItem>
-                    <SelectItem value="cod_charges">COD Charges</SelectItem>
-                    <SelectItem value="packaging">Packaging</SelectItem>
-                    <SelectItem value="custom">Custom</SelectItem>
+                    <SelectItem value="base_rate">Base Rate - Fixed charge for all shipments</SelectItem>
+                    <SelectItem value="per_kg_metro">Per KG (Metro) - Additional charge per kg in metro cities</SelectItem>
+                    <SelectItem value="per_kg_non_metro">Per KG (Non-Metro) - Additional charge per kg outside metros</SelectItem>
+                    <SelectItem value="cod_charges">COD Charges - Cash on Delivery handling fee</SelectItem>
+                    <SelectItem value="packaging">Packaging - Material and packing costs</SelectItem>
+                    <SelectItem value="custom">Custom - Your own fee type</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground mt-1">Select how this fee should be applied in calculations</p>
               </div>
 
               <div>
@@ -436,8 +440,10 @@ export default function DelhiveryFeesPage() {
                   min="0"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                  placeholder="50"
                   required
                 />
+                <p className="text-xs text-muted-foreground mt-1">Fee amount in rupees (e.g., 50 for ₹50)</p>
               </div>
 
               <div>
@@ -450,11 +456,12 @@ export default function DelhiveryFeesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Areas</SelectItem>
-                    <SelectItem value="metro">Metro Cities Only</SelectItem>
-                    <SelectItem value="non_metro">Non-Metro Only</SelectItem>
+                    <SelectItem value="all">All Areas - Apply to all locations</SelectItem>
+                    <SelectItem value="metro">Metro Cities Only - Mumbai, Delhi, Bangalore, etc.</SelectItem>
+                    <SelectItem value="non_metro">Non-Metro Only - All other cities and towns</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground mt-1">Choose which locations this fee applies to</p>
               </div>
 
               <div>
@@ -466,8 +473,9 @@ export default function DelhiveryFeesPage() {
                   min="0"
                   value={formData.minWeight || ''}
                   onChange={(e) => setFormData({ ...formData, minWeight: parseFloat(e.target.value) || undefined })}
-                  placeholder="Optional"
+                  placeholder="0.5"
                 />
+                <p className="text-xs text-muted-foreground mt-1">Apply this fee only if weight is above this (optional)</p>
               </div>
 
               <div className="col-span-2">
@@ -479,19 +487,27 @@ export default function DelhiveryFeesPage() {
                   min="0"
                   value={formData.maxWeight || ''}
                   onChange={(e) => setFormData({ ...formData, maxWeight: parseFloat(e.target.value) || undefined })}
-                  placeholder="Optional - leave empty for unlimited"
+                  placeholder="10"
                 />
+                <p className="text-xs text-muted-foreground mt-1">Apply this fee only if weight is below this (leave empty for unlimited)</p>
               </div>
 
-              <div className="col-span-2 flex items-center space-x-2">
+              <div className="col-span-2 flex items-center space-x-2 p-3 bg-accent/50 rounded-lg">
                 <Switch
                   id="isActive"
                   checked={formData.isActive}
                   onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
                 />
-                <Label htmlFor="isActive" className="cursor-pointer">
-                  Active (fee will be applied to calculations)
-                </Label>
+                <div className="flex-1">
+                  <Label htmlFor="isActive" className="cursor-pointer font-medium">
+                    Active Status
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {formData.isActive 
+                      ? '✓ This fee will be included in shipping calculations' 
+                      : '✗ This fee is disabled and will not be applied'}
+                  </p>
+                </div>
               </div>
             </div>
 
