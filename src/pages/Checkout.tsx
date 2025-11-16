@@ -73,8 +73,11 @@ const Checkout = () => {
     const loadRazorpay = async () => {
       console.log('🔄 Loading Razorpay...');
       
+      // Detect mobile at time of loading
+      const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
       // Show loading message for mobile users
-      if (isMobile) {
+      if (mobile) {
         console.log('📱 Mobile device detected, initializing payment gateway...');
       }
       
@@ -83,7 +86,7 @@ const Checkout = () => {
       setRazorpayLoaded(result);
       if (!result) {
         console.error('❌ Failed to load Razorpay');
-        const errorMessage = isMobile 
+        const errorMessage = mobile 
           ? "Payment gateway failed to load. Please check your internet connection and refresh the page."
           : "Failed to load payment gateway. Please try again later.";
         
@@ -94,14 +97,14 @@ const Checkout = () => {
         });
       } else {
         console.log('✅ Razorpay loaded successfully');
-        if (isMobile) {
+        if (mobile) {
           console.log('📱 Payment gateway ready for mobile payments');
         }
       }
     };
     
     loadRazorpay();
-  }, [isMobile]); // Add isMobile as dependency
+  }, []); // Only run once on mount
   
   // Load saved addresses if user is logged in
   useEffect(() => {
