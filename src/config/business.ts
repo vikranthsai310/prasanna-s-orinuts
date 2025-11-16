@@ -49,7 +49,7 @@ export const businessConfig = {
   samples: {
     enabled: true,
     maxSamplesPerUser: 3,
-    sampleWeight: '50g',
+    sampleWeight: 'Sample',
     samplePrice: 49,
     cooldownPeriod: 30 * 24 * 60 * 60 * 1000 // 30 days
   }

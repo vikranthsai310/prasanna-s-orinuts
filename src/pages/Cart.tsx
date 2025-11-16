@@ -104,7 +104,7 @@ const Cart = () => {
             id: product.id,
             name: `${product.name} (Sample)`,
             price: 0, // Free sample
-            weight: '50g', // Sample size
+            weight: 'Sample',
             image: product.image
           });
         }

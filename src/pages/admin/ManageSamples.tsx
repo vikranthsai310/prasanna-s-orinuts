@@ -41,7 +41,7 @@ const AdminSamples = () => {
     productId: '',
     productName: '',
     productImage: '',
-    sampleWeight: '50g',
+    sampleWeight: 'Sample',
     maxQuantity: 2,
     stock: 100,
     isActive: true,
@@ -220,7 +220,7 @@ const AdminSamples = () => {
       productId: '',
       productName: '',
       productImage: '',
-      sampleWeight: '50g',
+      sampleWeight: 'Sample',
       maxQuantity: 2,
       stock: 100,
       isActive: true,
@@ -411,10 +411,6 @@ const AdminSamples = () => {
                       {/* Product Stats */}
                       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] md:text-sm text-muted-foreground">
                         <span className="flex items-center gap-1 whitespace-nowrap">
-                          <span className="font-medium">Wt:</span> 
-                          <span className="text-gray-900">{sample.sampleWeight}</span>
-                        </span>
-                        <span className="flex items-center gap-1 whitespace-nowrap">
                           <span className="font-medium">Max:</span> 
                           <span className="text-gray-900">{sample.maxQuantity}</span>
                         </span>
@@ -545,22 +541,8 @@ const AdminSamples = () => {
                 </div>
               )}
 
-              {/* Sample Weight */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Sample Weight *
-                </label>
-                <select
-                  value={formData.sampleWeight}
-                  onChange={(e) => setFormData(prev => ({ ...prev, sampleWeight: e.target.value }))}
-                  className="input-field w-full"
-                >
-                  <option value="25g">25g</option>
-                  <option value="50g">50g</option>
-                  <option value="75g">75g</option>
-                  <option value="100g">100g</option>
-                </select>
-              </div>
+              {/* Sample Weight - hidden field */}
+              <input type="hidden" value={formData.sampleWeight} />
 
               {/* Max Quantity */}
               <div>

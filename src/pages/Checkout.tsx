@@ -1011,7 +1011,7 @@ const Checkout = () => {
                 {selectedSamples.map(sample => (
                   <div key={sample.id} className="flex items-center text-sm">
                     <Check className="w-3 h-3 text-green-600 mr-2" />
-                    <span>{sample.name} (50g sample) - FREE</span>
+                    <span>{sample.name} (Sample) - FREE</span>
                   </div>
                 ))}
               </div>

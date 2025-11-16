@@ -142,7 +142,7 @@ const AddSamples = () => {
           id: sample.productId,
           name: `${sample.productName} (Sample)`,
           price: 0, // Free sample
-          weight: sample.sampleWeight,
+          weight: 'Sample',
           image: sample.productImage
         }, 1); // quantity as second parameter
       }
@@ -270,7 +270,7 @@ const AddSamples = () => {
                 
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">
-                    Sample Size: {sample.sampleWeight}
+                    <span className="text-xs text-gray-500">FREE</span>
                   </div>
                   <Button
                     variant={isSelected ? "default" : "outline"}
@@ -332,7 +332,7 @@ const AddSamples = () => {
               {selectedSamples.map(sample => (
                 <li key={sample.id} className="flex items-center">
                   <Check className="w-4 h-4 text-green-600 mr-2" />
-                  {sample.productName} ({sample.sampleWeight} sample)
+                  {sample.productName} (Sample)
                 </li>
               ))}
             </ul>
