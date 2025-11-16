@@ -1,5 +1,6 @@
 // Vercel Serverless Function for creating Delhivery shipments
 import { requireAuth } from './_middleware/auth.js';
+import { logger } from './_utils/logger.js';
 
 const DELHIVERY_API_URL = process.env.DELHIVERY_API_URL || 'https://track.delhivery.com/api';
 const DELHIVERY_API_TOKEN = process.env.DELHIVERY_API_TOKEN;
@@ -145,7 +146,7 @@ async function handler(req, res) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Delhivery API error:', errorText);
+      logger.error('CREATE-SHIPMENT', `Delhivery API error: ${response.statusText}`, null, { errorText });
       throw new Error(`Delhivery shipment creation failed: ${response.statusText} - ${errorText}`);
     }
 
@@ -168,7 +169,7 @@ async function handler(req, res) {
       message: result.rmk || 'Shipment created successfully',
     });
   } catch (error) {
-    console.error('❌ Error creating Delhivery shipment:', error);
+    logger.error('CREATE-SHIPMENT', 'Error creating Delhivery shipment', error);
     
     if (error.message.includes('permission') || error.message.includes('Forbidden')) {
       return res.status(403).json({ 

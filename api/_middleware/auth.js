@@ -6,6 +6,7 @@
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { configureCors } from './cors.js';
+import { logger } from '../_utils/logger.js';
 
 let adminAuth = null;
 
@@ -25,7 +26,7 @@ function initializeFirebaseAdmin() {
       const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
       
       if (!serviceAccountKey) {
-        console.error('❌ Firebase Admin: FIREBASE_SERVICE_ACCOUNT_KEY not configured');
+        logger.error('FIREBASE-ADMIN', 'FIREBASE_SERVICE_ACCOUNT_KEY not configured');
         return null;
       }
 
@@ -37,7 +38,7 @@ function initializeFirebaseAdmin() {
           projectId: serviceAccount.project_id,
         });
       } catch (parseError) {
-        console.error('❌ Firebase Admin: Failed to parse service account credentials');
+        logger.error('FIREBASE-ADMIN', 'Failed to parse service account credentials', parseError);
         return null;
       }
     }
@@ -45,7 +46,7 @@ function initializeFirebaseAdmin() {
     adminAuth = getAuth();
     return adminAuth;
   } catch (error) {
-    console.error('❌ Firebase Admin initialization failed:', error.message);
+    logger.error('FIREBASE-ADMIN', 'Initialization failed', error);
     return null;
   }
 }
@@ -94,7 +95,7 @@ export async function verifyAuthToken(req) {
       exp: decodedToken.exp,
     };
   } catch (error) {
-    console.error('❌ Token verification failed:', error.code || error.message);
+    logger.error('AUTH-MIDDLEWARE', 'Token verification failed', error);
     
     if (error.code === 'auth/id-token-expired') {
       throw new Error('Token has expired. Please refresh and try again.');
@@ -135,7 +136,7 @@ export function requireAuth(handler, options = {}) {
       // Check if Firebase Admin can be initialized
       const auth = initializeFirebaseAdmin();
       if (!auth) {
-        console.error('❌ Firebase Admin not configured - returning 503');
+        logger.error('AUTH-MIDDLEWARE', 'Firebase Admin not configured - returning 503');
         return res.status(503).json({
           error: 'Service Unavailable',
           message: 'Authentication service is not configured. Please contact support.',
@@ -161,8 +162,7 @@ export function requireAuth(handler, options = {}) {
       return await handler(req, res);
       
     } catch (error) {
-      console.error('❌ Authentication failed:', error.message);
-      console.error('   Stack:', error.stack);
+      logger.error('AUTH-MIDDLEWARE', 'Authentication failed', error);
       
       // Return appropriate HTTP status
       return res.status(401).json({ 

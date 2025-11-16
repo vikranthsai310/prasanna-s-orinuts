@@ -1,5 +1,6 @@
 // Vercel Serverless Function for calculating shipping rates via Delhivery
 import { requireAuth } from './_middleware/auth.js';
+import { logger } from './_utils/logger.js';
 
 const DELHIVERY_API_URL = process.env.DELHIVERY_API_URL || 'https://track.delhivery.com/api';
 const DELHIVERY_API_TOKEN = process.env.DELHIVERY_API_TOKEN;
@@ -36,7 +37,7 @@ const checkServiceability = async (pickupPincode, deliveryPincode, weight, cod =
     const result = await response.json();
     return result;
   } catch (error) {
-    console.error('Delhivery serviceability check error:', error);
+    logger.error('DELHIVERY', 'Serviceability check error', error);
     throw error;
   }
 };
@@ -189,7 +190,7 @@ async function handler(req, res) {
 
     return res.status(200).json(response);
   } catch (error) {
-    console.error('❌ Error calculating shipping:', error);
+    logger.error('SHIPPING', 'Error calculating shipping rates', error);
     return res.status(500).json({
       success: false,
       error: 'Failed to calculate shipping rates',

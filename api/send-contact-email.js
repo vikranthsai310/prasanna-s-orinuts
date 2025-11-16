@@ -1,3 +1,5 @@
+import { logger } from './_utils/logger.js';
+
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -57,7 +59,7 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('Error sending email:', error);
+    logger.error('SEND-CONTACT-EMAIL', 'Error sending email', error);
     return res.status(500).json({ 
       error: 'Failed to send email. Please try again later.' 
     });

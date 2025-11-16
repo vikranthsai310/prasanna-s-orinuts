@@ -1,6 +1,7 @@
 // Vercel Serverless Function for verifying Razorpay payments
 import crypto from 'crypto';
 import { requireAuth, verifyOwnership } from './_middleware/auth.js';
+import { logger } from './_utils/logger.js';
 
 // Initialize Firebase Firestore for order updates
 let db = null;
@@ -23,7 +24,7 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
       db = getFirestore();
     }
   } catch (error) {
-    console.error('❌ Firebase Admin initialization failed:', error.message);
+    logger.error('VERIFY-PAYMENT', 'Firebase Admin initialization failed', error);
   }
 }
 
@@ -49,7 +50,7 @@ async function handler(req, res) {
           verifyOwnership(req.user, orderData.userId);
         }
       } catch (ownershipError) {
-        console.error('❌ Payment ownership verification failed:', ownershipError.message);
+        logger.error('VERIFY-PAYMENT', 'Payment ownership verification failed', ownershipError);
         return res.status(403).json({ 
           error: 'Forbidden',
           message: 'You do not have permission to verify this payment'
@@ -61,7 +62,7 @@ async function handler(req, res) {
     const secret = process.env.RAZORPAY_KEY_SECRET;
     
     if (!secret) {
-      console.error('❌ RAZORPAY_KEY_SECRET not configured');
+      logger.error('VERIFY-PAYMENT', 'RAZORPAY_KEY_SECRET not configured');
       return res.status(500).json({ 
         error: 'Server configuration error. Please contact support.',
         isValid: false 
@@ -86,7 +87,7 @@ async function handler(req, res) {
           updatedAt: new Date().toISOString()
         });
       } catch (dbError) {
-        console.error('❌ Order status update failed:', dbError.message);
+        logger.error('VERIFY-PAYMENT', 'Order status update failed', dbError);
       }
     }
 
@@ -99,7 +100,7 @@ async function handler(req, res) {
       paymentId: paymentId
     });
   } catch (error) {
-    console.error('❌ Error verifying payment:', error);
+    logger.error('VERIFY-PAYMENT', 'Error verifying payment', error);
     
     // Handle different error types
     if (error.message.includes('permission') || error.message.includes('Forbidden')) {
