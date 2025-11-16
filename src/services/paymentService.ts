@@ -268,8 +268,27 @@ export const openRazorpayCheckout = (
       remember_customer: false, // Don't save customer details for security
     };
 
-    console.log('🔧 Razorpay options:', options);
+    console.log('🔧 Razorpay options:', {
+      key: options.key,
+      amount: options.amount,
+      currency: options.currency,
+      order_id: options.order_id,
+      name: options.name
+    });
 
+    // Validate order_id format before opening checkout
+    if (!orderId || !orderId.startsWith('order_')) {
+      console.error('❌ Invalid Razorpay order ID format:', orderId);
+      throw new Error('Invalid order ID format. Order ID must start with "order_"');
+    }
+
+    // Validate amount is in correct format
+    if (amountInPaise < 100) {
+      console.error('❌ Amount too small:', amountInPaise, 'paise (minimum 100 paise = ₹1)');
+      throw new Error('Order amount is too small. Minimum amount is ₹1.00');
+    }
+
+    console.log('✅ All validations passed, creating Razorpay instance...');
     const razorpayInstance = new window.Razorpay(options);
 
     // Handle payment failures
@@ -295,7 +314,19 @@ export const openRazorpayCheckout = (
 
     // Open Razorpay checkout
     console.log('🚀 Opening Razorpay modal...');
-    razorpayInstance.open();
+    
+    try {
+      razorpayInstance.open();
+      console.log('✅ Razorpay modal opened successfully');
+    } catch (openError) {
+      console.error('❌ Failed to open Razorpay modal:', openError);
+      console.error('   This could mean:');
+      console.error('   1. Invalid order ID or order already used/paid');
+      console.error('   2. Razorpay account not activated for live payments');
+      console.error('   3. Network/connectivity issue');
+      console.error('   4. Browser blocking the payment popup');
+      throw new Error('Failed to open payment gateway. Please try again or contact support.');
+    }
   } catch (error) {
     console.error('❌ Error opening Razorpay checkout:', error);
     onFailure(error);
