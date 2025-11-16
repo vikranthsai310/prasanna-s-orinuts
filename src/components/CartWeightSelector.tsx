@@ -12,10 +12,8 @@ interface CartWeightSelectorProps {
 
 const CartWeightSelector = ({ productId, currentWeight, onWeightChange }: CartWeightSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { calculatePricing } = useDiscounts();
-  
-  // Find the product to get available weights and prices
   const [product, setProduct] = useState<Product | null>(null);
+  const { calculatePricing } = useDiscounts();
   
   useEffect(() => {
     const loadProduct = async () => {
@@ -29,7 +27,18 @@ const CartWeightSelector = ({ productId, currentWeight, onWeightChange }: CartWe
     loadProduct();
   }, [productId]);
   
-  if (!product) return null;
+  if (!product) {
+    return (
+      <div className="relative">
+        <label className="text-xs font-semibold text-[#6B5750] mb-1.5 block uppercase tracking-wide">
+          Weight
+        </label>
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 border-2 border-[#E0DCD7] rounded-lg min-w-[120px]">
+          <span className="text-[#6B5750] text-sm">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   const weights = Object.keys(product.prices);
   
