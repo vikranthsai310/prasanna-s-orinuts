@@ -289,18 +289,6 @@ const Cart = () => {
                       }
                     />
                   </div>
-                    </div>
-                    
-                    {/* Delete Button - Top Right */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeItem(item.id, item.weight)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 w-9 p-0 flex-shrink-0 rounded-lg transition-all"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
                   
                   {/* Quantity and Price Row */}
                   <div className="flex items-center justify-between pt-3 border-t border-border/30">
