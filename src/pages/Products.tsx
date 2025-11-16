@@ -49,7 +49,9 @@ const Products = () => {
     { id: 'nuts', name: 'Nuts' },
     { id: 'dates', name: 'Dates' },
     { id: 'dried-fruits', name: 'Dried Fruits' },
-    { id: 'mixed', name: 'Mixed' }
+    { id: 'mixed', name: 'Mixed' },
+    { id: 'seeds', name: 'Seeds' },
+    { id: 'premium', name: 'Premium' }
   ];
 
   // Apply category filter only when not searching

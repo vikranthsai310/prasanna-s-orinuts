@@ -21,7 +21,7 @@ export const ADMIN_EMAILS = ['vikranthsai310@gmail.com', 'admin@prasannaorinut.c
 export const SUPER_ADMIN_PHONES = ['+916301308477', '+918555856366']; // Super Admins - cannot be removed
 export const ADMIN_PHONE_NUMBERS = ['+918555856366', '+916301308477']; // Admin phone numbers
 export const ADDRESS_TYPES = ['Home', 'Work', 'Business', 'Other'] as const;
-export const PRODUCT_CATEGORIES = ['nuts', 'dates', 'dried-fruits', 'seeds', 'spices'] as const;
+export const PRODUCT_CATEGORIES = ['nuts', 'dates', 'dried-fruits', 'mixed', 'seeds', 'premium'] as const;
 export const WEIGHT_OPTIONS = ['250g', '500g', '1kg', '2kg'] as const;
 
 // Configuration validation helper

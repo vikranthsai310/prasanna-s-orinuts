@@ -17,7 +17,7 @@ export interface Product {
     carbs: number;
     fiber: number;
   };
-  category: 'nuts' | 'dates' | 'dried-fruits' | 'mixed';
+  category: 'nuts' | 'dates' | 'dried-fruits' | 'mixed' | 'seeds' | 'premium';
   stock: number;
   isBestSeller?: boolean; // Flag to mark product as best seller
 }

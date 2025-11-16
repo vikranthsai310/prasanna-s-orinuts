@@ -136,7 +136,7 @@ const AdminProducts = () => {
   };
 
   const handleCategoryChange = (value: string) => {
-    setFormData(prev => ({ ...prev, category: value as 'nuts' | 'dates' | 'dried-fruits' | 'mixed' }));
+    setFormData(prev => ({ ...prev, category: value as 'nuts' | 'dates' | 'dried-fruits' | 'mixed' | 'seeds' | 'premium' }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -237,7 +237,7 @@ const AdminProducts = () => {
           carbs: formData.carbs,
           fiber: formData.fiber
         },
-        category: formData.category as 'nuts' | 'dates' | 'dried-fruits' | 'mixed',
+        category: formData.category as 'nuts' | 'dates' | 'dried-fruits' | 'mixed' | 'seeds' | 'premium',
         stock: formData.stock
       };
 
@@ -504,6 +504,8 @@ const AdminProducts = () => {
                         <SelectItem value="dates">Dates</SelectItem>
                         <SelectItem value="dried-fruits">Dried Fruits</SelectItem>
                         <SelectItem value="mixed">Mixed</SelectItem>
+                        <SelectItem value="seeds">Seeds</SelectItem>
+                        <SelectItem value="premium">Premium</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

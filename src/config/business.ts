@@ -29,7 +29,7 @@ export const businessConfig = {
 
   // Product categories and management
   products: {
-    categories: ['nuts', 'dates', 'dried-fruits', 'seeds', 'spices'] as const,
+    categories: ['nuts', 'dates', 'dried-fruits', 'mixed', 'seeds', 'premium'] as const,
     weightOptions: ['250g', '500g', '1kg', '2kg'] as const,
     stockThreshold: 10, // Low stock warning
     maxQuantityPerOrder: 10
