@@ -294,32 +294,41 @@ const Cart = () => {
                   
                   {/* Quantity and Price Row */}
                   <div className="flex items-center justify-between pt-3 border-t border-border/30">
-                    {/* Quantity Controls */}
-                    <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => updateQuantity(item.id, item.weight, item.quantity - 1)}
-                        className="h-9 w-9 p-0 hover:bg-secondary/10 hover:text-secondary rounded-lg"
-                        disabled={item.quantity <= 1}
-                      >
-                        <Minus className="w-4 h-4" />
-                      </Button>
-                      <span className="w-12 text-center font-semibold text-base">{item.quantity}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => updateQuantity(item.id, item.weight, item.quantity + 1)}
-                        className="h-9 w-9 p-0 hover:bg-secondary/10 hover:text-secondary rounded-lg"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    {/* Quantity Controls - Hide for free samples */}
+                    {item.price === 0 ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-green-600">FREE SAMPLE</span>
+                        <span className="text-xs text-muted-foreground">(Qty: {item.quantity})</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => updateQuantity(item.id, item.weight, item.quantity - 1)}
+                          className="h-9 w-9 p-0 hover:bg-secondary/10 hover:text-secondary rounded-lg"
+                          disabled={item.quantity <= 1}
+                        >
+                          <Minus className="w-4 h-4" />
+                        </Button>
+                        <span className="w-12 text-center font-semibold text-base">{item.quantity}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => updateQuantity(item.id, item.weight, item.quantity + 1)}
+                          className="h-9 w-9 p-0 hover:bg-secondary/10 hover:text-secondary rounded-lg"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                     
                     {/* Total Price */}
                     <div className="text-right">
                       <p className="text-xs text-muted-foreground mb-0.5">Total</p>
-                      <p className="font-bold text-xl text-secondary">₹{(item.price * item.quantity).toLocaleString()}</p>
+                      <p className="font-bold text-xl text-secondary">
+                        {item.price === 0 ? 'FREE' : `₹${(item.price * item.quantity).toLocaleString()}`}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -373,33 +382,42 @@ const Cart = () => {
                     )}
                   </div>
                   
-                  {/* Quantity Controls */}
-                  <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1 flex-shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => updateQuantity(item.id, item.weight, item.quantity - 1)}
-                      className="h-10 w-10 p-0 hover:bg-secondary/10 hover:text-secondary rounded-lg"
-                      disabled={item.quantity <= 1}
-                    >
-                      <Minus className="w-5 h-5" />
-                    </Button>
-                    <span className="w-14 text-center font-semibold text-lg">{item.quantity}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => updateQuantity(item.id, item.weight, item.quantity + 1)}
-                      className="h-10 w-10 p-0 hover:bg-secondary/10 hover:text-secondary rounded-lg"
-                    >
-                      <Plus className="w-5 h-5" />
-                    </Button>
-                  </div>
+                  {/* Quantity Controls - Hide for free samples */}
+                  {item.price === 0 ? (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                      <span className="text-sm font-semibold text-green-700 dark:text-green-300">FREE SAMPLE</span>
+                      <span className="text-xs text-muted-foreground">(Qty: {item.quantity})</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1 flex-shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => updateQuantity(item.id, item.weight, item.quantity - 1)}
+                        className="h-10 w-10 p-0 hover:bg-secondary/10 hover:text-secondary rounded-lg"
+                        disabled={item.quantity <= 1}
+                      >
+                        <Minus className="w-5 h-5" />
+                      </Button>
+                      <span className="w-14 text-center font-semibold text-lg">{item.quantity}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => updateQuantity(item.id, item.weight, item.quantity + 1)}
+                        className="h-10 w-10 p-0 hover:bg-secondary/10 hover:text-secondary rounded-lg"
+                      >
+                        <Plus className="w-5 h-5" />
+                      </Button>
+                    </div>
+                  )}
                   
                   {/* Price and Delete */}
                   <div className="flex flex-col items-end gap-3 min-w-[120px] flex-shrink-0">
                     <div className="text-right">
                       <p className="text-xs text-muted-foreground mb-1">Total Price</p>
-                      <p className="font-bold text-2xl text-secondary">₹{(item.price * item.quantity).toLocaleString()}</p>
+                      <p className="font-bold text-2xl text-secondary">
+                        {item.price === 0 ? 'FREE' : `₹${(item.price * item.quantity).toLocaleString()}`}
+                      </p>
                     </div>
                     <Button
                       variant="ghost"
