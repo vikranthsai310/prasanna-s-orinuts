@@ -35,7 +35,14 @@ export interface Order {
   paymentStatus: 'pending' | 'paid' | 'failed';
   orderStatus: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   trackingId?: string;
-  // Shiprocket integration fields
+  // Delivery method tracking
+  deliveryMethod?: 'pending' | 'self' | 'delhivery';
+  deliveryAssignedAt?: Timestamp;
+  // Delhivery integration fields
+  delhiveryWaybill?: string;
+  delhiveryShipmentId?: string;
+  delhiveryPickupScheduled?: boolean;
+  // Shiprocket integration fields (legacy)
   shiprocketOrderId?: number;
   shipmentId?: number;
   awbCode?: string;
@@ -396,4 +403,136 @@ export const trackShipment = async (awbCode: string): Promise<any> => {
     console.error('Error tracking shipment:', error);
     throw error;
   }
-}; 
+};
+
+/**
+ * Get all paid orders (payment status = 'paid')
+ * Used for delivery management
+ */
+export const getPaidOrders = async (): Promise<Order[]> => {
+  try {
+    const ordersRef = collection(db, ORDERS_COLLECTION);
+    const q = query(
+      ordersRef,
+      where('paymentStatus', '==', 'paid'),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const orders: Order[] = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Order));
+    
+    return orders;
+  } catch (error) {
+    console.error('Error fetching paid orders:', error);
+    throw error;
+  }
+};
+
+/**
+ * Assign delivery method to an order
+ * @param orderId - The order ID
+ * @param deliveryMethod - 'self' or 'delhivery'
+ */
+export const assignDeliveryMethod = async (
+  orderId: string,
+  deliveryMethod: 'self' | 'delhivery'
+): Promise<void> => {
+  try {
+    const orderRef = doc(db, ORDERS_COLLECTION, orderId);
+    const orderSnap = await getDoc(orderRef);
+    
+    if (!orderSnap.exists()) {
+      throw new Error('Order not found');
+    }
+    
+    const orderData = orderSnap.data();
+    
+    // Check if order is paid
+    if (orderData.paymentStatus !== 'paid') {
+      throw new Error('Order payment is not completed');
+    }
+    
+    // Check if delivery method is already assigned
+    if (orderData.deliveryMethod && orderData.deliveryMethod !== 'pending') {
+      throw new Error('Delivery method already assigned to this order');
+    }
+    
+    await updateDoc(orderRef, {
+      deliveryMethod,
+      deliveryAssignedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      // Update order status if it's still pending
+      ...(orderData.orderStatus === 'pending' && { orderStatus: 'processing' })
+    });
+    
+    console.log(`✅ Delivery method "${deliveryMethod}" assigned to order ${orderId}`);
+  } catch (error) {
+    console.error('Error assigning delivery method:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create Delhivery shipment for an order
+ * This will call the API and update the order with shipment details
+ */
+export const createDelhiveryShipmentForOrder = async (orderId: string): Promise<any> => {
+  try {
+    const orderRef = doc(db, ORDERS_COLLECTION, orderId);
+    const orderSnap = await getDoc(orderRef);
+    
+    if (!orderSnap.exists()) {
+      throw new Error('Order not found');
+    }
+    
+    const order = { id: orderSnap.id, ...orderSnap.data() } as Order;
+    
+    // Check if order is paid
+    if (order.paymentStatus !== 'paid') {
+      throw new Error('Order payment is not completed');
+    }
+    
+    // Check if Delhivery shipment already exists
+    if (order.delhiveryWaybill) {
+      throw new Error('Delhivery shipment already created for this order');
+    }
+    
+    // Call the create-shipment API
+    const response = await fetch('/api/create-shipment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ order }),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create Delhivery shipment');
+    }
+    
+    const shipmentResult = await response.json();
+    
+    // Update order with Delhivery details
+    await updateDoc(orderRef, {
+      deliveryMethod: 'delhivery',
+      deliveryAssignedAt: serverTimestamp(),
+      delhiveryWaybill: shipmentResult.waybill,
+      delhiveryShipmentId: shipmentResult.data?.packages?.[0]?.waybill || shipmentResult.waybill,
+      delhiveryPickupScheduled: true,
+      trackingId: shipmentResult.waybill, // Also set as tracking ID
+      orderStatus: 'processing',
+      updatedAt: serverTimestamp(),
+    });
+    
+    console.log(`✅ Delhivery shipment created for order ${orderId}. Waybill: ${shipmentResult.waybill}`);
+    
+    return shipmentResult;
+  } catch (error) {
+    console.error('Error creating Delhivery shipment:', error);
+    throw error;
+  }
+};
