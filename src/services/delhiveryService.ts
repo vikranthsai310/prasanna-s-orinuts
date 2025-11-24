@@ -147,7 +147,18 @@ export const createDelhiveryShipment = async (
     const apiUrl = getDelhiveryApiUrl();
     const token = delhiveryConfig.api.token;
 
+    console.log('🔍 Delhivery Configuration Check:');
+    console.log('- API URL:', apiUrl);
+    console.log('- Token exists:', !!token);
+    console.log('- Token length:', token?.length || 0);
+    console.log('- Is Production:', delhiveryConfig.api.isProduction);
+    console.log('- Client Name:', delhiveryConfig.api.clientName);
+    console.log('- Warehouse Pincode:', delhiveryConfig.warehouse.pincode);
+
     if (!token) {
+      console.error('❌ Delhivery API token is missing!');
+      console.error('Please set VITE_DELHIVERY_API_TOKEN in your .env file');
+      console.error('Get your token from: https://www.delhivery.com/ → Settings → API');
       throw new Error('Delhivery API token is not configured');
     }
 
@@ -170,25 +181,55 @@ export const createDelhiveryShipment = async (
       },
     };
 
-    const response = await fetch(`${apiUrl}/cmu/create.json`, {
+    console.log('📦 Creating Delhivery shipment...');
+    console.log('- Order ID:', shipmentData.order);
+    console.log('- Destination Pincode:', shipmentData.pin);
+    console.log('- Weight:', shipmentData.weight);
+    console.log('- Payment Mode:', shipmentData.payment_mode);
+
+    const requestUrl = `${apiUrl}/cmu/create.json`;
+    const requestBody = { format: 'json', data: formattedData };
+    
+    console.log('🌐 API Request:', requestUrl);
+    console.log('📝 Request Body:', JSON.stringify(requestBody, null, 2));
+
+    const response = await fetch(requestUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Token ${token}`,
         Accept: 'application/json',
       },
-      body: JSON.stringify({ format: 'json', data: formattedData }),
+      body: JSON.stringify(requestBody),
     });
 
+    console.log('📡 Response Status:', response.status, response.statusText);
+
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorText = await response.text();
+      console.error('❌ Delhivery API Error Response:', errorText);
+      
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { message: errorText };
+      }
+      
       throw new Error(errorData.message || `Failed to create shipment: ${response.statusText}`);
     }
 
     const result: DelhiveryShipmentResponse = await response.json();
+    
+    console.log('✅ Delhivery API Response:', JSON.stringify(result, null, 2));
 
     if (!result.success && result.error) {
+      console.error('❌ Shipment creation failed:', result.error);
       throw new Error(result.error);
+    }
+
+    if (result.waybill) {
+      console.log('✅ Shipment created successfully! Waybill:', result.waybill);
     }
 
     return result;

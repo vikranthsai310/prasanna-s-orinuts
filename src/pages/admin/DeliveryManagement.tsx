@@ -169,10 +169,22 @@ const DeliveryManagement = () => {
 
       fetchOrders();
     } catch (error: any) {
-      console.error('Error creating Delhivery shipment:', error);
+      console.error('❌ Error creating Delhivery shipment:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        orderId: order.id
+      });
+      
+      let errorMessage = error.message || 'Failed to schedule Delhivery pickup';
+      
+      if (error.message?.includes('API token is not configured')) {
+        errorMessage = 'Delhivery API token is missing. Please configure VITE_DELHIVERY_API_TOKEN in your .env file. Get your token from Delhivery Settings → API.';
+      }
+      
       toast({
         title: 'Error',
-        description: error.message || 'Failed to schedule Delhivery pickup',
+        description: errorMessage,
         variant: 'destructive'
       });
     } finally {
