@@ -197,13 +197,33 @@ async function handler(req, res) {
 
     const result = await response.json();
 
+    // 🔍 Debug: Log Delhivery response
+    logger.info('CREATE-SHIPMENT', 'Delhivery API response data', null, {
+      success: result.success,
+      hasWaybill: !!result.waybill,
+      hasPackages: !!result.packages,
+      hasError: !!result.error,
+      errorMsg: result.error || 'none',
+      rmk: result.rmk || 'none',
+      fullResponse: JSON.stringify(result)
+    });
+
     // Check if shipment was successful
-    if (!result.success && result.error) {
-      throw new Error(result.error);
+    if (!result.success) {
+      const errorMsg = result.error || result.rmk || result.message || 'Unknown error from Delhivery';
+      logger.error('CREATE-SHIPMENT', 'Delhivery shipment not successful', null, {
+        errorMsg,
+        fullResult: result
+      });
+      throw new Error(errorMsg);
     }
 
     // Extract waybill number
     const waybill = result.waybill || (result.packages && result.packages[0]?.waybill);
+    
+    if (!waybill) {
+      logger.warn('CREATE-SHIPMENT', 'No waybill returned from Delhivery', null, { result });
+    }
     
     // Return the shipment details
     return res.status(200).json({
@@ -214,9 +234,14 @@ async function handler(req, res) {
       message: result.rmk || 'Shipment created successfully',
     });
   } catch (error) {
-    logger.error('CREATE-SHIPMENT', 'Error creating Delhivery shipment', error);
+    logger.error('CREATE-SHIPMENT', 'Error creating Delhivery shipment', error, {
+      errorMessage: error.message,
+      errorStack: error.stack,
+      errorType: typeof error,
+      orderId: req.body?.order?.id
+    });
     
-    if (error.message.includes('permission') || error.message.includes('Forbidden')) {
+    if (error.message && error.message.includes('permission') || error.message && error.message.includes('Forbidden')) {
       return res.status(403).json({ 
         error: 'Forbidden',
         message: error.message,
@@ -226,8 +251,9 @@ async function handler(req, res) {
     
     return res.status(500).json({ 
       error: 'Failed to create shipment',
-      message: error.message,
-      success: false 
+      message: error.message || String(error),
+      success: false,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 }
