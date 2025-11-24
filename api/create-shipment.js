@@ -66,7 +66,17 @@ async function handler(req, res) {
       });
     }
 
+    // 🔍 Debug: Check environment variables
+    logger.info('CREATE-SHIPMENT', 'Environment check', null, {
+      hasDelhiveryToken: !!DELHIVERY_API_TOKEN,
+      tokenLength: DELHIVERY_API_TOKEN?.length || 0,
+      tokenPreview: DELHIVERY_API_TOKEN ? `${DELHIVERY_API_TOKEN.substring(0, 10)}...` : 'MISSING',
+      apiUrl: DELHIVERY_API_URL,
+      orderId: order.id
+    });
+
     if (!DELHIVERY_API_TOKEN) {
+      logger.error('CREATE-SHIPMENT', 'Delhivery API token is missing from environment variables');
       throw new Error('Delhivery API token is not configured');
     }
 
@@ -134,6 +144,19 @@ async function handler(req, res) {
       },
     };
 
+    // 🔍 Debug: Log request details
+    logger.info('CREATE-SHIPMENT', 'Sending request to Delhivery', null, {
+      url: `${DELHIVERY_API_URL}/cmu/create.json`,
+      hasAuthToken: !!DELHIVERY_API_TOKEN,
+      tokenLength: DELHIVERY_API_TOKEN?.length,
+      shipmentData: {
+        orderId: delhiveryShipment.order,
+        pincode: delhiveryShipment.pin,
+        paymentMode: delhiveryShipment.payment_mode,
+        weight: delhiveryShipment.weight
+      }
+    });
+
     // Create shipment in Delhivery
     const response = await fetch(`${DELHIVERY_API_URL}/cmu/create.json`, {
       method: 'POST',
@@ -145,9 +168,22 @@ async function handler(req, res) {
       body: JSON.stringify(formData),
     });
 
+    // 🔍 Debug: Log response
+    logger.info('CREATE-SHIPMENT', 'Delhivery API response received', null, {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+
     if (!response.ok) {
       const errorText = await response.text();
-      logger.error('CREATE-SHIPMENT', `Delhivery API error: ${response.statusText}`, null, { errorText });
+      logger.error('CREATE-SHIPMENT', `Delhivery API error: ${response.statusText}`, null, { 
+        status: response.status,
+        errorText,
+        requestUrl: `${DELHIVERY_API_URL}/cmu/create.json`,
+        hasToken: !!DELHIVERY_API_TOKEN,
+        tokenInfo: DELHIVERY_API_TOKEN ? `${DELHIVERY_API_TOKEN.substring(0, 10)}...` : 'MISSING'
+      });
       throw new Error(`Delhivery shipment creation failed: ${response.statusText} - ${errorText}`);
     }
 

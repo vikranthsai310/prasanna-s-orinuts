@@ -155,9 +155,16 @@ export const createDelhiveryShipment = async (
     console.log('- Payment Mode:', shipmentData.payment_mode);
 
     // Get authentication token
-    const authToken = await getAuthToken();
-    
-    console.log('🔐 Auth token obtained');
+    let authToken;
+    try {
+      authToken = await getAuthToken();
+      console.log('🔐 Auth token obtained successfully');
+      console.log('- Token length:', authToken?.length || 0);
+      console.log('- Token preview:', authToken ? `${authToken.substring(0, 20)}...` : 'MISSING');
+    } catch (authError) {
+      console.error('❌ Failed to get auth token:', authError);
+      throw new Error('Authentication failed. Please login again.');
+    }
 
     // Call backend API proxy instead of Delhivery directly
     const apiUrl = '/api/create-shipment';
@@ -204,7 +211,16 @@ export const createDelhiveryShipment = async (
         errorData = { message: errorText };
       }
       
-      throw new Error(errorData.message || `Failed to create shipment: ${response.statusText}`);
+      // More detailed error message
+      const errorMsg = errorData.message || errorData.error || `Failed to create shipment: ${response.statusText}`;
+      console.error('❌ Error details:', {
+        status: response.status,
+        statusText: response.statusText,
+        message: errorMsg,
+        fullError: errorData
+      });
+      
+      throw new Error(errorMsg);
     }
 
     const result = await response.json();
@@ -227,7 +243,8 @@ export const createDelhiveryShipment = async (
       rmk: result.message,
     };
   } catch (error) {
-    console.error('Delhivery shipment creation error:', error);
+    console.error('❌ Delhivery shipment creation error:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     throw error;
   }
 };
