@@ -137,18 +137,16 @@ async function handler(req, res) {
     };
 
     // Format the data for Delhivery API
-    const formData = {
-      format: 'json',
-      data: {
-        shipments: [delhiveryShipment],
-        pickup_location: {
-          name: warehouseName,
-          add: warehouseAddress,
-          city: warehouseCity,
-          pin_code: warehousePincode,
-          country: 'India',
-          phone: warehousePhone,
-        },
+    // Delhivery requires 'format' as a query param and 'data' as form-encoded
+    const shipmentPayload = {
+      shipments: [delhiveryShipment],
+      pickup_location: {
+        name: warehouseName,
+        add: warehouseAddress,
+        city: warehouseCity,
+        pin_code: warehousePincode,
+        country: 'India',
+        phone: warehousePhone,
       },
     };
 
@@ -166,14 +164,19 @@ async function handler(req, res) {
     });
 
     // Create shipment in Delhivery
+    // Note: Delhivery API expects form-urlencoded data
+    const formBody = new URLSearchParams();
+    formBody.append('format', 'json');
+    formBody.append('data', JSON.stringify(shipmentPayload));
+
     const response = await fetch(`${DELHIVERY_API_URL}/cmu/create.json`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
         'Authorization': `Token ${DELHIVERY_API_TOKEN}`,
         'Accept': 'application/json',
       },
-      body: JSON.stringify(formData),
+      body: formBody.toString(),
     });
 
     // 🔍 Debug: Log response
