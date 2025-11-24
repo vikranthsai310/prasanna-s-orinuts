@@ -6,6 +6,14 @@ import { logger } from './_utils/logger.js';
 const DELHIVERY_API_URL = process.env.DELHIVERY_API_URL || 'https://track.delhivery.com/api';
 const DELHIVERY_API_TOKEN = process.env.DELHIVERY_API_TOKEN || process.env.VITE_DELHIVERY_API_TOKEN;
 
+// 🔍 Log environment status on module load (will appear in Vercel logs)
+console.log('🔍 [DELHIVERY CONFIG] Module loaded');
+console.log('🔍 [DELHIVERY CONFIG] API URL:', DELHIVERY_API_URL);
+console.log('🔍 [DELHIVERY CONFIG] Has Token:', !!DELHIVERY_API_TOKEN);
+console.log('🔍 [DELHIVERY CONFIG] Token Length:', DELHIVERY_API_TOKEN?.length || 0);
+console.log('🔍 [DELHIVERY CONFIG] Token Preview:', DELHIVERY_API_TOKEN ? `${DELHIVERY_API_TOKEN.substring(0, 15)}...` : 'MISSING');
+console.log('🔍 [DELHIVERY CONFIG] Available env keys:', Object.keys(process.env).filter(k => k.includes('DELHIVERY')).join(', '));
+
 // Helper function to calculate package weight
 const calculatePackageWeight = (items) => {
   // Base weight for packaging

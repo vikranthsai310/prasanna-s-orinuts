@@ -181,14 +181,27 @@ const DeliveryManagement = () => {
       
       let errorMessage = error.message || 'Failed to schedule Delhivery pickup';
       
+      // Provide specific guidance for common errors
       if (error.message?.includes('API token is not configured')) {
-        errorMessage = 'Delhivery API token is missing. Please configure VITE_DELHIVERY_API_TOKEN in your .env file. Get your token from Delhivery Settings → API.';
+        errorMessage = '⚠️ Delhivery API token is missing. Please configure VITE_DELHIVERY_API_TOKEN in your .env file. Get your token from Delhivery Settings → API.';
+      } else if (error.message?.includes('UNAUTHORIZED') || error.message?.includes('Authentication credentials')) {
+        errorMessage = '⚠️ Delhivery Authentication Failed!\n\n' +
+                      'This means the Delhivery API token is NOT configured in Vercel.\n\n' +
+                      'TO FIX:\n' +
+                      '1. Go to Vercel Dashboard\n' +
+                      '2. Settings → Environment Variables\n' +
+                      '3. Add: DELHIVERY_API_TOKEN = 6a837c59c18e2becb4207783345c95ace05962fa\n' +
+                      '4. Redeploy the application\n\n' +
+                      'See URGENT_DELHIVERY_FIX.md for detailed instructions.';
+      } else if (error.message?.includes('Authentication failed')) {
+        errorMessage = '⚠️ Please login again. Your session may have expired.';
       }
       
       toast({
         title: 'Error',
         description: errorMessage,
-        variant: 'destructive'
+        variant: 'destructive',
+        duration: 10000, // Show for 10 seconds for longer error messages
       });
     } finally {
       setProcessingOrder(null);
