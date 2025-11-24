@@ -1,9 +1,11 @@
 /**
  * Delhivery Shipping Service
  * Handles all Delhivery API interactions for shipment creation, tracking, and rate calculation
+ * Uses backend API proxy to avoid CORS issues
  */
 
 import { delhiveryConfig, getDelhiveryApiUrl, getEstimatedDeliveryTime } from '@/config/delhivery';
+import { getAuthToken } from '@/utils/authToken';
 
 // Types for Delhivery API
 export interface DelhiveryAddress {
@@ -138,76 +140,62 @@ export interface RateCalculationResponse {
 }
 
 /**
- * Create a shipment with Delhivery
+ * Create a shipment with Delhivery via backend API proxy
+ * This avoids CORS issues by routing through our serverless function
  */
 export const createDelhiveryShipment = async (
-  shipmentData: DelhiveryShipment
+  shipmentData: DelhiveryShipment,
+  orderData?: any // Optional full order data for backend processing
 ): Promise<DelhiveryShipmentResponse> => {
   try {
-    const apiUrl = getDelhiveryApiUrl();
-    const token = delhiveryConfig.api.token;
-
-    console.log('🔍 Delhivery Configuration Check:');
-    console.log('- API URL:', apiUrl);
-    console.log('- Token exists:', !!token);
-    console.log('- Token length:', token?.length || 0);
-    console.log('- Is Production:', delhiveryConfig.api.isProduction);
-    console.log('- Client Name:', delhiveryConfig.api.clientName);
-    console.log('- Warehouse Pincode:', delhiveryConfig.warehouse.pincode);
-
-    if (!token) {
-      console.error('❌ Delhivery API token is missing!');
-      console.error('Please set VITE_DELHIVERY_API_TOKEN in your .env file');
-      console.error('Get your token from: https://www.delhivery.com/ → Settings → API');
-      throw new Error('Delhivery API token is not configured');
-    }
-
-    // Format the shipment data according to Delhivery's requirements
-    const formattedData = {
-      shipments: [
-        {
-          ...shipmentData,
-          country: shipmentData.country || 'India',
-          return_country: shipmentData.return_country || 'India',
-        },
-      ],
-      pickup_location: {
-        name: delhiveryConfig.warehouse.name,
-        add: delhiveryConfig.warehouse.address,
-        city: delhiveryConfig.warehouse.city,
-        pin_code: delhiveryConfig.warehouse.pincode,
-        country: 'India',
-        phone: delhiveryConfig.warehouse.phone,
-      },
-    };
-
-    console.log('📦 Creating Delhivery shipment...');
+    console.log('🔍 Creating Delhivery shipment via backend API...');
     console.log('- Order ID:', shipmentData.order);
     console.log('- Destination Pincode:', shipmentData.pin);
     console.log('- Weight:', shipmentData.weight);
     console.log('- Payment Mode:', shipmentData.payment_mode);
 
-    const requestUrl = `${apiUrl}/cmu/create.json`;
-    const requestBody = { format: 'json', data: formattedData };
+    // Get authentication token
+    const authToken = await getAuthToken();
     
-    console.log('🌐 API Request:', requestUrl);
-    console.log('📝 Request Body:', JSON.stringify(requestBody, null, 2));
+    console.log('🔐 Auth token obtained');
 
-    const response = await fetch(requestUrl, {
+    // Call backend API proxy instead of Delhivery directly
+    const apiUrl = '/api/create-shipment';
+    
+    console.log('🌐 Calling backend API:', apiUrl);
+
+    // Prepare order data for backend
+    const requestBody = orderData || {
+      id: shipmentData.order,
+      shippingAddress: {
+        name: shipmentData.name,
+        street: shipmentData.add,
+        pincode: shipmentData.pin,
+        city: shipmentData.city,
+        state: shipmentData.state,
+        phone: shipmentData.phone,
+      },
+      items: [],
+      paymentMethod: shipmentData.payment_mode === 'COD' ? 'cod' : 'online',
+      totalAmount: parseFloat(shipmentData.total_amount || '0'),
+    };
+
+    console.log('📝 Sending order data:', JSON.stringify(requestBody, null, 2));
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Token ${token}`,
-        Accept: 'application/json',
+        'Authorization': `Bearer ${authToken}`,
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({ order: requestBody }),
     });
 
     console.log('📡 Response Status:', response.status, response.statusText);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ Delhivery API Error Response:', errorText);
+      console.error('❌ Backend API Error Response:', errorText);
       
       let errorData;
       try {
@@ -219,20 +207,25 @@ export const createDelhiveryShipment = async (
       throw new Error(errorData.message || `Failed to create shipment: ${response.statusText}`);
     }
 
-    const result: DelhiveryShipmentResponse = await response.json();
+    const result = await response.json();
     
-    console.log('✅ Delhivery API Response:', JSON.stringify(result, null, 2));
+    console.log('✅ Backend API Response:', JSON.stringify(result, null, 2));
 
-    if (!result.success && result.error) {
-      console.error('❌ Shipment creation failed:', result.error);
-      throw new Error(result.error);
+    if (!result.success) {
+      console.error('❌ Shipment creation failed:', result.error || result.message);
+      throw new Error(result.error || result.message || 'Failed to create shipment');
     }
 
     if (result.waybill) {
       console.log('✅ Shipment created successfully! Waybill:', result.waybill);
     }
 
-    return result;
+    return {
+      success: true,
+      waybill: result.waybill,
+      packages: result.data?.packages,
+      rmk: result.message,
+    };
   } catch (error) {
     console.error('Delhivery shipment creation error:', error);
     throw error;

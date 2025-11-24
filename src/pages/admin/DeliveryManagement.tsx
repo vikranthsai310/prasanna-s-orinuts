@@ -126,32 +126,35 @@ const DeliveryManagement = () => {
         return sum + (weight * item.quantity);
       }, 0);
 
-      // Create Delhivery shipment
-      const delhiveryResponse = await createDelhiveryShipment({
-        name: order.shippingAddress.name,
-        add: order.shippingAddress.street,
-        pin: order.shippingAddress.pincode,
-        city: order.shippingAddress.city,
-        state: order.shippingAddress.state,
-        country: 'India',
-        phone: order.shippingAddress.phone,
-        order: order.id,
-        payment_mode: order.paymentMethod === 'cod' ? 'COD' : 'Prepaid',
-        return_pin: '500001', // Your return pincode
-        return_city: 'Hyderabad',
-        return_phone: '1234567890',
-        return_add: 'Your return address',
-        return_state: 'Telangana',
-        return_country: 'India',
-        products_desc: order.items.map(i => i.name).join(', '),
-        cod_amount: order.paymentMethod === 'cod' ? order.totalAmount.toString() : '0',
-        total_amount: order.totalAmount.toString(),
-        seller_add: 'Your seller address',
-        seller_name: 'Prasanna Orinuts',
-        quantity: order.items.reduce((sum, item) => sum + item.quantity, 0).toString(),
-        weight: totalWeight.toString(),
-        shipping_mode: 'Surface'
-      });
+      // Create Delhivery shipment via backend API (pass full order)
+      const delhiveryResponse = await createDelhiveryShipment(
+        {
+          name: order.shippingAddress.name,
+          add: order.shippingAddress.street,
+          pin: order.shippingAddress.pincode,
+          city: order.shippingAddress.city,
+          state: order.shippingAddress.state,
+          country: 'India',
+          phone: order.shippingAddress.phone,
+          order: order.id,
+          payment_mode: order.paymentMethod === 'cod' ? 'COD' : 'Prepaid',
+          return_pin: '500018',
+          return_city: 'Hyderabad',
+          return_phone: '6301308477',
+          return_add: 'Shiv Nivas Opposite Road no-7 Pragathinagar moosapet hyderabad',
+          return_state: 'Telangana',
+          return_country: 'India',
+          products_desc: order.items.map(i => i.name).join(', '),
+          cod_amount: order.paymentMethod === 'cod' ? order.totalAmount.toString() : '0',
+          total_amount: order.totalAmount.toString(),
+          seller_add: 'Shiv Nivas Opposite Road no-7 Pragathinagar moosapet hyderabad',
+          seller_name: 'Prasannas orinuts',
+          quantity: order.items.reduce((sum, item) => sum + item.quantity, 0).toString(),
+          weight: totalWeight.toString(),
+          shipping_mode: 'Surface'
+        },
+        order // Pass full order object to backend
+      );
 
       // Update order in database
       const orderRef = doc(db, 'orders', order.id);

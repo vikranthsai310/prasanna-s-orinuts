@@ -2,8 +2,9 @@
 import { requireAuth } from './_middleware/auth.js';
 import { logger } from './_utils/logger.js';
 
+// Backend environment variables (no VITE_ prefix)
 const DELHIVERY_API_URL = process.env.DELHIVERY_API_URL || 'https://track.delhivery.com/api';
-const DELHIVERY_API_TOKEN = process.env.DELHIVERY_API_TOKEN;
+const DELHIVERY_API_TOKEN = process.env.DELHIVERY_API_TOKEN || process.env.VITE_DELHIVERY_API_TOKEN;
 
 // Helper function to calculate package weight
 const calculatePackageWeight = (items) => {
@@ -76,13 +77,13 @@ async function handler(req, res) {
     // Prepare product description
     const productDesc = order.items.map(item => `${item.name} (${item.quantity})`).join(', ');
     
-    // Get warehouse details from environment
-    const warehouseName = process.env.DELHIVERY_WAREHOUSE_NAME || 'Premium Orchard';
-    const warehouseAddress = process.env.DELHIVERY_PICKUP_ADDRESS || '';
-    const warehouseCity = process.env.DELHIVERY_PICKUP_CITY || '';
-    const warehouseState = process.env.DELHIVERY_PICKUP_STATE || '';
-    const warehousePincode = process.env.DELHIVERY_PICKUP_PINCODE || '110001';
-    const warehousePhone = process.env.DELHIVERY_PICKUP_PHONE || '';
+    // Get warehouse details from environment (try both with and without VITE_ prefix)
+    const warehouseName = process.env.DELHIVERY_WAREHOUSE_NAME || process.env.VITE_DELHIVERY_WAREHOUSE_NAME || 'Premium Orchard';
+    const warehouseAddress = process.env.DELHIVERY_PICKUP_ADDRESS || process.env.VITE_DELHIVERY_PICKUP_ADDRESS || '';
+    const warehouseCity = process.env.DELHIVERY_PICKUP_CITY || process.env.VITE_DELHIVERY_PICKUP_CITY || '';
+    const warehouseState = process.env.DELHIVERY_PICKUP_STATE || process.env.VITE_DELHIVERY_PICKUP_STATE || '';
+    const warehousePincode = process.env.DELHIVERY_PICKUP_PINCODE || process.env.VITE_DELHIVERY_PICKUP_PINCODE || '110001';
+    const warehousePhone = process.env.DELHIVERY_PICKUP_PHONE || process.env.VITE_DELHIVERY_PICKUP_PHONE || '';
 
     // Prepare Delhivery shipment data
     const delhiveryShipment = {
