@@ -198,6 +198,14 @@ async function handler(req, res) {
     const result = await response.json();
 
     // 🔍 Debug: Log Delhivery response
+    console.log('=== DELHIVERY RESPONSE START ===');
+    console.log('Success:', result.success);
+    console.log('Error:', result.error);
+    console.log('RMK:', result.rmk);
+    console.log('Message:', result.message);
+    console.log('Full Response:', JSON.stringify(result));
+    console.log('=== DELHIVERY RESPONSE END ===');
+    
     logger.info('CREATE-SHIPMENT', 'Delhivery API response data', null, {
       success: result.success,
       hasWaybill: !!result.waybill,
@@ -210,7 +218,23 @@ async function handler(req, res) {
 
     // Check if shipment was successful
     if (!result.success) {
-      const errorMsg = result.error || result.rmk || result.message || 'Unknown error from Delhivery';
+      // Delhivery can return errors in multiple formats
+      let errorMsg = 'Unknown error from Delhivery';
+      
+      if (typeof result.error === 'string' && result.error) {
+        errorMsg = result.error;
+      } else if (typeof result.rmk === 'string' && result.rmk) {
+        errorMsg = result.rmk;
+      } else if (typeof result.message === 'string' && result.message) {
+        errorMsg = result.message;
+      } else if (result.packages && Array.isArray(result.packages) && result.packages[0]?.remarks) {
+        errorMsg = result.packages[0].remarks;
+      } else {
+        // If error is just true or other non-string, show the full response
+        errorMsg = `Delhivery rejected the shipment. Response: ${JSON.stringify(result)}`;
+      }
+      
+      console.log('!!! DELHIVERY ERROR:', errorMsg);
       logger.error('CREATE-SHIPMENT', 'Delhivery shipment not successful', null, {
         errorMsg,
         fullResult: result
