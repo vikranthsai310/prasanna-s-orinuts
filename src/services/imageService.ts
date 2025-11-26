@@ -167,7 +167,7 @@ export const getProductImageUrl = async (productName: string): Promise<string> =
     'Iranian Pistachios': 'pista',
     'Premium Pistachios': 'pista',
     'Brazilian Cashews': 'cashew',
-    'Exotic Cashews': 'cashew',
+    'Premium Cashews': 'cashew',
     'Dried Apricots': 'apricot',
     'Golden Raisins': 'rasins'
   };

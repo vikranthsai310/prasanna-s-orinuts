@@ -120,7 +120,7 @@ export const preloadFirebaseImages = async (): Promise<HTMLImageElement[]> => {
 export const preloadCriticalImages = async (): Promise<HTMLImageElement[]> => {
   const criticalImages = [
     { src: FIREBASE_IMAGE_URLS.almond, alt: 'Premium Almonds' },
-    { src: FIREBASE_IMAGE_URLS.cashew, alt: 'Exotic Cashews' },
+    { src: FIREBASE_IMAGE_URLS.cashew, alt: 'Premium Cashews' },
     { src: FIREBASE_IMAGE_URLS.walnut, alt: 'Organic Walnuts' },
     { src: FIREBASE_IMAGE_URLS.pista, alt: 'Premium Pistachios' },
     { src: FIREBASE_IMAGE_URLS.dates, alt: 'Medjool Dates' },

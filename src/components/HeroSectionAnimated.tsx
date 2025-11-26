@@ -18,7 +18,7 @@ const HeroSectionAnimated = () => {
     },
     { 
       id: 'cashew', 
-      name: 'Exotic Cashews', 
+      name: 'Premium Cashews', 
       image: FIREBASE_IMAGE_URLS.cashew,
       description: 'Creamy hand-selected cashews with subtle sweetness',
       benefits: ['Energy Boost', 'Premium Quality'],

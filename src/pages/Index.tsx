@@ -275,7 +275,7 @@ const Index = () => {
                     loading="lazy"
                   />
                 </div>
-                <h3 className="fruit-title text-center">Exotic Cashews</h3>
+                <h3 className="fruit-title text-center">Premium Cashews</h3>
                 <p className="fruit-description text-center sequential-fade">
                   Creamy <span className="golden-text">hand-selected</span> cashews with subtle sweetness
                 </p>
@@ -398,7 +398,7 @@ const Index = () => {
                     loading="lazy"
                   />
                 </div>
-                <h3 className="fruit-title text-center">Exotic Cashews</h3>
+                <h3 className="fruit-title text-center">Premium Cashews</h3>
                 <p className="fruit-description text-center sequential-fade">
                   Creamy <span className="golden-text">hand-selected</span> cashews with subtle sweetness
                 </p>
