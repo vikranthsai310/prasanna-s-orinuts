@@ -509,7 +509,7 @@ const Cart = () => {
                   <Truck className="w-5 h-5 text-secondary mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-semibold mb-1 text-foreground">
-                      {shippingCharges > 0 ? 'Express Delivery' : 'Free Express Delivery'}
+                      Express Delivery
                     </p>
                     <p className="text-xs text-muted-foreground leading-relaxed">
                       Estimated delivery: <span className="font-semibold text-foreground">3-5 business days</span>
