@@ -86,7 +86,7 @@ const Footer = () => {
 
         <div className="border-t border-amber-600/30 mt-8 pt-8 text-center">
           <p className="text-amber-200/70">
-            © 2024 Prasanna's Orinuts. All rights reserved.
+            © 2025 Prasanna's Orinuts. All rights reserved.
           </p>
         </div>
         </div>

@@ -131,7 +131,7 @@ const Contact = () => {
                 <Phone className="w-5 h-5 text-secondary" />
                 <div>
                   <p className="font-medium">Phone</p>
-                  <p className="text-muted-foreground">+91 6301308477</p>
+                  <p className="text-muted-foreground">+91 9398649506</p>
                 </div>
               </div>
               
@@ -151,7 +151,7 @@ const Contact = () => {
             <div className="space-y-3">
               <Button 
                 className="w-full justify-start bg-green-500 hover:bg-green-600 text-white"
-                onClick={() => window.open('https://wa.me/916301308477', '_blank')}
+                onClick={() => window.open('https://wa.me/919398649506', '_blank')}
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Chat on WhatsApp
@@ -160,7 +160,7 @@ const Contact = () => {
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
-                onClick={() => window.location.href = 'tel:+916301308477'}
+                onClick={() => window.location.href = 'tel:+919398649506'}
               >
                 <Phone className="w-4 h-4 mr-2" />
                 Call Now
