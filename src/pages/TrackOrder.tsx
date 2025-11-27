@@ -1,17 +1,37 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Package, Truck, CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { ArrowLeft, Package, Truck, CheckCircle, Clock, Loader2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getOrderById, Order } from '@/services/orderService';
+import { trackShipment } from '@/services/shippingService';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
+
+interface ShiprocketTrackingActivity {
+  date: string;
+  status: string;
+  activity: string;
+  location: string;
+  sr_status_label?: string;
+}
+
+interface ShiprocketTracking {
+  awb_code: string;
+  courier_name: string;
+  current_status: string;
+  shipment_status: string;
+  shipment_track_activities: ShiprocketTrackingActivity[];
+  edd?: string;
+}
 
 const TrackOrder = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [liveTracking, setLiveTracking] = useState<ShiprocketTracking | null>(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -47,6 +67,11 @@ const TrackOrder = () => {
 
         console.log('Fetched order data:', orderData);
         setOrder(orderData);
+        
+        // Fetch live tracking if Shiprocket AWB code exists
+        if (orderData.shiprocketAwbCode) {
+          fetchLiveTracking(orderData.shiprocketAwbCode);
+        }
       } catch (error) {
         console.error('Error fetching order:', error);
         toast({
@@ -61,6 +86,20 @@ const TrackOrder = () => {
 
     fetchOrder();
   }, [id, user?.id]);
+
+  const fetchLiveTracking = async (awbCode: string) => {
+    try {
+      setTrackingLoading(true);
+      const trackingData = await trackShipment(awbCode);
+      console.log('Live tracking data:', trackingData);
+      setLiveTracking(trackingData);
+    } catch (error) {
+      console.error('Error fetching live tracking:', error);
+      // Don't show error toast, just log it
+    } finally {
+      setTrackingLoading(false);
+    }
+  };
 
   const generateTrackingSteps = (order: Order) => {
     const steps = [
@@ -218,12 +257,65 @@ const TrackOrder = () => {
           </div>
           
           <div className="card-premium">
-            <h3 className="font-semibold text-lg mb-4">Shipping Details</h3>
+            <h3 className="font-semibold text-lg mb-4 flex items-center justify-between">
+              <span>Shipping Details</span>
+              {trackingLoading && <Loader2 className="w-4 h-4 animate-spin text-secondary" />}
+            </h3>
+            
+            {/* Live Tracking from Shiprocket */}
+            {liveTracking && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <Truck className="w-5 h-5 text-blue-600" />
+                  <h4 className="font-semibold text-blue-900">Live Tracking</h4>
+                </div>
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Current Status:</span>
+                    <span className="font-medium text-blue-900">{liveTracking.current_status}</span>
+                  </div>
+                  {liveTracking.edd && (
+                    <div className="flex justify-between">
+                      <span className="text-blue-700">Expected Delivery:</span>
+                      <span className="font-medium text-blue-900">{new Date(liveTracking.edd).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Live Tracking Activities */}
+                {liveTracking.shipment_track_activities && liveTracking.shipment_track_activities.length > 0 && (
+                  <div className="mt-4">
+                    <h5 className="font-medium text-blue-900 mb-2 text-sm">Tracking History</h5>
+                    <div className="space-y-3 max-h-60 overflow-y-auto">
+                      {liveTracking.shipment_track_activities.map((activity, index) => (
+                        <div key={index} className="flex gap-3 text-xs border-l-2 border-blue-300 pl-3 py-1">
+                          <div className="flex-1">
+                            <p className="font-medium text-blue-900">{activity.activity}</p>
+                            {activity.location && (
+                              <p className="text-blue-600 mt-0.5">{activity.location}</p>
+                            )}
+                            <p className="text-blue-500 mt-1">{new Date(activity.date).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
             <div className="space-y-2 text-sm">
               {order.courierName && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Courier:</span>
-                  <span>{order.courierName}</span>
+                  <span className="font-medium">{order.courierName}</span>
+                </div>
+              )}
+              {order.shiprocketAwbCode && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">AWB Code:</span>
+                  <span className="font-mono">{order.shiprocketAwbCode}</span>
                 </div>
               )}
               {order.trackingId && (
@@ -232,21 +324,30 @@ const TrackOrder = () => {
                   <span className="font-mono">{order.trackingId}</span>
                 </div>
               )}
-              {order.awbCode && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">AWB Code:</span>
-                  <span className="font-mono">{order.awbCode}</span>
-                </div>
-              )}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Status:</span>
                 <span className="capitalize font-medium">{order.orderStatus}</span>
               </div>
             </div>
             
-            {order.trackingId && (
-              <Button variant="outline" className="w-full mt-4">
-                Track on Courier Website
+            {order.shiprocketAwbCode && (
+              <Button 
+                variant="outline" 
+                className="w-full mt-4"
+                onClick={() => fetchLiveTracking(order.shiprocketAwbCode!)}
+                disabled={trackingLoading}
+              >
+                {trackingLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Refreshing...
+                  </>
+                ) : (
+                  <>
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Refresh Tracking
+                  </>
+                )}
               </Button>
             )}
           </div>

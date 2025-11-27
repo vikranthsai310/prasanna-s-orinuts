@@ -220,13 +220,6 @@ const Header = () => {
                           <span>Manage Orders</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem 
-                          onClick={() => navigate('/admin/delivery')}
-                          className="hover:bg-amber-50 cursor-pointer"
-                        >
-                          <Truck className="mr-2 h-4 w-4 text-amber-700" />
-                          <span>Delivery Management</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
                           onClick={() => navigate('/admin/products')}
                           className="hover:bg-amber-50 cursor-pointer"
                         >
@@ -380,28 +373,6 @@ const Header = () => {
                     >
                       <BarChart3 className="h-5 w-5 text-amber-700 group-hover:text-amber-900" />
                       <span className="text-base">Dashboard</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => {
-                        navigate('/admin/orders');
-                        setIsMenuOpen(false);
-                      }}
-                      className="flex items-center space-x-4 px-4 py-3 rounded-xl text-amber-900 hover:bg-amber-100/80 transition-all duration-200 w-full group"
-                    >
-                      <Package className="h-5 w-5 text-amber-700 group-hover:text-amber-900" />
-                      <span className="text-base">Manage Orders</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => {
-                        navigate('/admin/delivery');
-                        setIsMenuOpen(false);
-                      }}
-                      className="flex items-center space-x-4 px-4 py-3 rounded-xl text-amber-900 hover:bg-amber-100/80 transition-all duration-200 w-full group"
-                    >
-                      <Truck className="h-5 w-5 text-amber-700 group-hover:text-amber-900" />
-                      <span className="text-base">Delivery Management</span>
                     </button>
                     
                     <button

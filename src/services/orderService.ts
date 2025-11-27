@@ -15,6 +15,7 @@ import { db } from '@/lib/firebase';
 import { CartItem } from '@/types/product';
 import { shippingConfig } from '@/config';
 import { decreaseSampleStock, getAllSamples } from './sampleService';
+import { createShiprocketOrder } from './shippingService';
 
 export interface Address {
   name: string;
@@ -128,6 +129,44 @@ export const createOrder = async (orderData: NewOrder): Promise<string> => {
         });
         
         console.log(`✅ Reduced stock for ${item.name}: ${currentStock} -> ${currentStock - item.quantity}`);
+      }
+    }
+    
+    // Automatically create Shiprocket shipment if payment is successful (paid)
+    if (orderData.paymentStatus === 'paid') {
+      try {
+        console.log('🚀 Auto-creating Shiprocket shipment for order:', docRef.id);
+        
+        // Create full order object for Shiprocket
+        const fullOrder: Order = {
+          id: docRef.id,
+          ...orderData,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now()
+        };
+        
+        const shiprocketResponse = await createShiprocketOrder(fullOrder);
+        
+        if (shiprocketResponse.order_id && shiprocketResponse.shipment_id) {
+          // Update order with Shiprocket details
+          await updateDoc(doc(db, ORDERS_COLLECTION, docRef.id), {
+            shiprocketOrderId: shiprocketResponse.order_id,
+            shiprocketShipmentId: shiprocketResponse.shipment_id,
+            deliveryMethod: 'shiprocket',
+            deliveryAssignedAt: serverTimestamp(),
+            orderStatus: 'processing',
+            updatedAt: serverTimestamp()
+          });
+          
+          console.log('✅ Shiprocket shipment created automatically:', {
+            orderId: shiprocketResponse.order_id,
+            shipmentId: shiprocketResponse.shipment_id
+          });
+        }
+      } catch (shiprocketError) {
+        // Log error but don't fail the order creation
+        console.error('⚠️ Failed to auto-create Shiprocket shipment:', shiprocketError);
+        // Order is still created, admin can manually create shipment later
       }
     }
     
