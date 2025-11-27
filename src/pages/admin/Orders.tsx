@@ -312,6 +312,7 @@ const AdminOrders = () => {
                 <th className="text-left py-3 px-4">Date</th>
                 <th className="text-left py-3 px-4">Items</th>
                 <th className="text-left py-3 px-4">Total</th>
+                <th className="text-left py-3 px-4">Payment</th>
                 <th className="text-left py-3 px-4">Status</th>
                 <th className="text-left py-3 px-4">Actions</th>
               </tr>
@@ -337,6 +338,11 @@ const AdminOrders = () => {
                     </td>
                     <td className="py-3 px-4">
                       <span className="font-semibold">₹{order.totalAmount.toLocaleString()}</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Badge className={`${order.paymentStatus === 'paid' ? 'bg-green-100 text-green-800 border-green-300' : 'bg-red-100 text-red-800 border-red-300'}`}>
+                        {order.paymentStatus === 'paid' ? '✓ PAID' : '✗ NOT PAID'}
+                      </Badge>
                     </td>
                     <td className="py-3 px-4">
                       <Select 
