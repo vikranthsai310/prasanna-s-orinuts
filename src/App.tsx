@@ -32,7 +32,6 @@ const Contact = lazy(() => import("./pages/Contact"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const ShippingPolicy = lazy(() => import("./pages/ShippingPolicy"));
-const ReturnPolicy = lazy(() => import("./pages/ReturnPolicy"));
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
 const AdminProducts = lazy(() => import("./pages/admin/Products"));
 const AdminOrders = lazy(() => import("./pages/admin/Orders"));
@@ -101,7 +100,6 @@ const App = () => {
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                     <Route path="/terms-of-service" element={<TermsOfService />} />
                     <Route path="/shipping-policy" element={<ShippingPolicy />} />
-                    <Route path="/return-policy" element={<ReturnPolicy />} />
                     
                     {/* Development-only routes */}
                     {isDevelopment && (

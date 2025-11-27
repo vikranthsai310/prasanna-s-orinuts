@@ -7,7 +7,7 @@ const PrivacyPolicy = () => {
         
         <div className="prose prose-lg max-w-none">
           <p className="text-muted-foreground mb-6">
-            Last updated: December 27, 2024
+            Last updated: November 28, 2024
           </p>
 
           <section className="mb-8">
@@ -52,8 +52,8 @@ const PrivacyPolicy = () => {
             <h2 className="font-playfair text-2xl font-semibold mb-4">Contact Us</h2>
             <p>
               If you have any questions about this Privacy Policy, please contact us at{' '}
-              <a href="mailto:privacy@prasannaorinut.com" className="text-secondary hover:underline">
-                privacy@prasannaorinut.com
+              <a href="mailto:prasannasorinuts@gmail.com" className="text-secondary hover:underline">
+                prasannasorinuts@gmail.com
               </a>
             </p>
           </section>

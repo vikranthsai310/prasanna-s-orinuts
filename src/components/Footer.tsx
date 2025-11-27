@@ -75,11 +75,6 @@ const Footer = () => {
                   Shipping Policy
                 </Link>
               </li>
-              <li>
-                <Link to="/return-policy" className="text-amber-100/80 hover:text-amber-400 transition-colors">
-                  Return Policy
-                </Link>
-              </li>
             </ul>
           </div>
         </div>

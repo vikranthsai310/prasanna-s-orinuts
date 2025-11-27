@@ -7,7 +7,7 @@ const TermsOfService = () => {
         
         <div className="prose prose-lg max-w-none">
           <p className="text-muted-foreground mb-6">
-            Last updated: December 27, 2024
+            Last updated: November 28, 2024
           </p>
 
           <section className="mb-8">
@@ -52,8 +52,8 @@ const TermsOfService = () => {
             <h2 className="font-playfair text-2xl font-semibold mb-4">Contact Information</h2>
             <p>
               For questions about these Terms of Service, contact us at{' '}
-              <a href="mailto:legal@prasannaorinut.com" className="text-secondary hover:underline">
-                legal@prasannaorinut.com
+              <a href="mailto:prasannasorinuts@gmail.com" className="text-secondary hover:underline">
+                prasannasorinuts@gmail.com
               </a>
             </p>
           </section>
