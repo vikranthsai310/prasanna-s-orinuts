@@ -249,19 +249,19 @@ service cloud.firestore {
     }
     
     // ============================================
-    // DELHIVERY FEES COLLECTION
+    // SETTINGS COLLECTION (Shipping, etc.)
     // ============================================
-    match /delhiveryFees/{feeId} {
-      // Anyone can read fees (needed for shipping calculations at checkout)
+    match /settings/{settingId} {
+      // Anyone can read settings (needed for shipping calculations at checkout)
       allow read: if true;
       
-      // Only admins can create/update/delete fees
+      // Only admins can create/update/delete settings
       allow create, update, delete: if isAdmin();
     }
     
-    // Allow collection queries for delhivery fees
-    match /delhiveryFees {
-      allow list: if true; // Anyone can list fees for shipping calculations
+    // Allow collection queries for settings
+    match /settings {
+      allow list: if true; // Anyone can list settings for shipping calculations
     }
     
     // ============================================

@@ -46,7 +46,7 @@ export const calculateTotalWeight = (items: CartItem[]): number => {
 export const calculateShippingCharges = async (
   itemsOrWeight: CartItem[] | number,
   deliveryPincodeOrIsMetro?: string | boolean
-): Promise<number | { total: number; breakdown: any }> => {
+): Promise<number | { total: number; breakdown?: any }> => {
   try {
     let weight: number;
     let isMetro: boolean = false;
@@ -63,12 +63,7 @@ export const calculateShippingCharges = async (
       const shippingCharge = Math.ceil(baseRate + (weight * perKgRate * (isMetro ? 1 : 1.2)));
       
       return {
-        total: shippingCharge,
-        breakdown: {
-          baseRate,
-          weightCharge: weight * perKgRate * (isMetro ? 1 : 1.2),
-          totalWeight: weight
-        }
+        total: shippingCharge
       };
     }
 
@@ -99,7 +94,7 @@ export const calculateShippingCharges = async (
   } catch (error) {
     console.error('Error calculating shipping charges:', error);
     // Return default shipping charge on error
-    return typeof itemsOrWeight === 'number' ? { total: 70, breakdown: {} } : 70;
+    return typeof itemsOrWeight === 'number' ? { total: 70 } : 70;
   }
 };
 
