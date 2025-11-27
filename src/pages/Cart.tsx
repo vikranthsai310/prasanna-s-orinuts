@@ -12,7 +12,7 @@ import { toast } from '@/components/ui/use-toast';
 import { useDiscounts } from '@/hooks/useDiscounts';
 import { getAllProducts } from '@/services/productService';
 import { calculateShippingCharges } from '@/services/shiprocketFeesService';
-import type { Product } from '@/types';
+import type { Product } from '@/types/product';
 
 const Cart = () => {
   const { items, updateQuantity, removeItem, totalPrice, addItem, updateItemWeight } = useCart();
