@@ -51,14 +51,25 @@ const Cart = () => {
         setLoadingShipping(true);
         // Calculate total weight from cart items
         const totalWeight = items.reduce((sum, item) => {
+          if (item.price === 0) return sum; // Skip free samples
           const weight = parseFloat(item.weight.replace(/[^0-9.]/g, '')) / 1000; // Convert to kg
           return sum + (weight * item.quantity);
         }, 0);
 
         // For now, assume non-metro (can be updated based on user's address later)
         const result = await calculateShippingCharges(totalWeight, false);
-        setShippingCharges(result.total);
-        setShippingBreakdown(result.breakdown);
+        
+        // Handle both object {total, breakdown} and direct number responses
+        if (typeof result === 'object' && result !== null) {
+          setShippingCharges(result.total || 0);
+          setShippingBreakdown(result.breakdown || {});
+        } else if (typeof result === 'number') {
+          setShippingCharges(result);
+          setShippingBreakdown({});
+        } else {
+          setShippingCharges(0);
+          setShippingBreakdown({});
+        }
       } catch (error) {
         console.error('Error calculating shipping:', error);
         setShippingCharges(0);
@@ -499,7 +510,9 @@ const Cart = () => {
                 <div className="border-t-2 border-secondary/20 pt-4 mt-4">
                   <div className="flex justify-between items-center">
                     <span className="font-playfair text-xl font-semibold">Total</span>
-                    <span className="font-playfair text-3xl font-bold text-secondary">₹{(totalPrice + shippingCharges).toLocaleString()}</span>
+                    <span className="font-playfair text-3xl font-bold text-secondary">
+                      ₹{((totalPrice || 0) + (shippingCharges || 0)).toLocaleString()}
+                    </span>
                   </div>
                 </div>
               </div>

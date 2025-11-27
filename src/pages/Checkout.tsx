@@ -95,8 +95,18 @@ const Checkout = () => {
 
         // For now, assume non-metro (can be updated based on user's address later)
         const result = await calculateShippingCharges(totalWeight, false);
-        setShippingCharges(result.total);
-        setShippingBreakdown(result.breakdown);
+        
+        // Handle both object {total, breakdown} and direct number responses
+        if (typeof result === 'object' && result !== null) {
+          setShippingCharges(result.total || 0);
+          setShippingBreakdown(result.breakdown || {});
+        } else if (typeof result === 'number') {
+          setShippingCharges(result);
+          setShippingBreakdown({});
+        } else {
+          setShippingCharges(0);
+          setShippingBreakdown({});
+        }
       } catch (error) {
         console.error('Error calculating shipping:', error);
         setShippingCharges(0);
