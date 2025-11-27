@@ -86,15 +86,9 @@ const Checkout = () => {
 
       try {
         setLoadingShipping(true);
-        // Calculate total weight from cart items (excluding free samples)
-        const totalWeight = items.reduce((sum, item) => {
-          if (item.price === 0) return sum; // Skip free samples
-          const weight = parseFloat(item.weight.replace(/[^0-9.]/g, '')) / 1000; // Convert to kg
-          return sum + (weight * item.quantity);
-        }, 0);
-
-        // For now, assume non-metro (can be updated based on user's address later)
-        const result = await calculateShippingCharges(totalWeight, false);
+        
+        // Pass cart items to calculate shipping (this allows checking subtotal for free shipping threshold)
+        const result = await calculateShippingCharges(items, '');
         
         // Handle both object {total, breakdown} and direct number responses
         if (typeof result === 'object' && result !== null) {
