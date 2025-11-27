@@ -5,6 +5,8 @@
 
 import { CartItem } from '@/types/product';
 import { shiprocketConfig } from '@/config/shiprocket';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 /**
  * Calculate total weight from cart items
@@ -52,18 +54,29 @@ export const calculateShippingCharges = async (
     let isMetro: boolean = false;
     let subtotal: number = 0;
 
+    // Fetch shipping settings from Firestore
+    let deliveryFee = 50; // Default
+    let freeDeliveryThreshold = 500; // Default
+    
+    try {
+      const settingsRef = doc(db, 'settings', 'shipping');
+      const settingsSnap = await getDoc(settingsRef);
+      if (settingsSnap.exists()) {
+        const data = settingsSnap.data();
+        deliveryFee = data.deliveryFee || 50;
+        freeDeliveryThreshold = data.freeDeliveryThreshold || 500;
+      }
+    } catch (err) {
+      console.warn('Could not fetch shipping settings, using defaults:', err);
+    }
+
     // Handle legacy signature: calculateShippingCharges(weight, isMetro)
     if (typeof itemsOrWeight === 'number') {
       weight = itemsOrWeight;
       isMetro = typeof deliveryPincodeOrIsMetro === 'boolean' ? deliveryPincodeOrIsMetro : false;
       
-      // Legacy response format
-      const baseRate = 50;
-      const perKgRate = 20;
-      const shippingCharge = Math.ceil(baseRate + (weight * perKgRate * (isMetro ? 1 : 1.2)));
-      
       return {
-        total: shippingCharge
+        total: deliveryFee
       };
     }
 
@@ -75,26 +88,15 @@ export const calculateShippingCharges = async (
     subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
     // Free shipping above threshold
-    if (subtotal >= shiprocketConfig.shipping.freeShippingThreshold) {
+    if (subtotal >= freeDeliveryThreshold) {
       return 0;
     }
     
-    // Base shipping rates
-    const baseRate = 50; // Rs. 50 base rate
-    const perKgRate = 20; // Rs. 20 per kg
-    
-    // Check if delivery location is metro
-    isMetro = deliveryPincode ? shiprocketConfig.shipping.metroCities.some(city =>
-      deliveryPincode.startsWith(getMetroPincodePrefix(city))
-    ) : false;
-    
-    const shippingCharge = Math.ceil(baseRate + (weight * perKgRate * (isMetro ? 1 : 1.2)));
-    
-    return shippingCharge;
+    return deliveryFee;
   } catch (error) {
     console.error('Error calculating shipping charges:', error);
     // Return default shipping charge on error
-    return typeof itemsOrWeight === 'number' ? { total: 70 } : 70;
+    return typeof itemsOrWeight === 'number' ? { total: 50 } : 50;
   }
 };
 
