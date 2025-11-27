@@ -13,6 +13,8 @@ import { useDiscounts } from '@/hooks/useDiscounts';
 import { getAllProducts } from '@/services/productService';
 import { calculateShippingCharges } from '@/services/shiprocketFeesService';
 import type { Product } from '@/types/product';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 const Cart = () => {
   const { items, updateQuantity, removeItem, totalPrice, addItem, updateItemWeight } = useCart();
@@ -23,6 +25,8 @@ const Cart = () => {
   const [shippingCharges, setShippingCharges] = useState<number>(0);
   const [shippingBreakdown, setShippingBreakdown] = useState<Record<string, number>>({});
   const [loadingShipping, setLoadingShipping] = useState(true);
+  const [deliveryFee, setDeliveryFee] = useState<number>(0);
+  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState<number>(0);
   const { calculatePricing } = useDiscounts();
 
   // Load sample products for adding to cart
@@ -30,12 +34,30 @@ const Cart = () => {
     const loadSampleProducts = async () => {
       try {
         const products = await getAllProducts();
-        setSampleProducts(products.slice(0, 6));
+        setSampleProducts(products);
       } catch (error) {
         console.error('Error loading sample products:', error);
       }
     };
     loadSampleProducts();
+  }, []);
+
+  // Fetch shipping settings
+  useEffect(() => {
+    const fetchShippingSettings = async () => {
+      try {
+        const settingsRef = doc(db, 'settings', 'shipping');
+        const settingsSnap = await getDoc(settingsRef);
+        if (settingsSnap.exists()) {
+          const data = settingsSnap.data();
+          setDeliveryFee(data.deliveryFee || 0);
+          setFreeDeliveryThreshold(data.freeDeliveryThreshold || 0);
+        }
+      } catch (error) {
+        console.error('Error fetching shipping settings:', error);
+      }
+    };
+    fetchShippingSettings();
   }, []);
 
   // Calculate shipping charges based on cart weight
@@ -480,6 +502,29 @@ const Cart = () => {
                     <span className="font-semibold text-green-600">FREE</span>
                   )}
                 </div>
+                
+                {/* Delivery Fee Preview */}
+                {deliveryFee > 0 && freeDeliveryThreshold > 0 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 -mx-1">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-amber-900 font-medium">Delivery Fee:</span>
+                        <span className="font-semibold text-amber-900">₹{deliveryFee}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-amber-700">Free delivery above:</span>
+                        <span className="font-semibold text-amber-800">₹{freeDeliveryThreshold}</span>
+                      </div>
+                      {totalPrice < freeDeliveryThreshold && totalPrice > 0 && (
+                        <div className="pt-1 border-t border-amber-200 mt-2">
+                          <p className="text-xs text-amber-700">
+                            Add <span className="font-bold text-amber-900">₹{(freeDeliveryThreshold - totalPrice).toLocaleString()}</span> more for free delivery!
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 
                 {/* Shipping Breakdown */}
                 {!loadingShipping && shippingCharges > 0 && Object.keys(shippingBreakdown).length > 0 && (
