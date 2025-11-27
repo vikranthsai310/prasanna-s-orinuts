@@ -7,10 +7,12 @@
 import { firebaseConfig } from './firebase';
 import { paymentConfig } from './payment';
 import { shippingConfig } from './shipping';
+import { shiprocketConfig } from './shiprocket';
 
 export { firebaseConfig, firebaseOptions, firebaseStorageUrls, localImageUrls } from './firebase';
 export { paymentConfig, paymentOptions } from './payment';
 export { shippingConfig, shippingOptions } from './shipping';
+export { shiprocketConfig, validateShiprocketConfig, getEstimatedDeliveryTime } from './shiprocket';
 export { authConfig, authOptions } from './auth';
 export { uiConfig, uiOptions } from './ui';
 export { businessConfig, businessOptions } from './business';
@@ -38,9 +40,9 @@ export const validateConfig = () => {
     errors.push('Razorpay key ID is not configured');
   }
   
-  // Check shipping configuration (Delhivery)
-  if (!shippingConfig.delhivery?.api?.token) {
-    errors.push('Delhivery API token is missing');
+  // Check shipping configuration (Shiprocket)
+  if (!shiprocketConfig.api.email || !shiprocketConfig.api.password) {
+    errors.push('Shiprocket credentials are missing');
   }
   
   if (errors.length > 0) {

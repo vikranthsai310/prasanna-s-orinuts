@@ -1,34 +1,33 @@
 ﻿/**
  * Shipping Service Configuration
- * Using Delhivery as the shipping provider
+ * Using Shiprocket as the shipping provider
  */
 
-import { delhiveryConfig } from './delhivery';
+import { shiprocketConfig } from './shiprocket';
 
-// Export Delhivery config as the main shipping config
+// Export Shiprocket config as the main shipping config
 export const shippingConfig = {
-  provider: 'delhivery',
-  delhivery: delhiveryConfig,
+  provider: 'shiprocket',
+  shiprocket: shiprocketConfig,
 };
 
 export const shippingOptions = {
   // Shipping charges apply based on location
   minimumOrderCharge: 50, // Rs. 50 for orders below certain amount
 
-  // Standard delivery times (Telangana only)
+  // Standard delivery times
   deliveryTimes: {
-    hyderabad: '1-2 days',
-    telanganaMetro: '2-3 days',
-    telanganaTier2: '3-5 days',
+    hyderabad: '2-3 days',
+    telanganaMetro: '3-4 days',
+    telanganaTier2: '4-6 days',
+    india: '5-7 days',
   },
 
-  // Serviceable state
-  serviceableState: 'Telangana',
-  serviceableCities: [
-    'Hyderabad', 'Warangal', 'Nizamabad', 'Karimnagar', 
-    'Khammam', 'Nalgonda', 'Mahabubnagar', 'Adilabad', 'Medak'
-  ]
+  // Serviceable regions
+  serviceableState: 'All India',
+  serviceableMessage: 'We deliver across India via Shiprocket'
 };
 
-// Export Delhivery config as default
-export default delhiveryConfig;
+// Export Shiprocket config as default
+export default shiprocketConfig;
+

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Truck, Package, CheckCircle, Clock, AlertCircle, MapPin, Phone, User } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { createDelhiveryShipment, trackShipment } from '@/services/delhiveryService';
+import { createShiprocketOrder, trackShipment } from '@/services/shippingService';
 
 interface Order {
   id: string;
@@ -29,9 +29,10 @@ interface Order {
   paymentMethod: 'cod' | 'online';
   paymentStatus: 'pending' | 'paid' | 'failed';
   orderStatus: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  deliveryMethod?: 'self' | 'delhivery';
-  delhiveryWaybill?: string;
-  delhiveryStatus?: string;
+  deliveryMethod?: 'self' | 'shiprocket';
+  shiprocketOrderId?: number;
+  shiprocketShipmentId?: number;
+  shiprocketAwbCode?: string;
   trackingUrl?: string;
   createdAt: any;
   updatedAt: any;
@@ -116,105 +117,66 @@ const DeliveryManagement = () => {
     }
   };
 
-  const handleDelhiveryShipment = async (order: Order) => {
+  const handleShiprocketShipment = async (order: Order) => {
     try {
       setProcessingOrder(order.id);
 
-      // Calculate total weight
-      const totalWeight = order.items.reduce((sum, item) => {
-        const weight = parseFloat(item.weight.replace(/[^0-9.]/g, '')) || 0.25; // Default 250g
-        return sum + (weight * item.quantity);
-      }, 0);
+      console.log('🚀 Creating Shiprocket shipment for order:', order.id);
 
-      // Create Delhivery shipment via backend API (pass full order)
-      const delhiveryResponse = await createDelhiveryShipment(
-        {
-          name: order.shippingAddress.name,
-          add: order.shippingAddress.street,
-          pin: order.shippingAddress.pincode,
-          city: order.shippingAddress.city,
-          state: order.shippingAddress.state,
-          country: 'India',
-          phone: order.shippingAddress.phone,
-          order: order.id,
-          payment_mode: order.paymentMethod === 'cod' ? 'COD' : 'Prepaid',
-          return_pin: '500018',
-          return_city: 'Hyderabad',
-          return_phone: '6301308477',
-          return_add: 'Shiv Nivas Opposite Road no-7 Pragathinagar moosapet hyderabad',
-          return_state: 'Telangana',
-          return_country: 'India',
-          products_desc: order.items.map(i => i.name).join(', '),
-          cod_amount: order.paymentMethod === 'cod' ? order.totalAmount.toString() : '0',
-          total_amount: order.totalAmount.toString(),
-          seller_add: 'Shiv Nivas Opposite Road no-7 Pragathinagar moosapet hyderabad',
-          seller_name: 'Prasannas orinuts',
-          quantity: order.items.reduce((sum, item) => sum + item.quantity, 0).toString(),
-          weight: totalWeight.toString(),
-          shipping_mode: 'Surface'
-        },
-        order // Pass full order object to backend
-      );
+      // Create Shiprocket order
+      const shiprocketResponse = await createShiprocketOrder(order);
+
+      console.log('✅ Shiprocket response:', shiprocketResponse);
 
       // Update order in database
       const orderRef = doc(db, 'orders', order.id);
       await updateDoc(orderRef, {
-        deliveryMethod: 'delhivery',
+        deliveryMethod: 'shiprocket',
         orderStatus: 'processing',
-        delhiveryWaybill: delhiveryResponse.waybill || '',
+        shiprocketOrderId: shiprocketResponse.order_id || 0,
+        shiprocketShipmentId: shiprocketResponse.shipment_id || 0,
+        shiprocketAwbCode: shiprocketResponse.awb_code || '',
         updatedAt: Timestamp.now()
       });
 
       toast({
         title: 'Success',
-        description: 'Delhivery pickup scheduled successfully!',
+        description: 'Shiprocket order created successfully!',
       });
 
       fetchOrders();
     } catch (error: any) {
-      console.error('❌ Error creating Delhivery shipment:', error);
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        orderId: order.id
-      });
+      console.error('❌ Error creating Shiprocket shipment:', error);
       
-      let errorMessage = error.message || 'Failed to schedule Delhivery pickup';
+      let errorMessage = error.message || 'Failed to create Shiprocket shipment';
       
       // Provide specific guidance for common errors
-      if (error.message?.includes('API token is not configured')) {
-        errorMessage = '⚠️ Delhivery API token is missing. Please configure VITE_DELHIVERY_API_TOKEN in your .env file. Get your token from Delhivery Settings → API.';
-      } else if (error.message?.includes('UNAUTHORIZED') || error.message?.includes('Authentication credentials')) {
-        errorMessage = '⚠️ Delhivery Authentication Failed!\n\n' +
-                      'This means the Delhivery API token is NOT configured in Vercel.\n\n' +
-                      'TO FIX:\n' +
-                      '1. Go to Vercel Dashboard\n' +
-                      '2. Settings → Environment Variables\n' +
-                      '3. Add: DELHIVERY_API_TOKEN = 6a837c59c18e2becb4207783345c95ace05962fa\n' +
-                      '4. Redeploy the application\n\n' +
-                      'See URGENT_DELHIVERY_FIX.md for detailed instructions.';
-      } else if (error.message?.includes('Authentication failed')) {
-        errorMessage = '⚠️ Please login again. Your session may have expired.';
+      if (error.message?.includes('credentials are not configured')) {
+        errorMessage = '⚠️ Shiprocket credentials are missing. Please configure VITE_SHIPROCKET_EMAIL and VITE_SHIPROCKET_PASSWORD in your environment variables.';
+      } else if (error.message?.includes('Authentication failed') || error.message?.includes('Unauthorized')) {
+        errorMessage = '⚠️ Shiprocket authentication failed. Please check your credentials.';
+      } else if (error.message?.includes('channel_id')) {
+        errorMessage = '⚠️ Shiprocket Channel ID is missing. Please set VITE_SHIPROCKET_CHANNEL_ID.';
       }
       
       toast({
         title: 'Error',
         description: errorMessage,
         variant: 'destructive',
-        duration: 10000, // Show for 10 seconds for longer error messages
+        duration: 10000,
       });
     } finally {
       setProcessingOrder(null);
     }
   };
 
-  const handleTrackShipment = async (waybill: string) => {
+  const handleTrackShipment = async (awbCode: string) => {
     try {
-      const tracking = await trackShipment(waybill);
+      const tracking = await trackShipment(awbCode);
       
       toast({
         title: 'Tracking Information',
-        description: `Status: ${tracking.status || 'N/A'}\nLocation: ${tracking.current_location || 'N/A'}`,
+        description: `Status: ${tracking.tracking_data?.track_status || 'N/A'}\nLocation: ${tracking.tracking_data?.current_status || 'N/A'}`,
       });
     } catch (error) {
       console.error('Error tracking shipment:', error);
@@ -301,7 +263,7 @@ const DeliveryManagement = () => {
                     </span>
                     {order.deliveryMethod && (
                       <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-800">
-                        {order.deliveryMethod === 'self' ? '🚗 Self Delivery' : '📦 Delhivery'}
+                        {order.deliveryMethod === 'self' ? '🚗 Self Delivery' : '📦 Shiprocket'}
                       </span>
                     )}
                   </div>
@@ -342,9 +304,9 @@ const DeliveryManagement = () => {
                       <p><span className="font-medium">Items:</span> {order.items.length}</p>
                       <p><span className="font-medium">Amount:</span> ₹{order.totalAmount}</p>
                       <p><span className="font-medium">Payment:</span> {order.paymentMethod.toUpperCase()}</p>
-                      {order.delhiveryWaybill && (
+                      {order.shiprocketAwbCode && (
                         <>
-                          <p><span className="font-medium">Waybill:</span> {order.delhiveryWaybill}</p>
+                          <p><span className="font-medium">AWB Code:</span> {order.shiprocketAwbCode}</p>
                           {order.trackingUrl && (
                             <a 
                               href={order.trackingUrl} 
@@ -387,7 +349,7 @@ const DeliveryManagement = () => {
                       Self Delivery
                     </Button>
                     <Button
-                      onClick={() => handleDelhiveryShipment(order)}
+                      onClick={() => handleShiprocketShipment(order)}
                       disabled={processingOrder === order.id}
                       className="flex-1 bg-blue-600 hover:bg-blue-700"
                     >
@@ -399,17 +361,17 @@ const DeliveryManagement = () => {
                       ) : (
                         <>
                           <Package className="w-4 h-4 mr-2" />
-                          Schedule Delhivery Pickup
+                          Create Shiprocket Shipment
                         </>
                       )}
                     </Button>
                   </div>
                 )}
 
-                {order.delhiveryWaybill && (
+                {order.shiprocketAwbCode && (
                   <div className="mt-4 pt-4 border-t">
                     <Button
-                      onClick={() => handleTrackShipment(order.delhiveryWaybill!)}
+                      onClick={() => handleTrackShipment(order.shiprocketAwbCode!)}
                       variant="outline"
                       size="sm"
                     >

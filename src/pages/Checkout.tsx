@@ -12,7 +12,7 @@ import { Check, ChevronDown, Edit, Gift } from 'lucide-react';
 import { sampleStorage } from '@/utils/sampleStorage';
 import { ADDRESS_TYPES, AddressType, addAddress } from '@/services/addressService';
 import { validateAndGetLocation } from '@/utils/telanganaPincodeService';
-import { calculateShippingCharges } from '@/services/delhiveryFeesService';
+import { calculateShippingCharges } from '@/services/shiprocketFeesService';
 import {
   Select,
   SelectContent,

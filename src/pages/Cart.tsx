@@ -11,7 +11,7 @@ import { sampleStorage } from '@/utils/sampleStorage';
 import { toast } from '@/components/ui/use-toast';
 import { useDiscounts } from '@/hooks/useDiscounts';
 import { getAllProducts } from '@/services/productService';
-import { calculateShippingCharges } from '@/services/delhiveryFeesService';
+import { calculateShippingCharges } from '@/services/shiprocketFeesService';
 import type { Product } from '@/types';
 
 const Cart = () => {

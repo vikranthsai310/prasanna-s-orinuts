@@ -1,11 +1,17 @@
-import { Order, Address } from './orderService';
+/**
+ * Shiprocket Shipping Service
+ * Handles all Shiprocket API interactions for shipment creation, tracking, and rate calculation
+ */
 
-import { shippingConfig } from '@/config';
+import { Order, Address } from './orderService';
+import { shiprocketConfig, getEstimatedDeliveryTime } from '@/config/shiprocket';
+import { getAuthToken } from './authToken';
 
 // Shiprocket API Configuration
-const SHIPROCKET_BASE_URL = shippingConfig.shiprocket.baseUrl;
-const SHIPROCKET_USERNAME = shippingConfig.shiprocket.username;
-const SHIPROCKET_PASSWORD = shippingConfig.shiprocket.password;
+const SHIPROCKET_BASE_URL = shiprocketConfig.api.baseUrl;
+const SHIPROCKET_EMAIL = shiprocketConfig.api.email;
+const SHIPROCKET_PASSWORD = shiprocketConfig.api.password;
+const SHIPROCKET_CHANNEL_ID = shiprocketConfig.api.channelId;
 
 // Types for Shiprocket API
 export interface ShiprocketAuth {
@@ -99,19 +105,24 @@ export const authenticateShiprocket = async (): Promise<string> => {
       return authToken;
     }
 
+    if (!SHIPROCKET_EMAIL || !SHIPROCKET_PASSWORD) {
+      throw new Error('Shiprocket credentials are not configured. Please set VITE_SHIPROCKET_EMAIL and VITE_SHIPROCKET_PASSWORD.');
+    }
+
     const response = await fetch(`${SHIPROCKET_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        email: SHIPROCKET_USERNAME,
+        email: SHIPROCKET_EMAIL,
         password: SHIPROCKET_PASSWORD,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Authentication failed: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(`Shiprocket authentication failed: ${errorData.message || response.statusText}`);
     }
 
     const data = await response.json();
@@ -133,7 +144,7 @@ export const authenticateShiprocket = async (): Promise<string> => {
 // Create order in Shiprocket
 export const createShiprocketOrder = async (
   order: Order,
-  pickupLocation: string = 'Primary'
+  pickupLocation: string = shiprocketConfig.warehouse.name
 ): Promise<ShiprocketResponse> => {
   try {
     const token = await authenticateShiprocket();
@@ -147,15 +158,15 @@ export const createShiprocketOrder = async (
       order_id: order.id,
       order_date: order.createdAt.toDate().toISOString().split('T')[0],
       pickup_location: pickupLocation,
-      channel_id: '5043677', // Replace with your channel ID from Shiprocket dashboard
-      comment: 'Premium Orchard Order',
+      channel_id: SHIPROCKET_CHANNEL_ID || '',
+      comment: 'Prasannas Orinuts Order',
       billing_customer_name: order.shippingAddress.name,
       billing_address: order.shippingAddress.street,
       billing_city: order.shippingAddress.city,
       billing_pincode: order.shippingAddress.pincode,
       billing_state: order.shippingAddress.state,
       billing_country: 'India',
-      billing_email: 'orders@prasannaorinut.com', // Use business email for billing
+      billing_email: 'orders@prasannasorinuts.com',
       billing_phone: order.shippingAddress.phone,
       shipping_is_billing: true,
       order_items: order.items.map(item => ({
@@ -165,7 +176,7 @@ export const createShiprocketOrder = async (
         selling_price: item.price,
         discount: 0,
         tax: 0,
-        hsn: '08134000', // HSN code for dried fruits and nuts
+        hsn: shiprocketConfig.products.hsnCode,
       })),
       payment_method: order.paymentMethod === 'cod' ? 'COD' : 'Prepaid',
       sub_total: order.totalAmount,
@@ -174,6 +185,8 @@ export const createShiprocketOrder = async (
       height: packageDimensions.height,
       weight: packageWeight,
     };
+
+    console.log('🚀 Creating Shiprocket order:', { orderId: order.id, weight: packageWeight });
 
     const response = await fetch(`${SHIPROCKET_BASE_URL}/orders/create/adhoc`, {
       method: 'POST',
@@ -186,10 +199,12 @@ export const createShiprocketOrder = async (
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(`Shiprocket order creation failed: ${JSON.stringify(errorData)}`);
+      console.error('❌ Shiprocket order creation failed:', errorData);
+      throw new Error(`Shiprocket order creation failed: ${errorData.message || JSON.stringify(errorData)}`);
     }
 
     const result = await response.json();
+    console.log('✅ Shiprocket order created successfully:', result);
     return result;
   } catch (error) {
     console.error('Error creating Shiprocket order:', error);

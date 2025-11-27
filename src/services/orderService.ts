@@ -36,16 +36,12 @@ export interface Order {
   orderStatus: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   trackingId?: string;
   // Delivery method tracking
-  deliveryMethod?: 'pending' | 'self' | 'delhivery';
+  deliveryMethod?: 'pending' | 'self' | 'shiprocket';
   deliveryAssignedAt?: Timestamp;
-  // Delhivery integration fields
-  delhiveryWaybill?: string;
-  delhiveryShipmentId?: string;
-  delhiveryPickupScheduled?: boolean;
-  // Shiprocket integration fields (legacy)
+  // Shiprocket integration fields
   shiprocketOrderId?: number;
-  shipmentId?: number;
-  awbCode?: string;
+  shiprocketShipmentId?: number;
+  shiprocketAwbCode?: string;
   courierName?: string;
   courierCompanyId?: number;
   pickupScheduled?: boolean;
@@ -297,8 +293,8 @@ export const updateShiprocketDetails = async (
   orderId: string,
   shiprocketData: {
     shiprocketOrderId?: number;
-    shipmentId?: number;
-    awbCode?: string;
+    shiprocketShipmentId?: number;
+    shiprocketAwbCode?: string;
     courierName?: string;
     courierCompanyId?: number;
     pickupScheduled?: boolean;
@@ -335,8 +331,8 @@ export const createShipment = async (order: Order): Promise<void> => {
       // Update order with Shiprocket details
       await updateShiprocketDetails(order.id, {
         shiprocketOrderId: result.order_id,
-        shipmentId: result.shipment_id,
-        awbCode: result.awb_code,
+        shiprocketShipmentId: result.shipment_id,
+        shiprocketAwbCode: result.awb_code,
         courierName: result.courier_name,
         courierCompanyId: result.courier_company_id,
         pickupScheduled: true,
@@ -358,7 +354,7 @@ export const calculateShippingRates = async (
   deliveryPincode: string,
   weight: number,
   isCod: boolean = false,
-  pickupPincode: string = shippingConfig.delhivery.warehouse.pincode
+  pickupPincode: string = shippingConfig.shiprocket.warehouse.pincode
 ): Promise<any> => {
   try {
     const response = await fetch('/api/calculate-shipping', {
@@ -434,11 +430,11 @@ export const getPaidOrders = async (): Promise<Order[]> => {
 /**
  * Assign delivery method to an order
  * @param orderId - The order ID
- * @param deliveryMethod - 'self' or 'delhivery'
+ * @param deliveryMethod - 'self' or 'shiprocket'
  */
 export const assignDeliveryMethod = async (
   orderId: string,
-  deliveryMethod: 'self' | 'delhivery'
+  deliveryMethod: 'self' | 'shiprocket'
 ): Promise<void> => {
   try {
     const orderRef = doc(db, ORDERS_COLLECTION, orderId);
@@ -476,10 +472,10 @@ export const assignDeliveryMethod = async (
 };
 
 /**
- * Create Delhivery shipment for an order
- * This will call the API and update the order with shipment details
+ * Create Shiprocket shipment for an order
+ * This will call the Shiprocket service and update the order with shipment details
  */
-export const createDelhiveryShipmentForOrder = async (orderId: string): Promise<any> => {
+export const createShiprocketShipmentForOrder = async (orderId: string): Promise<any> => {
   try {
     const orderRef = doc(db, ORDERS_COLLECTION, orderId);
     const orderSnap = await getDoc(orderRef);
@@ -495,44 +491,36 @@ export const createDelhiveryShipmentForOrder = async (orderId: string): Promise<
       throw new Error('Order payment is not completed');
     }
     
-    // Check if Delhivery shipment already exists
-    if (order.delhiveryWaybill) {
-      throw new Error('Delhivery shipment already created for this order');
+    // Check if Shiprocket shipment already exists
+    if (order.shiprocketOrderId) {
+      throw new Error('Shiprocket shipment already created for this order');
     }
     
-    // Call the create-shipment API
-    const response = await fetch('/api/create-shipment', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ order }),
-    });
+    // Import createShiprocketOrder function
+    const { createShiprocketOrder } = await import('./shippingService');
     
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to create Delhivery shipment');
-    }
+    // Create Shiprocket order
+    const shipmentResult = await createShiprocketOrder(order);
     
-    const shipmentResult = await response.json();
-    
-    // Update order with Delhivery details
+    // Update order with Shiprocket details
     await updateDoc(orderRef, {
-      deliveryMethod: 'delhivery',
+      deliveryMethod: 'shiprocket',
       deliveryAssignedAt: serverTimestamp(),
-      delhiveryWaybill: shipmentResult.waybill,
-      delhiveryShipmentId: shipmentResult.data?.packages?.[0]?.waybill || shipmentResult.waybill,
-      delhiveryPickupScheduled: true,
-      trackingId: shipmentResult.waybill, // Also set as tracking ID
+      shiprocketOrderId: shipmentResult.order_id,
+      shiprocketShipmentId: shipmentResult.shipment_id,
+      shiprocketAwbCode: shipmentResult.awb_code,
+      courierName: shipmentResult.courier_name,
+      pickupScheduled: true,
+      trackingId: shipmentResult.awb_code, // Also set as tracking ID
       orderStatus: 'processing',
       updatedAt: serverTimestamp(),
     });
     
-    console.log(`✅ Delhivery shipment created for order ${orderId}. Waybill: ${shipmentResult.waybill}`);
+    console.log(`✅ Shiprocket shipment created for order ${orderId}. AWB: ${shipmentResult.awb_code}`);
     
     return shipmentResult;
   } catch (error) {
-    console.error('Error creating Delhivery shipment:', error);
+    console.error('Error creating Shiprocket shipment:', error);
     throw error;
   }
 };
