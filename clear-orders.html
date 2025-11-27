@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Test Orders - Prasanna's Orinuts</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 2px solid #17a2b8;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #0c5460;
+        }
+        button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 0;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        #output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+        }
+        .log {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .log.success {
+            color: #28a745;
+        }
+        .log.error {
+            color: #dc3545;
+        }
+        .log.info {
+            color: #17a2b8;
+        }
+        .count {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗑️ Clear Test Orders</h1>
+        <p style="color: #666;">Prasanna's Premium Orchard - Admin Tool</p>
+        
+        <div class="warning">
+            <strong>⚠️ WARNING:</strong> This will permanently delete ALL orders from Firebase!<br>
+            Only use this to clear test data before going live in production.
+        </div>
+        
+        <div class="info">
+            <strong>ℹ️ Info:</strong> This tool will:<br>
+            • List all orders in the database<br>
+            • Show total count and details<br>
+            • Delete all orders when you confirm<br>
+            • Prepare database for production use
+        </div>
+        
+        <button onclick="loadOrders()" id="loadBtn">📊 Check Orders</button>
+        <button onclick="clearOrders()" id="clearBtn" style="display:none;">🗑️ Delete All Orders</button>
+        
+        <div id="output"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, getDocs, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCFGNw-QaL0NeajxgjMcuOxCXzeeHX1nwY",
+            authDomain: "orinut-494cc.firebaseapp.com",
+            projectId: "orinut-494cc",
+            storageBucket: "orinut-494cc.firebasestorage.app",
+            messagingSenderId: "369347130599",
+            appId: "1:369347130599:web:79cd0316f8af76c0a2de42"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let ordersData = [];
+
+        // Check if user is authenticated
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                document.getElementById('loadBtn').disabled = false;
+                console.log('✅ Authenticated as:', user.email);
+            } else {
+                document.getElementById('output').style.display = 'block';
+                document.getElementById('output').innerHTML = `
+                    <div class="log error">
+                        ❌ Not authenticated! Please:<br>
+                        1. Open your website: <a href="https://prasannasorinuts.com" target="_blank">prasannasorinuts.com</a><br>
+                        2. Login as admin<br>
+                        3. Come back to this page and refresh<br>
+                        4. Then click "Check Orders"
+                    </div>
+                `;
+                document.getElementById('loadBtn').disabled = true;
+            }
+        });
+
+        window.loadOrders = async function() {
+            const output = document.getElementById('output');
+            const loadBtn = document.getElementById('loadBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            
+            output.style.display = 'block';
+            output.innerHTML = '<div class="log info">🔄 Loading orders from Firebase...</div>';
+            loadBtn.disabled = true;
+            
+            try {
+                const ordersRef = collection(db, 'orders');
+                const snapshot = await getDocs(ordersRef);
+                
+                if (snapshot.empty) {
+                    output.innerHTML = '<div class="log success">✅ No orders found. Database is already clean!</div>';
+                    loadBtn.disabled = false;
+                    return;
+                }
+                
+                ordersData = snapshot.docs;
+                let html = `<div class="count">📦 Found ${ordersData.length} Orders</div>`;
+                html += '<div style="margin-top: 20px;">';
+                
+                ordersData.forEach((doc, index) => {
+                    const order = doc.data();
+                    html += `
+                        <div style="border-bottom: 1px solid #ddd; padding: 10px 0;">
+                            <strong>${index + 1}. Order ID:</strong> ${doc.id.substring(0, 8)}...<br>
+                            <strong>Customer:</strong> ${order.shippingAddress?.name || 'Unknown'}<br>
+                            <strong>Total:</strong> ₹${order.totalAmount || 0}<br>
+                            <strong>Status:</strong> ${order.orderStatus || 'Unknown'}<br>
+                            <strong>Payment:</strong> ${order.paymentStatus || 'Unknown'}<br>
+                            <strong>Date:</strong> ${order.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                output.innerHTML = html;
+                
+                clearBtn.style.display = 'inline-block';
+                loadBtn.disabled = false;
+                
+            } catch (error) {
+                output.innerHTML = `<div class="log error">❌ Error: ${error.message}<br><br>Make sure you're logged in as admin on your website first!</div>`;
+                loadBtn.disabled = false;
+            }
+        };
+
+        window.clearOrders = async function() {
+            if (!confirm(`Are you sure you want to delete ALL ${ordersData.length} orders?\n\nThis action CANNOT be undone!`)) {
+                return;
+            }
+            
+            if (!confirm(`FINAL WARNING!\n\nDeleting ${ordersData.length} orders permanently.\n\nAre you absolutely sure?`)) {
+                return;
+            }
+            
+            const output = document.getElementById('output');
+            const clearBtn = document.getElementById('clearBtn');
+            const loadBtn = document.getElementById('loadBtn');
+            
+            clearBtn.disabled = true;
+            loadBtn.disabled = true;
+            
+            output.innerHTML = `<div class="log info">🗑️ Deleting ${ordersData.length} orders...</div>`;
+            
+            try {
+                let deleted = 0;
+                const deletePromises = ordersData.map(doc => {
+                    return deleteDoc(doc.ref).then(() => {
+                        deleted++;
+                        if (deleted % 5 === 0 || deleted === ordersData.length) {
+                            output.innerHTML += `<div class="log success">✓ Deleted ${deleted}/${ordersData.length} orders</div>`;
+                        }
+                    });
+                });
+                
+                await Promise.all(deletePromises);
+                
+                output.innerHTML += `
+                    <div class="log success" style="font-size: 18px; margin-top: 20px; padding: 20px; background: #d4edda; border: 2px solid #28a745; border-radius: 8px;">
+                        🎉 Successfully deleted all ${deleted} orders!<br>
+                        ✅ Database is now clean and ready for production!<br><br>
+                        <strong>Next steps:</strong><br>
+                        1. Deploy your code to Vercel<br>
+                        2. Add Shiprocket credentials to Vercel environment variables<br>
+                        3. Start accepting real orders! 🚀
+                    </div>
+                `;
+                
+                clearBtn.style.display = 'none';
+                ordersData = [];
+                loadBtn.disabled = false;
+                
+            } catch (error) {
+                output.innerHTML += `<div class="log error">❌ Error: ${error.message}</div>`;
+                clearBtn.disabled = false;
+                loadBtn.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>
