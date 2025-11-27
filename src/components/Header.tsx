@@ -271,11 +271,11 @@ const Header = () => {
                           <span>Manage Samples</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem 
-                          onClick={() => navigate('/admin/delhivery-fees')}
+                          onClick={() => navigate('/admin/shipping')}
                           className="hover:bg-amber-50 cursor-pointer"
                         >
                           <DollarSign className="mr-2 h-4 w-4 text-amber-700" />
-                          <span>Delhivery Fees</span>
+                          <span>Shipping Settings</span>
                         </DropdownMenuItem>
                       </>
                     )}
@@ -474,13 +474,13 @@ const Header = () => {
                     
                     <button
                       onClick={() => {
-                        navigate('/admin/delhivery-fees');
+                        navigate('/admin/shipping');
                         setIsMenuOpen(false);
                       }}
                       className="flex items-center space-x-4 px-4 py-3 rounded-xl text-amber-900 hover:bg-amber-100/80 transition-all duration-200 w-full group"
                     >
                       <DollarSign className="h-5 w-5 text-amber-700 group-hover:text-amber-900" />
-                      <span className="text-base">Delhivery Fees</span>
+                      <span className="text-base">Shipping Settings</span>
                     </button>
                   </div>
                 )}
