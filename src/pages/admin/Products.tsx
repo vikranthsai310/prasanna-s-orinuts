@@ -436,7 +436,7 @@ const AdminProducts = () => {
 
       {/* Add/Edit Product Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-4 sm:p-6">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-xl font-playfair">{selectedProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
             <DialogDescription className="sr-only">
@@ -444,7 +444,7 @@ const AdminProducts = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden" id="product-form">
             <div className="flex-1 overflow-y-auto px-1 space-y-5 pb-4">
               {/* AI Auto-fill Toggle */}
               <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-lg p-4">
@@ -722,17 +722,14 @@ const AdminProducts = () => {
               </div>
             </div>
             
-            <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4 bg-background z-10">
+            <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4 bg-background z-10 gap-2">
               <DialogClose asChild>
-                <Button type="button" variant="outline">Cancel</Button>
+                <Button type="button" variant="outline" className="flex-1 sm:flex-initial">Cancel</Button>
               </DialogClose>
               <Button 
                 type="submit" 
-                className="btn-primary"
-                onClick={(e) => {
-                  console.log('Button clicked!');
-                  // Form will handle submit
-                }}
+                form="product-form"
+                className="btn-primary flex-1 sm:flex-initial"
               >
                 <Save className="w-4 h-4 mr-2" />
                 {selectedProduct ? 'Update Product' : 'Add Product'}
