@@ -236,6 +236,36 @@ const AddSamples = () => {
             Selected: {selectedSamples.length}/{sampleProducts[0]?.maxQuantity || 2} samples
           </p>
         </div>
+
+        {/* Action buttons at top */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/cart')}
+            className="w-full sm:w-auto"
+          >
+            Back to Cart
+          </Button>
+          
+          {selectedSamples.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={handleClearSamples}
+              className="w-full sm:w-auto text-destructive hover:text-destructive"
+            >
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Clear Samples
+            </Button>
+          )}
+          
+          <Button
+            onClick={handleProceedToCheckout}
+            disabled={selectedSamples.length !== 2}
+            className="w-full sm:w-auto btn-primary"
+          >
+            Proceed to Checkout ({selectedSamples.length}/2 samples selected)
+          </Button>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {sampleProducts.map((sample) => {

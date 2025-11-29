@@ -1,31 +1,99 @@
 rules_version = '2';
-
-// Craft rules based on data in your Firestore database
-// allow write: if firestore.get(
-//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin == true
 service firebase.storage {
   match /b/{bucket}/o {
-    // Images and media
+    
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    
+    // Check if user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Check if user is admin
+    function isAdmin() {
+      return isSignedIn() && 
+             request.auth.token.admin == true;
+    }
+    
+    // Check if email is admin
+    function isAdminEmail() {
+      return isSignedIn() && 
+             request.auth.token.email in ['vikranthsai310@gmail.com'];
+    }
+    
+    // Validate file size (max 5MB for images)
+    function validImageSize() {
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+    
+    // Validate image content type
+    function validImageType() {
+      return request.resource.contentType.matches('image/(png|jpeg|jpg|webp|gif)');
+    }
+    
+    // ============================================
+    // PRODUCT IMAGES
+    // ============================================
     match /products/{imageId} {
-      // Allow anyone to read product images
+      // Anyone can read product images (public)
       allow read: if true;
+      
       // Only admins can upload/update/delete product images
-      allow write: if request.auth != null;
+      allow write: if (isAdmin() || isAdminEmail()) && 
+                      validImageSize() && 
+                      validImageType();
     }
     
-    match /branding/{imageId} {
-      // Allow anyone to read branding images (logo, etc)
+    // ============================================
+    // BRANDING ASSETS (logos, banners, etc.)
+    // ============================================
+    match /branding/{assetId} {
+      // Anyone can read branding assets
       allow read: if true;
-      // Only admins can upload/update/delete branding images
-      allow write: if request.auth != null;
+      
+      // Only admins can manage branding
+      allow write: if (isAdmin() || isAdminEmail()) && 
+                      validImageSize() && 
+                      validImageType();
     }
     
-    // Default rule for other files
+    // ============================================
+    // USER UPLOADS (profile pictures, etc.)
+    // ============================================
+    match /users/{userId}/{allPaths=**} {
+      // Users can read their own uploads, admins can read all
+      allow read: if isSignedIn() && 
+                     (request.auth.uid == userId || isAdmin() || isAdminEmail());
+      
+      // Users can upload to their own folder
+      allow create: if isSignedIn() && 
+                       request.auth.uid == userId && 
+                       validImageSize() && 
+                       validImageType();
+      
+      // Users can update/delete their own uploads
+      allow update, delete: if isSignedIn() && 
+                               request.auth.uid == userId;
+    }
+    
+    // ============================================
+    // ORDER RELATED FILES (receipts, invoices, etc.)
+    // ============================================
+    match /orders/{orderId}/{allPaths=**} {
+      // Only authenticated users involved in the order can read
+      allow read: if isSignedIn() && (isAdmin() || isAdminEmail());
+      
+      // Only admins/system can write
+      allow write: if isAdmin() || isAdminEmail();
+    }
+    
+    // ============================================
+    // DENY ALL OTHER PATHS
+    // ============================================
     match /{allPaths=**} {
-      // Allow anyone to read
-      allow read: if true;
-      // Only authenticated users can write
-      allow write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }
