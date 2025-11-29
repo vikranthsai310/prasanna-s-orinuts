@@ -66,9 +66,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
               src={validateImageUrl(product.image)}
               alt={product.name}
               className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
-              loading="lazy"
+              loading="eager"
               decoding="async"
-              fetchPriority="low"
             />
             {/* Hover overlay - hidden on mobile, visible on hover for desktop */}
             <div className={`absolute inset-0 bg-primary/40 transition-opacity duration-300 hidden md:block ${isHovered ? 'opacity-100' : 'opacity-0'}`}>

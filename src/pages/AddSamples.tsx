@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
@@ -6,6 +6,7 @@ import { toast } from '@/components/ui/use-toast';
 import { Check, Plus, RefreshCw, Loader2, Package } from 'lucide-react';
 import { sampleStorage } from '@/utils/sampleStorage';
 import { getActiveSamples, SampleProduct } from '@/services/sampleService';
+import { validateImageUrl } from '@/utils/imageErrorHandler';
 
 const AddSamples = () => {
   const navigate = useNavigate();
@@ -13,6 +14,21 @@ const AddSamples = () => {
   const [selectedSamples, setSelectedSamples] = useState<SampleProduct[]>([]);
   const [sampleProducts, setSampleProducts] = useState<SampleProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Memoize validated image URLs to prevent re-validation on every render
+  const validatedImages = useMemo(() => {
+    const imageMap = new Map<string, string>();
+    sampleProducts.forEach(sample => {
+      const sourceUrl = sample.productImage;
+      if (sourceUrl) {
+        const validUrl = validateImageUrl(sourceUrl);
+        imageMap.set(sample.id, validUrl);
+      } else {
+        imageMap.set(sample.id, '/placeholder.svg');
+      }
+    });
+    return imageMap;
+  }, [sampleProducts]);
   
   useEffect(() => {
     fetchSamples();
@@ -224,6 +240,7 @@ const AddSamples = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {sampleProducts.map((sample) => {
             const isSelected = isSampleSelected(sample.id);
+            const imageUrl = validatedImages.get(sample.id) || '/placeholder.svg';
             
             return (
               <div
@@ -235,11 +252,17 @@ const AddSamples = () => {
               >
                 <div className="relative bg-accent rounded-lg">
                   <img
-                    src={sample.productImage}
+                    src={imageUrl}
                     alt={sample.productName}
                     className="w-full h-48 object-cover rounded-lg mb-4"
-                    loading="lazy"
+                    loading="eager"
                     decoding="async"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      if (target.src !== '/placeholder.svg') {
+                        target.src = '/placeholder.svg';
+                      }
+                    }}
                   />
                   {isSelected && (
                     <div className="absolute top-2 right-2 bg-secondary text-white rounded-full p-1">
