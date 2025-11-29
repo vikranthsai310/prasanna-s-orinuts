@@ -25,10 +25,20 @@ const Footer = () => {
               Experience the finest nuts and dried fruits from around the world.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="w-8 h-8 bg-amber-600/30 rounded-full flex items-center justify-center hover:bg-amber-600/50 transition-colors border border-amber-600/40">
+              <a 
+                href="https://www.instagram.com/prasannas_orinuts?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 bg-amber-600/30 rounded-full flex items-center justify-center hover:bg-amber-600/50 transition-colors border border-amber-600/40"
+              >
                 <Instagram size={16} className="text-amber-200" />
               </a>
-              <a href="#" className="w-8 h-8 bg-amber-600/30 rounded-full flex items-center justify-center hover:bg-amber-600/50 transition-colors border border-amber-600/40">
+              <a 
+                href="https://youtube.com/@prasannasorinuts?si=mjvbNvJxUWTxdgjJ" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 bg-amber-600/30 rounded-full flex items-center justify-center hover:bg-amber-600/50 transition-colors border border-amber-600/40"
+              >
                 <Youtube size={16} className="text-amber-200" />
               </a>
             </div>
@@ -80,9 +90,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-amber-600/30 mt-8 pt-8 text-center">
-          <p className="text-amber-200/70">
-            © 2025 Prasanna's Orinuts. All rights reserved.
-          </p>
+          {/* Copyright removed */}
         </div>
         </div>
       </div>
