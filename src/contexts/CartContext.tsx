@@ -55,7 +55,6 @@ const loadCartFromStorage = (userId?: string): CartItem[] => {
     if (wasCleared === 'true') {
       // Remove the flag and return empty cart
       localStorage.removeItem('cart_cleared_after_payment');
-      console.log('🛒 Cart was cleared after payment, not restoring from storage');
       return [];
     }
     
@@ -98,14 +97,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (isLoading) return;
 
-    console.log('🛒 Cart initialization - user:', user?.id, 'isInitialized:', isInitialized);
-
     if (user && !isInitialized) {
       // User logged in - merge guest cart with user cart
       const guestCart = loadCartFromStorage(); // guest cart
       const userCart = loadCartFromStorage(user.id); // user's saved cart
-      
-      console.log('🛒 Loading user cart - guest items:', guestCart.length, 'user items:', userCart.length);
       
       if (guestCart.length > 0) {
         // Merge guest cart with user cart
@@ -130,7 +125,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     } else if (!user && !isInitialized) {
       // Guest user - load guest cart
       const guestCart = loadCartFromStorage();
-      console.log('🛒 Loading guest cart - items:', guestCart.length);
       setItems(guestCart);
     }
     
@@ -286,7 +280,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const clearCart = () => {
-    console.log('🛒 Clearing cart - current items count:', items.length);
     setItems([]);
     // Also clear from localStorage
     try {
@@ -294,9 +287,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem(key);
       // Set a flag to indicate cart was cleared after successful payment
       localStorage.setItem('cart_cleared_after_payment', 'true');
-      console.log('✅ Cart cleared from localStorage:', key);
     } catch (error) {
-      console.error('❌ Error clearing cart from localStorage:', error);
+      // Silently handle error
     }
   };
 

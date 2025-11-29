@@ -36,7 +36,6 @@ const isValidImageUrl = (url: string): boolean => {
 export const preloadImage = (src: string, alt: string = ''): Promise<HTMLImageElement> => {
   // Validate URL first
   if (!isValidImageUrl(src)) {
-    console.warn(`Invalid image URL skipped: ${src}`);
     return Promise.reject(new Error(`Invalid image URL: ${src}`));
   }
 
@@ -57,13 +56,11 @@ export const preloadImage = (src: string, alt: string = ''): Promise<HTMLImageEl
     img.onload = () => {
       preloadedImages.set(src, img);
       preloadPromises.delete(src);
-      console.log(`✅ Preloaded image: ${src}`);
       resolve(img);
     };
     
     img.onerror = (error) => {
       preloadPromises.delete(src);
-      console.error(`❌ Failed to preload image: ${src}`, error);
       reject(error);
     };
     
@@ -89,12 +86,8 @@ export const preloadImages = async (images: Array<{ src: string; alt: string }>)
       .filter((result): result is PromiseFulfilledResult<HTMLImageElement> => result.status === 'fulfilled')
       .map(result => result.value);
     
-    const failed = results.filter(result => result.status === 'rejected').length;
-    
-    console.log(`🎯 Preloaded ${successful.length} images successfully, ${failed} failed`);
     return successful;
   } catch (error) {
-    console.error('Error preloading images:', error);
     return [];
   }
 };
@@ -109,7 +102,6 @@ export const preloadFirebaseImages = async (): Promise<HTMLImageElement[]> => {
     alt: `${name} image`
   }));
   
-  console.log('🚀 Starting to preload Firebase Storage images...');
   return preloadImages(firebaseImages);
 };
 
@@ -128,7 +120,6 @@ export const preloadCriticalImages = async (): Promise<HTMLImageElement[]> => {
     { src: FIREBASE_IMAGE_URLS.rasins, alt: 'Golden Raisins' }
   ];
   
-  console.log('⚡ Preloading critical images for hero section...');
   return preloadImages(criticalImages);
 };
 
@@ -156,7 +147,6 @@ export const isImagePreloaded = (src: string): boolean => {
 export const clearPreloadCache = (): void => {
   preloadedImages.clear();
   preloadPromises.clear();
-  console.log('🧹 Cleared image preload cache');
 };
 
 /**

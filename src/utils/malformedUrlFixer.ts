@@ -1,10 +1,10 @@
 /**
- * Image URL Error Handler and Debugger
+ * Image URL Error Handler
  * Helps identify and fix malformed data URL issues
  */
 
 /**
- * Check for and log malformed data URLs that might be causing network errors
+ * Check for and suppress malformed data URLs that might be causing network errors
  */
 export const detectMalformedDataUrls = () => {
   // Override console.error to catch malformed data URL errors
@@ -13,15 +13,10 @@ export const detectMalformedDataUrls = () => {
   console.error = (...args: any[]) => {
     const message = args.join(' ');
     
-    // Check for data URL related errors
+    // Check for data URL related errors - suppress them silently
     if (message.includes('data:;base64,=') || 
         message.includes('net::ERR_INVALID_URL') ||
         message.includes('base64,=:1')) {
-      
-      console.warn('🚨 DETECTED MALFORMED DATA URL ERROR:', message);
-      console.warn('This is likely caused by a browser extension or malformed image URL');
-      console.warn('The application will use fallback images to prevent this error');
-      
       // Don't propagate the error to avoid console spam
       return;
     }
@@ -47,16 +42,11 @@ export const cleanMalformedImageUrls = () => {
       src === 'data:;base64,=' ||
       src.endsWith('=:1')
     )) {
-      console.warn('Cleaning malformed image URL:', src);
       img.src = '/placeholder.svg';
       img.alt = img.alt || 'Image not available';
       cleanedCount++;
     }
   });
-  
-  if (cleanedCount > 0) {
-    console.log(`✅ Cleaned ${cleanedCount} malformed image URLs`);
-  }
   
   return cleanedCount;
 };
@@ -86,7 +76,6 @@ export const monitorForMalformedUrls = () => {
                 src === 'data:;base64,=' ||
                 src.endsWith('=:1')
               )) {
-                console.warn('Preventing malformed URL from being added:', src);
                 (img as HTMLImageElement).src = '/placeholder.svg';
               }
             });
@@ -108,8 +97,6 @@ export const monitorForMalformedUrls = () => {
  * Initialize malformed URL protection
  */
 export const initializeMalformedUrlProtection = () => {
-  console.log('🛡️ Initializing malformed URL protection...');
-  
   // Detect and handle malformed data URLs
   detectMalformedDataUrls();
   
@@ -119,14 +106,11 @@ export const initializeMalformedUrlProtection = () => {
   // Monitor for new malformed URLs
   const observer = monitorForMalformedUrls();
   
-  console.log('✅ Malformed URL protection initialized');
-  
   return {
     cleanedCount,
     observer,
     cleanup: () => {
       observer?.disconnect();
-      console.log('🧹 Malformed URL protection cleanup completed');
     }
   };
 };
