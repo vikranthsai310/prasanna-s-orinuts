@@ -83,8 +83,15 @@ service cloud.firestore {
       // Anyone can read products
       allow read: if true;
       
-      // Only admins can create/update/delete products
-      allow create, update, delete: if isAdmin();
+      // Admins can do anything with products
+      allow create, delete: if isAdmin();
+      
+      // Allow updates: Admins can update anything, 
+      // Authenticated users can ONLY decrement stock (for order placement)
+      allow update: if isAdmin() || 
+                       (isSignedIn() && 
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock']) &&
+                        request.resource.data.stock < resource.data.stock);
     }
     
     // ============================================
@@ -95,11 +102,11 @@ service cloud.firestore {
       allow read: if isSignedIn() && 
                      (resource.data.userId == request.auth.uid || isAdmin());
       
-      // TEMPORARY: Allow any authenticated user to create orders for debugging
-      // This bypasses the userId check to see if that's the issue
-      allow create: if isSignedIn();
+      // Users can create their own orders (userId must match their auth.uid)
+      allow create: if isSignedIn() && 
+                       request.resource.data.userId == request.auth.uid;
       
-      // Users can also update their own orders' payment status (for payment callbacks)
+      // Users can update their own orders' payment status (for payment callbacks)
       // Admins can update any order
       allow update: if isSignedIn() && 
                        (resource.data.userId == request.auth.uid || isAdmin());
@@ -210,8 +217,15 @@ service cloud.firestore {
       // Anyone can read active samples (needed for sample selection page)
       allow read: if true;
       
-      // Only admins can create/update/delete sample products
-      allow create, update, delete: if isAdmin();
+      // Admins can do anything with sample products
+      allow create, delete: if isAdmin();
+      
+      // Allow updates: Admins can update anything,
+      // Authenticated users can ONLY decrement stock (for order placement)
+      allow update: if isAdmin() || 
+                       (isSignedIn() && 
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'updatedAt']) &&
+                        request.resource.data.stock < resource.data.stock);
     }
     
     // Allow collection queries for samples

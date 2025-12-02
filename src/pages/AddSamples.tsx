@@ -8,9 +8,12 @@ import { sampleStorage } from '@/utils/sampleStorage';
 import { getActiveSamples, SampleProduct } from '@/services/sampleService';
 import { validateImageUrl } from '@/utils/imageErrorHandler';
 
+// Maximum number of samples allowed per order
+const MAX_SAMPLES = 2;
+
 const AddSamples = () => {
   const navigate = useNavigate();
-  const { addItem, items } = useCart();
+  const { addItem, items, removeItem } = useCart();
   const [selectedSamples, setSelectedSamples] = useState<SampleProduct[]>([]);
   const [sampleProducts, setSampleProducts] = useState<SampleProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,14 +112,14 @@ const AddSamples = () => {
     if (selectedSamples.some(s => s.id === sample.id)) {
       // Remove sample if already selected
       setSelectedSamples(prev => prev.filter(s => s.id !== sample.id));
-    } else if (selectedSamples.length < sample.maxQuantity) {
-      // Add sample if less than maxQuantity selected
+    } else if (selectedSamples.length < MAX_SAMPLES) {
+      // Add sample if less than MAX_SAMPLES selected
       setSelectedSamples(prev => [...prev, sample]);
     } else {
       // Show error if trying to select more than allowed
       toast({
         title: "Maximum samples reached",
-        description: `You can only select ${sample.maxQuantity} sample(s).`,
+        description: `You can only select ${MAX_SAMPLES} free samples per order.`,
         variant: "destructive"
       });
     }
@@ -127,6 +130,15 @@ const AddSamples = () => {
       toast({
         title: "Please select samples",
         description: "Please select at least one sample to proceed.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (selectedSamples.length > MAX_SAMPLES) {
+      toast({
+        title: "Too many samples",
+        description: `You can only select ${MAX_SAMPLES} free samples per order.`,
         variant: "destructive"
       });
       return;
@@ -143,29 +155,30 @@ const AddSamples = () => {
       return;
     }
     
+    // First, remove ALL existing samples from cart to prevent duplicates
+    const existingSamplesInCart = items.filter(item => 
+      item.name.includes('(Sample)') || item.price === 0
+    );
+    existingSamplesInCart.forEach(sample => {
+      removeItem(sample.id, sample.weight);
+    });
+    
     // Save selected samples to localStorage
     sampleStorage.saveSelectedSamples(selectedSamples);
     
-    // Add selected samples to cart (as free samples)
+    // Add selected samples to cart (as free samples) - only the selected ones
     selectedSamples.forEach(sample => {
-      // Check if sample is not already in cart to avoid duplicates
-      const existingCartItem = items.find(item => 
-        item.id === sample.productId && item.name.includes('(Sample)')
-      );
-      
-      if (!existingCartItem) {
-        addItem({
-          id: sample.productId,
-          name: `${sample.productName} (Sample)`,
-          price: 0, // Free sample
-          weight: 'Sample',
-          image: sample.productImage
-        }, 1); // quantity as second parameter
-      }
+      addItem({
+        id: sample.productId,
+        name: `${sample.productName} (Sample)`,
+        price: 0, // Free sample
+        weight: 'Sample',
+        image: sample.productImage
+      }, 1); // quantity is always 1 per sample
     });
     
     toast({
-      title: "Samples saved and added!",
+      title: "Samples saved!",
       description: `${selectedSamples.length} free sample(s) have been added to your order.`,
       variant: "default"
     });
@@ -230,10 +243,10 @@ const AddSamples = () => {
             Choose Your Free Samples
           </h1>
           <p className="text-muted-foreground text-lg mb-2">
-            Select up to {sampleProducts[0]?.maxQuantity || 2} samples to try with your order
+            Select exactly {MAX_SAMPLES} samples to try with your order
           </p>
           <p className="text-sm text-muted-foreground">
-            Selected: {selectedSamples.length}/{sampleProducts[0]?.maxQuantity || 2} samples
+            Selected: {selectedSamples.length}/{MAX_SAMPLES} samples
           </p>
         </div>
 
@@ -260,10 +273,10 @@ const AddSamples = () => {
           
           <Button
             onClick={handleProceedToCheckout}
-            disabled={selectedSamples.length !== 2}
+            disabled={selectedSamples.length !== MAX_SAMPLES}
             className="w-full sm:w-auto btn-primary"
           >
-            Proceed to Checkout ({selectedSamples.length}/2 samples selected)
+            Proceed to Checkout ({selectedSamples.length}/{MAX_SAMPLES} samples selected)
           </Button>
         </div>
         
@@ -371,10 +384,10 @@ const AddSamples = () => {
           
           <Button
             onClick={handleProceedToCheckout}
-            disabled={selectedSamples.length !== 2}
+            disabled={selectedSamples.length !== MAX_SAMPLES}
             className="w-full sm:w-auto btn-primary"
           >
-            Proceed to Checkout ({selectedSamples.length}/2 samples selected)
+            Proceed to Checkout ({selectedSamples.length}/{MAX_SAMPLES} samples selected)
           </Button>
         </div>
         

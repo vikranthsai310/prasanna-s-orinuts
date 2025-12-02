@@ -148,7 +148,51 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const addItem = async (newItem: Omit<CartItem, 'quantity'>, quantity: number = 1) => {
     try {
-      // Fetch product to check stock
+      // Check if this is a sample (free item with price = 0)
+      const isSample = newItem.price === 0 || newItem.name.includes('(Sample)');
+      
+      if (isSample) {
+        // Special handling for samples
+        const existingSamples = items.filter(item => 
+          item.price === 0 || item.name.includes('(Sample)')
+        );
+        
+        // Check if this exact sample is already in cart
+        const existingSample = existingSamples.find(item => 
+          item.id === newItem.id && item.weight === newItem.weight
+        );
+        
+        if (existingSample) {
+          // Sample already exists - don't add again, just show message
+          toast({
+            title: "Sample already added",
+            description: `${newItem.name} is already in your cart.`,
+          });
+          return;
+        }
+        
+        // Check total sample limit (max 2 samples)
+        const MAX_SAMPLES = 2;
+        if (existingSamples.length >= MAX_SAMPLES) {
+          toast({
+            title: "Maximum samples reached",
+            description: `You can only add ${MAX_SAMPLES} free samples per order.`,
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        // Add sample with quantity 1 (always)
+        setItems(prev => [...prev, { ...newItem, quantity: 1 }]);
+        
+        toast({
+          title: "Sample added",
+          description: `${newItem.name} has been added to your order.`,
+        });
+        return;
+      }
+      
+      // Regular product handling - fetch product to check stock
       const product = await getProductById(newItem.id);
       
       if (!product) {
@@ -212,6 +256,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     if (quantity <= 0) {
       removeItem(id, weight);
       return;
+    }
+
+    // Find the item
+    const currentItem = items.find(item => item.id === id && item.weight === weight);
+    
+    // Check if this is a sample - samples should always have quantity 1
+    const isSample = currentItem && (currentItem.price === 0 || currentItem.name.includes('(Sample)'));
+    if (isSample) {
+      // Samples can only be removed, not increased
+      if (quantity > 1) {
+        toast({
+          title: "Sample quantity fixed",
+          description: "Free samples are limited to 1 per item.",
+        });
+      }
+      return; // Don't allow quantity changes for samples
     }
 
     try {
