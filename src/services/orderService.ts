@@ -178,48 +178,88 @@ export const createOrder = async (orderData: NewOrder): Promise<string> => {
       updatedAt: serverTimestamp()
     };
     
-    console.log('📦 Order data to be written:', JSON.stringify({
-      userId: orderWithTimestamps.userId,
-      itemsCount: orderWithTimestamps.items?.length,
-      totalAmount: orderWithTimestamps.totalAmount,
-      paymentMethod: orderWithTimestamps.paymentMethod,
-      paymentStatus: orderWithTimestamps.paymentStatus
-    }, null, 2));
+    // Log FULL order data for debugging
+    console.log('📦 ============ FULL ORDER DATA ============');
+    console.log('📦 userId:', orderWithTimestamps.userId);
+    console.log('📦 userId type:', typeof orderWithTimestamps.userId);
+    console.log('📦 items:', JSON.stringify(orderWithTimestamps.items, null, 2));
+    console.log('📦 totalAmount:', orderWithTimestamps.totalAmount);
+    console.log('📦 shippingAddress:', JSON.stringify(orderWithTimestamps.shippingAddress, null, 2));
+    console.log('📦 paymentMethod:', orderWithTimestamps.paymentMethod);
+    console.log('📦 paymentStatus:', orderWithTimestamps.paymentStatus);
+    console.log('📦 orderStatus:', orderWithTimestamps.orderStatus);
+    console.log('📦 All keys:', Object.keys(orderWithTimestamps));
+    console.log('📦 ==========================================');
     
     console.log('📦 Attempting Firestore addDoc to collection:', ORDERS_COLLECTION);
     console.log('📦 Firestore DB instance exists:', !!db);
+    
+    // Verify auth one more time RIGHT BEFORE the write
+    const { auth: firebaseAuth } = await import('@/lib/firebase');
+    const authUser = firebaseAuth.currentUser;
+    console.log('📦 Final auth check RIGHT before addDoc:');
+    console.log('  - auth.currentUser exists:', !!authUser);
+    console.log('  - auth.currentUser.uid:', authUser?.uid);
+    console.log('  - order.userId:', orderWithTimestamps.userId);
+    console.log('  - MATCH:', authUser?.uid === orderWithTimestamps.userId);
+    
+    if (!authUser) {
+      throw new Error('Authentication lost before Firestore write!');
+    }
+    
+    if (authUser.uid !== orderWithTimestamps.userId) {
+      console.error('❌ CRITICAL: UID mismatch right before write!');
+      // Force correct the userId
+      orderWithTimestamps.userId = authUser.uid;
+      console.log('📦 Forced userId correction to:', authUser.uid);
+    }
     
     try {
       const docRef = await addDoc(collection(db, ORDERS_COLLECTION), orderWithTimestamps);
       console.log('✅ Order document created successfully! DocID:', docRef.id);
     
-    // Reduce stock for each item
-    for (const item of correctedOrderData.items) {
-      const isSample = item.price === 0 || item.name.includes('(Sample)');
+    // Stock reduction - wrap in try/catch since regular users can't update products
+    // This is a known limitation - stock should ideally be managed via Cloud Functions
+    try {
+      console.log('📦 Attempting stock reduction (may fail for non-admin users)...');
       
-      if (isSample) {
-        // Find and decrease sample stock
-        const sample = samples.find(s => 
-          s.productId === item.id || 
-          s.productName === item.name.replace(' (Sample)', '')
-        );
+      // Reduce stock for each item
+      for (const item of correctedOrderData.items) {
+        const isSample = item.price === 0 || item.name.includes('(Sample)');
         
-        if (sample) {
-          await decreaseSampleStock(sample.id, item.quantity);
-          console.log(`✅ Reduced sample stock for ${item.name}: ${sample.stock} -> ${sample.stock - item.quantity}`);
+        if (isSample) {
+          // Find and decrease sample stock
+          const sample = samples.find(s => 
+            s.productId === item.id || 
+            s.productName === item.name.replace(' (Sample)', '')
+          );
+          
+          if (sample) {
+            await decreaseSampleStock(sample.id, item.quantity);
+            console.log(`✅ Reduced sample stock for ${item.name}: ${sample.stock} -> ${sample.stock - item.quantity}`);
+          }
+        } else {
+          // Regular product stock reduction
+          const productRef = doc(db, 'products', item.id);
+          const productSnap = await getDoc(productRef);
+          const currentStock = productSnap.data()?.stock;
+          
+          if (currentStock !== undefined) {
+            await updateDoc(productRef, {
+              stock: currentStock - item.quantity
+            });
+            
+            console.log(`✅ Reduced stock for ${item.name}: ${currentStock} -> ${currentStock - item.quantity}`);
+          }
         }
-      } else {
-        // Regular product stock reduction
-        const productRef = doc(db, 'products', item.id);
-        const productSnap = await getDoc(productRef);
-        const currentStock = productSnap.data().stock;
-        
-        await updateDoc(productRef, {
-          stock: currentStock - item.quantity
-        });
-        
-        console.log(`✅ Reduced stock for ${item.name}: ${currentStock} -> ${currentStock - item.quantity}`);
       }
+      console.log('✅ Stock reduction completed successfully');
+    } catch (stockError: any) {
+      // Stock reduction failed - this is expected for non-admin users
+      // The order is still created, stock will need to be managed by admin
+      console.warn('⚠️ Stock reduction failed (expected for non-admin users):', stockError.message);
+      console.warn('⚠️ Order was created successfully, but stock was not reduced automatically');
+      console.warn('⚠️ Admin should manually adjust stock or use Cloud Functions for this');
     }
     
     // Automatically create Shiprocket shipment if payment is successful (paid)
