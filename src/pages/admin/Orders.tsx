@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, Eye, Loader2, Download } from 'lucide-react';
+import { Search, Filter, Eye, Loader2, Download, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,6 +21,41 @@ import {
 } from '@/services/orderService';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
+
+// Function to send order status email
+const sendOrderStatusEmail = async (order: Order, emailType: string) => {
+  try {
+    const response = await fetch('/api/send-order-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        orderId: order.id,
+        customerName: order.shippingAddress?.name || 'Valued Customer',
+        customerEmail: order.shippingAddress?.email,
+        items: order.items || [],
+        totalAmount: order.totalAmount || 0,
+        shippingAddress: order.shippingAddress || {},
+        paymentId: order.trackingId || '',
+        orderDate: order.createdAt?.toDate?.()?.toLocaleDateString('en-IN') || new Date().toLocaleDateString('en-IN'),
+        shippingCharges: 0,
+        trackingId: order.trackingId || order.shiprocketAwbCode || '',
+        courierName: order.courierName || '',
+        emailType: emailType, // confirmed, processing, shipped, delivered, cancelled
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to send email');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error sending status email:', error);
+    throw error;
+  }
+};
 
 const AdminOrders = () => {
   const { toast } = useToast();
@@ -88,9 +123,11 @@ const AdminOrders = () => {
     try {
       await updateOrderStatus(orderId, newStatus as Order['orderStatus']);
       
+      // Get the order for email sending
+      const order = orders.find(o => o.id === orderId);
+      
       // If status is shipped and there's no tracking ID, open the tracking modal
       if (newStatus === 'shipped') {
-        const order = orders.find(o => o.id === orderId);
         if (order && !order.trackingId) {
           setSelectedOrder(order);
           setIsTrackingModalOpen(true);
@@ -98,10 +135,27 @@ const AdminOrders = () => {
         }
       }
       
-      toast({
-        title: "Status Updated",
-        description: `Order status updated to ${newStatus}`
-      });
+      // Send email notification for status change
+      if (order && order.shippingAddress?.email) {
+        try {
+          await sendOrderStatusEmail(order, newStatus);
+          toast({
+            title: "Status Updated & Email Sent ✉️",
+            description: `Order status updated to ${newStatus}. Customer notified via email.`
+          });
+        } catch (emailError) {
+          console.error('Failed to send email:', emailError);
+          toast({
+            title: "Status Updated",
+            description: `Order status updated to ${newStatus}. (Email notification failed)`
+          });
+        }
+      } else {
+        toast({
+          title: "Status Updated",
+          description: `Order status updated to ${newStatus}`
+        });
+      }
       
       // Refresh orders
       fetchOrders();
@@ -122,10 +176,30 @@ const AdminOrders = () => {
     
     try {
       await addTrackingInfo(selectedOrder.id, trackingId);
-      toast({
-        title: "Tracking Added",
-        description: "Tracking information added successfully"
-      });
+      
+      // Send shipped email with tracking info
+      if (selectedOrder.shippingAddress?.email) {
+        try {
+          const updatedOrder = { ...selectedOrder, trackingId: trackingId };
+          await sendOrderStatusEmail(updatedOrder, 'shipped');
+          toast({
+            title: "Tracking Added & Email Sent ✉️",
+            description: "Tracking information added. Customer notified with tracking details."
+          });
+        } catch (emailError) {
+          console.error('Failed to send tracking email:', emailError);
+          toast({
+            title: "Tracking Added",
+            description: "Tracking information added. (Email notification failed)"
+          });
+        }
+      } else {
+        toast({
+          title: "Tracking Added",
+          description: "Tracking information added successfully"
+        });
+      }
+      
       setIsTrackingModalOpen(false);
       setTrackingId('');
       fetchOrders();

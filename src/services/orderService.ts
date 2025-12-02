@@ -19,6 +19,7 @@ import { createShiprocketOrder } from './shippingService';
 
 export interface Address {
   name: string;
+  email?: string; // Customer email for order confirmation
   phone: string;
   street: string;
   city: string;
@@ -54,15 +55,90 @@ export type NewOrder = Omit<Order, 'id' | 'createdAt' | 'updatedAt'>;
 
 const ORDERS_COLLECTION = 'orders';
 
+/**
+ * Validate that the current Firebase user is authenticated and matches the userId
+ * This is a critical check before attempting Firestore writes
+ */
+const validateAuthForOrder = async (orderUserId: string): Promise<{ isValid: boolean; correctedUserId: string; currentUser: any }> => {
+  const { auth } = await import('@/lib/firebase');
+  const currentUser = auth.currentUser;
+  
+  console.log('🔐 validateAuthForOrder check:');
+  console.log('  - Requested userId:', orderUserId);
+  console.log('  - Firebase currentUser:', currentUser?.uid);
+  
+  if (!currentUser) {
+    console.error('❌ validateAuthForOrder: No authenticated user!');
+    return { isValid: false, correctedUserId: orderUserId, currentUser: null };
+  }
+  
+  // Always use the Firebase UID to prevent permission errors
+  const correctedUserId = currentUser.uid;
+  
+  if (orderUserId !== correctedUserId) {
+    console.warn('⚠️ validateAuthForOrder: UID mismatch corrected');
+    console.warn('  - Original:', orderUserId);
+    console.warn('  - Corrected:', correctedUserId);
+  }
+  
+  return { isValid: true, correctedUserId, currentUser };
+};
+
 // Create a new order and reduce stock
 export const createOrder = async (orderData: NewOrder): Promise<string> => {
+  console.log('📦 ================== ORDER CREATION START ==================');
+  console.log('📦 createOrder called with data:', JSON.stringify({
+    userId: orderData.userId,
+    itemsCount: orderData.items?.length,
+    totalAmount: orderData.totalAmount,
+    paymentMethod: orderData.paymentMethod,
+    paymentStatus: orderData.paymentStatus,
+    orderStatus: orderData.orderStatus
+  }, null, 2));
+  
+  // CRITICAL: Validate and correct userId BEFORE any Firestore operations
+  const authValidation = await validateAuthForOrder(orderData.userId);
+  
+  if (!authValidation.isValid) {
+    console.error('❌ Auth validation failed! Cannot create order.');
+    throw new Error('User not authenticated. Please log in again.');
+  }
+  
+  // Use the corrected userId (Firebase UID) for the order
+  const correctedOrderData = {
+    ...orderData,
+    userId: authValidation.correctedUserId
+  };
+  
+  console.log('🔐 Using corrected userId for order:', authValidation.correctedUserId);
+  
+  const currentUser = authValidation.currentUser;
+  
+  // Debug: Check Firebase auth state
+  console.log('🔐 Firebase Auth State in orderService:');
+  console.log('  - currentUser exists:', !!currentUser);
+  console.log('  - currentUser.uid:', currentUser?.uid);
+  console.log('  - correctedOrderData.userId:', correctedOrderData.userId);
+  console.log('  - UIDs match:', currentUser?.uid === correctedOrderData.userId);
+  
+  // Get fresh ID token to verify auth is working
+  try {
+    const token = await currentUser.getIdToken(true);
+    console.log('✅ Fresh ID token obtained successfully (length:', token.length, ')');
+  } catch (tokenError) {
+    console.error('❌ Failed to get ID token:', tokenError);
+    throw new Error('Authentication expired. Please log in again.');
+  }
+  
   try {
     // Get all sample products to identify which items are samples
+    console.log('📦 Fetching sample products...');
     const samples = await getAllSamples();
+    console.log('📦 Samples fetched:', samples.length, 'items');
     const sampleProductIds = samples.map(s => s.productId);
     
     // First, verify stock availability for all items
-    for (const item of orderData.items) {
+    for (const item of correctedOrderData.items) {
       // Check if this is a sample product (price is 0 or name contains "Sample")
       const isSample = item.price === 0 || item.name.includes('(Sample)');
       
@@ -95,16 +171,30 @@ export const createOrder = async (orderData: NewOrder): Promise<string> => {
     }
     
     // Create the order
+    console.log('📦 Creating order document with timestamps...');
     const orderWithTimestamps = {
-      ...orderData,
+      ...correctedOrderData,  // Use correctedOrderData with the correct userId
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     };
     
-    const docRef = await addDoc(collection(db, ORDERS_COLLECTION), orderWithTimestamps);
+    console.log('📦 Order data to be written:', JSON.stringify({
+      userId: orderWithTimestamps.userId,
+      itemsCount: orderWithTimestamps.items?.length,
+      totalAmount: orderWithTimestamps.totalAmount,
+      paymentMethod: orderWithTimestamps.paymentMethod,
+      paymentStatus: orderWithTimestamps.paymentStatus
+    }, null, 2));
+    
+    console.log('📦 Attempting Firestore addDoc to collection:', ORDERS_COLLECTION);
+    console.log('📦 Firestore DB instance exists:', !!db);
+    
+    try {
+      const docRef = await addDoc(collection(db, ORDERS_COLLECTION), orderWithTimestamps);
+      console.log('✅ Order document created successfully! DocID:', docRef.id);
     
     // Reduce stock for each item
-    for (const item of orderData.items) {
+    for (const item of correctedOrderData.items) {
       const isSample = item.price === 0 || item.name.includes('(Sample)');
       
       if (isSample) {
@@ -133,14 +223,14 @@ export const createOrder = async (orderData: NewOrder): Promise<string> => {
     }
     
     // Automatically create Shiprocket shipment if payment is successful (paid)
-    if (orderData.paymentStatus === 'paid') {
+    if (correctedOrderData.paymentStatus === 'paid') {
       try {
         console.log('🚀 Auto-creating Shiprocket shipment for order:', docRef.id);
         
         // Create full order object for Shiprocket
         const fullOrder: Order = {
           id: docRef.id,
-          ...orderData,
+          ...correctedOrderData,
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now()
         };
@@ -171,7 +261,49 @@ export const createOrder = async (orderData: NewOrder): Promise<string> => {
     }
     
     console.log('✅ Order created and stock updated successfully');
+    console.log('📦 ================== ORDER CREATION END ==================');
     return docRef.id;
+    } catch (firestoreError: any) {
+      console.error('❌ ================== FIRESTORE ERROR ==================');
+      console.error('❌ Firestore addDoc failed!');
+      console.error('❌ Error name:', firestoreError?.name);
+      console.error('❌ Error code:', firestoreError?.code);
+      console.error('❌ Error message:', firestoreError?.message);
+      console.error('❌ Full error:', firestoreError);
+      
+      if (firestoreError?.code === 'permission-denied') {
+        console.error('❌ PERMISSION DENIED - Possible causes:');
+        console.error('  1. User not authenticated in Firebase');
+        console.error('  2. userId in order does not match auth.uid');
+        console.error('  3. Firestore security rules blocking the write');
+        console.error('  4. User document may not exist or isAdmin check failing');
+        console.error('  5. Firestore rules may not be deployed correctly');
+        
+        // Debug: Log the exact data that was attempted to be written
+        console.error('❌ Attempted to write order with:');
+        console.error('  - userId:', correctedOrderData.userId);
+        console.error('  - auth.uid (from currentUser):', currentUser?.uid);
+        console.error('  - These should match for Firestore rules to pass');
+        
+        // Debug: Check if user document exists
+        try {
+          const userDocRef = doc(db, 'users', correctedOrderData.userId);
+          const userDocSnap = await getDoc(userDocRef);
+          console.log('  - User document exists:', userDocSnap.exists());
+          if (userDocSnap.exists()) {
+            console.log('  - User data:', JSON.stringify(userDocSnap.data(), null, 2));
+          }
+        } catch (userCheckError) {
+          console.error('  - Failed to check user document:', userCheckError);
+        }
+        
+        // Provide actionable guidance
+        console.error('❌ SOLUTION: Check if Firestore security rules are properly deployed');
+        console.error('   Run: firebase deploy --only firestore:rules');
+      }
+      
+      throw firestoreError;
+    }
   } catch (error) {
     console.error('❌ Error creating order:', error);
     throw error;

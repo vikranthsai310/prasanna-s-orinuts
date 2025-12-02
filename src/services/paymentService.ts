@@ -124,15 +124,40 @@ export const createRazorpayOrder = async (
   },
   userId: string // Add authenticated user ID parameter
 ): Promise<string> => {
+  console.log('💳 ================== RAZORPAY ORDER CREATION START ==================');
   try {
     console.log('🔄 Creating Razorpay order...');
     console.log('💰 Total amount:', totalAmount);
-    console.log('👤 User ID:', userId);
+    console.log('👤 User ID passed to function:', userId);
     console.log('📦 Items count:', items.length);
+    console.log('📦 Items details:', items.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })));
+    
+    // Verify Firebase auth state before proceeding
+    const { auth } = await import('@/lib/firebase');
+    const currentUser = auth.currentUser;
+    
+    console.log('🔐 PaymentService Auth Check:');
+    console.log('  - Firebase currentUser exists:', !!currentUser);
+    console.log('  - Firebase currentUser.uid:', currentUser?.uid);
+    console.log('  - Passed userId:', userId);
+    console.log('  - UIDs match:', currentUser?.uid === userId);
+    
+    if (!currentUser) {
+      console.error('❌ No authenticated user in paymentService!');
+      throw new Error('User not authenticated. Please log in to continue.');
+    }
+    
+    if (currentUser.uid !== userId) {
+      console.warn('⚠️ UID mismatch in paymentService!');
+      console.warn('  Using Firebase UID instead:', currentUser.uid);
+      // Use the actual Firebase UID to prevent permission issues
+      userId = currentUser.uid;
+    }
     
     // Create a new order in your database first
     const shippingAddress = {
       name: userInfo.name,
+      email: userInfo.email, // Include email for order confirmation
       phone: userInfo.phone,
       street: userInfo.address,
       city: userInfo.city,

@@ -3,6 +3,11 @@ import crypto from 'crypto';
 import { requireAuth, verifyOwnership } from './_middleware/auth.js';
 import { logger } from './_utils/logger.js';
 
+// Base URL for internal API calls
+const BASE_URL = process.env.VERCEL_URL 
+  ? `https://${process.env.VERCEL_URL}` 
+  : process.env.BASE_URL || 'https://prasannaorchards.com';
+
 // Initialize Firebase Firestore for order updates
 let db = null;
 
@@ -77,15 +82,68 @@ async function handler(req, res) {
     
     const isSignatureValid = expectedSignature === signature;
 
+    let orderData = null;
+
     if (isSignatureValid && db && receipt) {
       try {
         const orderRef = db.collection('orders').doc(receipt);
+        const orderSnap = await orderRef.get();
+        
+        if (orderSnap.exists) {
+          orderData = { id: orderSnap.id, ...orderSnap.data() };
+        }
+        
         await orderRef.update({
           paymentStatus: 'paid',
           paymentId: paymentId,
           razorpayOrderId: orderId,
           updatedAt: new Date().toISOString()
         });
+
+        // Send order confirmation email
+        if (orderData) {
+          try {
+            logger.info('VERIFY-PAYMENT', 'Sending order confirmation email', {
+              orderId: receipt,
+              email: orderData.shippingAddress?.email || req.user?.email
+            });
+
+            const emailPayload = {
+              orderId: receipt,
+              customerName: orderData.shippingAddress?.name || 'Valued Customer',
+              customerEmail: orderData.shippingAddress?.email || orderData.userEmail || req.user?.email,
+              items: orderData.items || [],
+              totalAmount: orderData.totalAmount || 0,
+              shippingAddress: orderData.shippingAddress || {},
+              paymentId: paymentId,
+              orderDate: new Date().toLocaleDateString('en-IN', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              }),
+              shippingCharges: orderData.shippingCharges || 0,
+            };
+
+            // Call the send-order-email API
+            const emailResponse = await fetch(`${BASE_URL}/api/send-order-email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(emailPayload),
+            });
+
+            if (emailResponse.ok) {
+              logger.success('VERIFY-PAYMENT', 'Order confirmation email sent successfully');
+            } else {
+              const emailError = await emailResponse.json();
+              logger.error('VERIFY-PAYMENT', 'Failed to send order confirmation email', emailError);
+            }
+          } catch (emailError) {
+            // Don't fail payment verification if email fails
+            logger.error('VERIFY-PAYMENT', 'Error sending order confirmation email', emailError);
+          }
+        }
       } catch (dbError) {
         logger.error('VERIFY-PAYMENT', 'Order status update failed', dbError);
       }

@@ -516,15 +516,27 @@ const Checkout = () => {
         }
       }
 
+      console.log('💰 ================== CHECKOUT ORDER CREATION ==================');
       console.log('💰 Creating Razorpay order...');
       console.log('💰 Order details:', {
-        userId: currentUser.uid,
+        contextUserId: user?.id,
+        firebaseUserId: currentUser.uid,
+        userIdsMatch: user?.id === currentUser.uid,
         userEmail: currentUser.email,
+        contextUserEmail: user?.email,
         itemsCount: items.length,
         subtotal: totalPrice,
         shippingCharges,
         totalWithShipping: totalPrice + shippingCharges
       });
+      
+      // CRITICAL: Verify context user.id matches Firebase currentUser.uid
+      if (user?.id !== currentUser.uid) {
+        console.error('❌ CRITICAL: User ID mismatch detected!');
+        console.error('  - AuthContext user.id:', user?.id);
+        console.error('  - Firebase currentUser.uid:', currentUser.uid);
+        console.error('  - Will use Firebase UID for order creation');
+      }
       
       // Calculate final amount including shipping
       const finalAmount = totalPrice + shippingCharges;
@@ -536,6 +548,8 @@ const Checkout = () => {
         hasToken: !!finalToken,
         tokenLength: finalToken.length
       });
+      
+      console.log('💰 Calling createRazorpayOrder with userId:', currentUser.uid);
       
       // Create a Razorpay order - use currentUser.uid (already verified)
       const orderId = await createRazorpayOrder(
@@ -553,6 +567,7 @@ const Checkout = () => {
         currentUser.uid // Use the verified Firebase UID
       );
       
+      console.log('✅ Razorpay order created. Order ID:', orderId);
       console.log('🚀 Opening Razorpay checkout modal...');
       // Open Razorpay checkout
       openRazorpayCheckout(
