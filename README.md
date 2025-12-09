@@ -374,17 +374,10 @@ lint          # Run ESLint
 ## 📞 Support
 
 For support and queries:
-- 📧 Email: support@prasannaorchard.com
-- 🌐 Website: [prasannaorchard.com](https://prasannaorchard.com)
+- 📧 Email: prasannasorinuts@gmail.com
+- 🌐 Website: [prasannasorinuts.com](https://prasannasorinuts.com)
 - 💬 GitHub Issues: [Report Issue](https://github.com/vikranthsai310/prasanna-premium-orchard/issues)
 
----
-
-## 📄 License
-
-This project is proprietary software. All rights reserved.
-
----
 
 <div align="center">
 
