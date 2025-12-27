@@ -45,6 +45,13 @@ const STATUS_CONFIG = {
     message: 'Your order has been cancelled. If you did not request this, please contact us immediately.',
     subjectPrefix: 'Order Cancelled ❌',
   },
+  admin_new_order: {
+    icon: '📦',
+    iconBg: '#8B5A2B',
+    title: '🚨 NEW ORDER - PACK NOW!',
+    message: 'A new order has been placed! Please pack and ship this order as soon as possible.',
+    subjectPrefix: '🚨 NEW ORDER - Pack Now!',
+  },
 };
 
 /**
@@ -292,7 +299,7 @@ function generatePlainTextEmail(orderData, emailType = 'confirmed') {
 
   const status = STATUS_CONFIG[emailType] || STATUS_CONFIG.confirmed;
 
-  const itemsList = items.map(item => 
+  const itemsList = items.map(item =>
     `  - ${item.name} (Qty: ${item.quantity}) - ₹${(item.price * item.quantity).toLocaleString('en-IN')}`
   ).join('\n');
 
@@ -379,7 +386,7 @@ async function sendEmailWithResend(to, subject, htmlContent, textContent) {
 async function sendEmailWithNodemailer(to, subject, htmlContent, textContent) {
   // Dynamic import for nodemailer
   const nodemailer = await import('nodemailer');
-  
+
   const transporter = nodemailer.default.createTransport({
     service: 'gmail',
     auth: {
@@ -467,7 +474,7 @@ export default async function handler(req, res) {
         logger.success('SEND-ORDER-EMAIL', 'Email sent via Resend', { id: emailResult.id });
       } catch (resendError) {
         logger.error('SEND-ORDER-EMAIL', 'Resend failed, trying Nodemailer', resendError);
-        
+
         // Fallback to Nodemailer
         if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
           emailResult = await sendEmailWithNodemailer(
@@ -498,13 +505,13 @@ export default async function handler(req, res) {
     if (process.env.SEND_ADMIN_COPY === 'true') {
       try {
         const adminSubject = `[${emailType.toUpperCase()}] Order #${orderData.orderId} - ₹${orderData.totalAmount.toLocaleString('en-IN')}`;
-        
+
         if (RESEND_API_KEY) {
           await sendEmailWithResend(BUSINESS_EMAIL, adminSubject, htmlContent, textContent);
         } else if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
           await sendEmailWithNodemailer(BUSINESS_EMAIL, adminSubject, htmlContent, textContent);
         }
-        
+
         logger.success('SEND-ORDER-EMAIL', 'Admin copy sent', { to: BUSINESS_EMAIL });
       } catch (adminEmailError) {
         // Don't fail the entire request if admin email fails
@@ -521,7 +528,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     logger.error('SEND-ORDER-EMAIL', 'Error sending email', error);
-    
+
     return res.status(500).json({
       error: 'Failed to send email',
       message: error.message,
