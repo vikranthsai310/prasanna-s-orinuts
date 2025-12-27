@@ -7,60 +7,60 @@ import { FIREBASE_IMAGE_URLS } from '@/services/imageService';
 
 const HeroSection = () => {
   const { scrollYProgress } = useScroll();
-  
+
   // Fruit data with Firebase Storage images
   const fruits = [
-    { 
-      id: 'almond', 
-      name: 'Premium Almonds', 
+    {
+      id: 'almond',
+      name: 'Premium Almonds',
       image: FIREBASE_IMAGE_URLS.almond,
       description: 'Premium quality almonds with perfect crunch',
       benefits: ['Heart Health', 'Protein Rich'],
       colors: { primary: '#D2691E', secondary: '#F4A460' }
     },
-    { 
-      id: 'cashew', 
-      name: 'Premium Cashews', 
+    {
+      id: 'cashew',
+      name: 'Premium Cashews',
       image: FIREBASE_IMAGE_URLS.cashew,
       description: 'Creamy hand-selected cashews with subtle sweetness',
       benefits: ['Energy Boost', 'Premium Quality'],
       colors: { primary: '#DEB887', secondary: '#F5DEB3' }
     },
-    { 
-      id: 'walnut', 
-      name: 'Organic Walnuts', 
+    {
+      id: 'walnut',
+      name: 'Organic Walnuts',
       image: FIREBASE_IMAGE_URLS.walnut,
       description: 'Himalayan-grown walnuts rich in omega nutrition',
       benefits: ['Brain Health', 'Omega-3 Rich'],
       colors: { primary: '#8B4513', secondary: '#D2691E' }
     },
-    { 
-      id: 'pista', 
-      name: 'Premium Pistachios', 
+    {
+      id: 'pista',
+      name: 'Premium Pistachios',
       image: FIREBASE_IMAGE_URLS.pista,
       description: 'Finest Iranian pistachios with natural flavor',
       benefits: ['Antioxidants', 'Energy Dense'],
       colors: { primary: '#9ACD32', secondary: '#ADFF2F' }
     },
-    { 
-      id: 'dates', 
-      name: 'Medjool Dates', 
+    {
+      id: 'dates',
+      name: 'Medjool Dates',
       image: FIREBASE_IMAGE_URLS.dates,
       description: 'Sweet and chewy premium dates from Morocco',
       benefits: ['Natural Sugar', 'Fiber Rich'],
       colors: { primary: '#8B4513', secondary: '#A0522D' }
     },
-    { 
-      id: 'apricot', 
-      name: 'Dried Apricots', 
+    {
+      id: 'apricot',
+      name: 'Dried Apricots',
       image: FIREBASE_IMAGE_URLS.apricot,
       description: 'Sun-dried apricots bursting with vitamins',
       benefits: ['Vitamin A', 'Natural Glow'],
       colors: { primary: '#FF8C00', secondary: '#FFA500' }
     },
-    { 
-      id: 'rasins', 
-      name: 'Golden Raisins', 
+    {
+      id: 'rasins',
+      name: 'Golden Raisins',
       image: FIREBASE_IMAGE_URLS.rasins,
       description: 'Sweet golden raisins packed with energy',
       benefits: ['Quick Energy', 'Natural Sweet'],
@@ -72,7 +72,7 @@ const HeroSection = () => {
   const [isRotating, setIsRotating] = useState(true);
   const ringRef = useRef<HTMLDivElement>(null);
   const [ringRadius, setRingRadius] = useState<number>(420);
-  
+
   // Compute a responsive radius so the items stay within the visible circle
   useEffect(() => {
     const computeRadius = () => {
@@ -91,11 +91,11 @@ const HeroSection = () => {
     window.addEventListener('resize', computeRadius);
     return () => window.removeEventListener('resize', computeRadius);
   }, []);
-  
+
   // Parallax transforms with smooth spring physics
   const backgroundY = useTransform(scrollYProgress, [0, 0.3], [0, 20]);
   const shineX = useTransform(scrollYProgress, [0, 0.3], ["-30%", "130%"]);
-  
+
   // Spring animation for smooth interactions
   const springConfig = { stiffness: 100, damping: 30, restDelta: 0.001 };
 
@@ -111,26 +111,18 @@ const HeroSection = () => {
         <div className="absolute top-1/2 left-1/3 w-24 h-24 bg-gradient-to-r from-orange-200 to-red-200 rounded-full blur-2xl animate-pulse delay-500" />
       </motion.div>
 
-      {/* Floating Particles */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(8)].map((_, i) => (
-          <motion.div
+      {/* Floating Particles - OPTIMIZED: Reduced count, CSS animations, hidden on mobile */}
+      <div className="absolute inset-0 pointer-events-none hidden md:block">
+        {[...Array(5)].map((_, i) => (
+          <div
             key={i}
-            className="absolute w-2 h-2 bg-amber-300 rounded-full opacity-60"
-            initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-            }}
-            animate={{
-              y: [null, -20, 0],
-              x: [null, Math.random() * 20 - 10, 0],
-              opacity: [0.6, 0.3, 0.6],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-              ease: "easeInOut",
+            className="absolute w-2 h-2 bg-amber-300 rounded-full opacity-60 animate-float-particle"
+            style={{
+              left: `${15 + i * 18}%`,
+              top: `${20 + (i % 3) * 25}%`,
+              animationDelay: `${i * 0.5}s`,
+              animationDuration: `${3 + i * 0.5}s`,
+              willChange: 'transform',
             }}
           />
         ))}
@@ -225,7 +217,7 @@ const HeroSection = () => {
               </div>
               {selectedFruit.benefits.map((benefit, index) => (
                 <div key={benefit} className="flex items-center gap-1.5 xs:gap-2 text-amber-700">
-                  <div 
+                  <div
                     className="w-2 h-2 xs:w-3 xs:h-3 rounded-full"
                     style={{ backgroundColor: selectedFruit.colors.primary }}
                   />
@@ -247,7 +239,7 @@ const HeroSection = () => {
                   whileTap={{ scale: 0.98 }}
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
-                  <Button 
+                  <Button
                     className="text-white font-semibold px-4 xs:px-6 lg:px-8 py-2.5 xs:py-3 lg:py-4 text-xs xs:text-sm lg:text-base shadow-xl hover:shadow-2xl transition-all duration-300 w-full sm:w-auto"
                     style={{
                       background: `linear-gradient(135deg, ${selectedFruit.colors.primary}, ${selectedFruit.colors.secondary})`,
@@ -264,7 +256,7 @@ const HeroSection = () => {
                   whileTap={{ scale: 0.98 }}
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
-                  <Button 
+                  <Button
                     variant="outline"
                     className="border-2 font-semibold px-4 xs:px-6 lg:px-8 py-2.5 xs:py-3 lg:py-4 text-xs xs:text-sm lg:text-base shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
                     style={{
@@ -282,7 +274,7 @@ const HeroSection = () => {
           {/* Right Rotating Ring Visual - Background on Mobile, Prominent on Desktop */}
           <div className="absolute lg:relative inset-0 lg:inset-auto lg:pl-4 xl:pl-8 flex items-center justify-center opacity-20 lg:opacity-100 z-0 lg:z-auto">
             <div ref={ringRef} className="relative w-[30rem] h-[30rem] sm:w-[40rem] sm:h-[40rem] lg:w-[72rem] lg:h-[72rem] overflow-visible">
-              
+
               {/* Central Selected Fruit */}
               <motion.div
                 className="absolute inset-0 flex items-center justify-center z-20"
@@ -292,13 +284,13 @@ const HeroSection = () => {
                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               >
                 {/* Background Glow with Dynamic Color */}
-                <div 
+                <div
                   className="absolute inset-0 rounded-full blur-xl lg:blur-3xl opacity-20 scale-50 sm:scale-60 lg:scale-75"
-                  style={{ 
-                    background: `linear-gradient(135deg, ${selectedFruit.colors.primary}40, ${selectedFruit.colors.secondary}40)` 
+                  style={{
+                    background: `linear-gradient(135deg, ${selectedFruit.colors.primary}40, ${selectedFruit.colors.secondary}40)`
                   }}
                 />
-                
+
                 <motion.img
                   src={selectedFruit.image}
                   alt={selectedFruit.name}
@@ -306,7 +298,7 @@ const HeroSection = () => {
                   whileHover={{ scale: 1.1, rotateY: 10 }}
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
-                
+
                 {/* Shimmer Effect */}
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 rounded-full"
@@ -345,9 +337,8 @@ const HeroSection = () => {
                   return (
                     <motion.div
                       key={fruit.id}
-                      className={`absolute cursor-pointer ${
-                        fruit.id === 'pista' || fruit.id === 'walnut' ? 'z-20' : ''
-                      }`}
+                      className={`absolute cursor-pointer ${fruit.id === 'pista' || fruit.id === 'walnut' ? 'z-20' : ''
+                        }`}
                       style={{
                         left: `calc(50% + ${x}px)`,
                         top: `calc(50% + ${y}px)`,
@@ -361,38 +352,36 @@ const HeroSection = () => {
                         setTimeout(() => setIsRotating(true), 2000);
                       }}
                       initial={{ opacity: 0, scale: 0 }}
-                      animate={{ 
-                        opacity: 1, 
+                      animate={{
+                        opacity: 1,
                         scale: fruit.id === 'pista' || fruit.id === 'walnut' ? 1.2 : 0.8,
                       }}
-                      transition={{ 
+                      transition={{
                         duration: 0.5,
                         delay: index * 0.15,
                         ease: "easeOut"
                       }}
                     >
-                                              <div className={`relative ${
-                          fruit.id === 'pista' || fruit.id === 'walnut' 
-                            ? 'border-4 border-transparent bg-transparent rounded-lg p-4 min-w-[100px] min-h-[100px]' 
-                            : ''
+                      <div className={`relative ${fruit.id === 'pista' || fruit.id === 'walnut'
+                          ? 'border-4 border-transparent bg-transparent rounded-lg p-4 min-w-[100px] min-h-[100px]'
+                          : ''
                         }`}>
                         <img
                           src={fruit.image}
                           alt={fruit.name}
-                          className={`object-contain filter drop-shadow-lg ${
-                            fruit.id === 'pista' || fruit.id === 'walnut' 
-                              ? 'w-16 h-16 sm:w-24 sm:h-24 lg:w-56 lg:h-56' 
+                          className={`object-contain filter drop-shadow-lg ${fruit.id === 'pista' || fruit.id === 'walnut'
+                              ? 'w-16 h-16 sm:w-24 sm:h-24 lg:w-56 lg:h-56'
                               : 'w-12 h-12 sm:w-16 sm:h-16 lg:w-32 lg:h-32'
-                          }`}
+                            }`}
 
                         />
-                        
+
                         {/* Subtle glow for non-selected items */}
                         {!isSelected && (
-                          <div 
+                          <div
                             className="absolute inset-0 rounded-full blur-lg opacity-30"
-                            style={{ 
-                              background: `linear-gradient(135deg, ${fruit.colors.primary}60, ${fruit.colors.secondary}60)` 
+                            style={{
+                              background: `linear-gradient(135deg, ${fruit.colors.primary}60, ${fruit.colors.secondary}60)`
                             }}
                           />
                         )}
@@ -413,7 +402,7 @@ const HeroSection = () => {
                 whileHover={{ scale: 1.1 }}
               >
                 <div className="flex items-center lg:gap-2">
-                  <div 
+                  <div
                     className="lg:w-3 lg:h-3 rounded-full animate-pulse"
                     style={{ backgroundColor: selectedFruit.colors.primary }}
                   />
@@ -431,7 +420,7 @@ const HeroSection = () => {
                 whileHover={{ scale: 1.1 }}
               >
                 <div className="flex items-center lg:gap-2">
-                  <Award 
+                  <Award
                     className="lg:w-4 lg:h-4"
                     style={{ color: selectedFruit.colors.primary }}
                   />

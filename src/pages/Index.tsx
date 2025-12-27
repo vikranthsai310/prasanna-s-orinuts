@@ -16,10 +16,10 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const luxurySectionRef = useRef<HTMLElement>(null);
-  const [particles, setParticles] = useState<Array<{id: number, style: React.CSSProperties}>>([]);
+  const [particles, setParticles] = useState<Array<{ id: number, style: React.CSSProperties }>>([]);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isWeightDialogOpen, setIsWeightDialogOpen] = useState(false);
-  
+
   // Store products by category for quick access
   const [almondProduct, setAlmondProduct] = useState<Product | null>(null);
   const [cashewProduct, setCashewProduct] = useState<Product | null>(null);
@@ -35,25 +35,25 @@ const Index = () => {
           getAllProducts()
         ]);
         setFeaturedProducts(bestSellers); // Show best sellers in the featured section
-        
+
         // Find specific products for Nature's Finest Selection from ALL products
         // Match by name (case-insensitive) or category
-        const almond = allProducts.find(p => 
-          p.name.toLowerCase().includes('almond') || 
+        const almond = allProducts.find(p =>
+          p.name.toLowerCase().includes('almond') ||
           p.category?.toLowerCase() === 'almonds'
         );
-        const cashew = allProducts.find(p => 
-          p.name.toLowerCase().includes('cashew') || 
+        const cashew = allProducts.find(p =>
+          p.name.toLowerCase().includes('cashew') ||
           p.category?.toLowerCase() === 'cashews'
         );
-        const walnut = allProducts.find(p => 
-          p.name.toLowerCase().includes('walnut') || 
+        const walnut = allProducts.find(p =>
+          p.name.toLowerCase().includes('walnut') ||
           p.category?.toLowerCase() === 'walnuts'
         );
-        
+
         console.log('Products found:', { almond, cashew, walnut });
         console.log('All products:', allProducts.map(p => ({ name: p.name, category: p.category, prices: p.prices })));
-        
+
         setAlmondProduct(almond || null);
         setCashewProduct(cashew || null);
         setWalnutProduct(walnut || null);
@@ -72,38 +72,51 @@ const Index = () => {
     fetchProducts();
   }, []);
 
-  // Generate floating particles
+  // Generate floating particles - OPTIMIZED: Lazy load + reduced count + disable on mobile
   useEffect(() => {
-    const generateParticles = () => {
-      const newParticles = [];
-      for (let i = 0; i < 15; i++) { // Reduced from 20 to 15
-        newParticles.push({
-          id: i,
-          style: {
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 5}s`,
-            animationDuration: `${5 + Math.random() * 10}s`
-          }
-        });
-      }
-      setParticles(newParticles);
-    };
+    // Skip particles on mobile for better performance
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+      setParticles([]);
+      return;
+    }
 
-    generateParticles();
+    // Delay particle generation for faster initial load
+    const timer = setTimeout(() => {
+      const generateParticles = () => {
+        const newParticles = [];
+        // Reduced from 15 to 10 particles for better performance
+        for (let i = 0; i < 10; i++) {
+          newParticles.push({
+            id: i,
+            style: {
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 5}s`,
+              animationDuration: `${5 + Math.random() * 10}s`,
+              willChange: 'transform', // GPU acceleration
+            }
+          });
+        }
+        setParticles(newParticles);
+      };
+      generateParticles();
+    }, 500); // Delay 500ms after mount
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Parallax effect
   useEffect(() => {
     const handleParallax = () => {
       if (!luxurySectionRef.current) return;
-      
+
       const scrollPosition = window.scrollY;
       const sectionTop = luxurySectionRef.current.offsetTop;
       const sectionHeight = luxurySectionRef.current.offsetHeight;
-      
-      if (scrollPosition > sectionTop - window.innerHeight && 
-          scrollPosition < sectionTop + sectionHeight) {
+
+      if (scrollPosition > sectionTop - window.innerHeight &&
+        scrollPosition < sectionTop + sectionHeight) {
         const parallaxBg = luxurySectionRef.current.querySelector(':before') as HTMLElement;
         if (parallaxBg) {
           const speed = 0.5;
@@ -112,7 +125,7 @@ const Index = () => {
         }
       }
     };
-    
+
     window.addEventListener('scroll', handleParallax);
     return () => window.removeEventListener('scroll', handleParallax);
   }, []);
@@ -121,29 +134,29 @@ const Index = () => {
   useEffect(() => {
     const handleScroll = () => {
       const reveals = document.querySelectorAll('.reveal');
-      
+
       reveals.forEach(element => {
         const windowHeight = window.innerHeight;
         const elementTop = element.getBoundingClientRect().top;
         const elementVisible = 150;
-        
+
         if (elementTop < windowHeight - elementVisible) {
           element.classList.add('active');
         }
       });
     };
-    
+
     window.addEventListener('scroll', handleScroll);
     handleScroll(); // Check on initial load
-    
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Handle quick add to cart
   const handleQuickAdd = (productType: 'almond' | 'cashew' | 'walnut') => {
     let product = null;
-    
-    switch(productType) {
+
+    switch (productType) {
       case 'almond':
         product = almondProduct;
         break;
@@ -154,7 +167,7 @@ const Index = () => {
         product = walnutProduct;
         break;
     }
-    
+
     if (product) {
       setSelectedProduct(product);
       setIsWeightDialogOpen(true);
@@ -166,22 +179,22 @@ const Index = () => {
       });
     }
   };
-  
+
   // Helper function to get price display
   const getProductPrice = (product: Product | null): string => {
     if (!product || !product.prices) {
       return '₹--/kg'; // Show placeholder while loading
     }
-    
+
     // Use the 1kg price if available, otherwise calculate average
     if (product.prices['1kg']) {
       return `₹${product.prices['1kg']}/kg`;
     }
-    
+
     // Fallback: calculate average of all available prices
     const prices = Object.values(product.prices).filter(p => p > 0);
     if (prices.length === 0) return '₹999/kg';
-    
+
     const avgPrice = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
     return `₹${avgPrice}/kg`;
   };
@@ -196,7 +209,7 @@ const Index = () => {
         canonicalUrl="https://prasannasorinuts.com"
         type="website"
       />
-      
+
       {/* Premium Hero Section */}
       <HeroSection />
 
@@ -204,13 +217,13 @@ const Index = () => {
       <section ref={luxurySectionRef} className="luxury-section">
         {/* Floating particles */}
         {particles.map(particle => (
-          <div 
-            key={particle.id} 
-            className="particle" 
+          <div
+            key={particle.id}
+            className="particle"
             style={particle.style}
           />
         ))}
-        
+
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
             <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-2 text-primary">
@@ -220,7 +233,7 @@ const Index = () => {
               Indulge in our premium collection of handpicked dry fruits
             </p>
           </div>
-          
+
           {/* Mobile view: horizontal scroll */}
           <div className="md:hidden mobile-scroll-container">
             {/* Almond Card */}
@@ -228,9 +241,9 @@ const Index = () => {
               <div className="glassmorphic-card">
                 <div className="price-tag">{getProductPrice(almondProduct)}</div>
                 <div className="fruit-image-container">
-                  <img 
-                    src="/almond.png" 
-                    alt="Premium Almond" 
+                  <img
+                    src="/almond.png"
+                    alt="Premium Almond"
                     className="fruit-image float-animation-1"
                     loading="lazy"
                   />
@@ -262,15 +275,15 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Cashew Card */}
             <div className="mobile-scroll-item reveal delay-2">
               <div className="glassmorphic-card">
                 <div className="price-tag">{getProductPrice(cashewProduct)}</div>
                 <div className="fruit-image-container">
-                  <img 
-                    src="/cashew.png" 
-                    alt="Premium Cashew" 
+                  <img
+                    src="/cashew.png"
+                    alt="Premium Cashew"
                     className="fruit-image float-animation-2"
                     loading="lazy"
                   />
@@ -302,15 +315,15 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Walnut Card */}
             <div className="mobile-scroll-item reveal delay-3">
               <div className="glassmorphic-card">
                 <div className="price-tag">{getProductPrice(walnutProduct)}</div>
                 <div className="fruit-image-container">
-                  <img 
-                    src="/walnut.png" 
-                    alt="Premium Walnut" 
+                  <img
+                    src="/walnut.png"
+                    alt="Premium Walnut"
                     className="fruit-image float-animation-3"
                     loading="lazy"
                   />
@@ -343,7 +356,7 @@ const Index = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Desktop view: grid */}
           <div className="hidden md:grid md:grid-cols-3 gap-6">
             {/* Almond Card */}
@@ -351,9 +364,9 @@ const Index = () => {
               <div className="glassmorphic-card">
                 <div className="price-tag">{getProductPrice(almondProduct)}</div>
                 <div className="fruit-image-container">
-                  <img 
-                    src="/almond.png" 
-                    alt="Premium Almond" 
+                  <img
+                    src="/almond.png"
+                    alt="Premium Almond"
                     className="fruit-image float-animation-1"
                     loading="lazy"
                   />
@@ -385,15 +398,15 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Cashew Card */}
             <div className="reveal delay-2">
               <div className="glassmorphic-card">
                 <div className="price-tag">{getProductPrice(cashewProduct)}</div>
                 <div className="fruit-image-container">
-                  <img 
-                    src="/cashew.png" 
-                    alt="Premium Cashew" 
+                  <img
+                    src="/cashew.png"
+                    alt="Premium Cashew"
                     className="fruit-image float-animation-2"
                     loading="lazy"
                   />
@@ -425,15 +438,15 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Walnut Card */}
             <div className="reveal delay-3">
               <div className="glassmorphic-card">
                 <div className="price-tag">{getProductPrice(walnutProduct)}</div>
                 <div className="fruit-image-container">
-                  <img 
-                    src="/walnut.png" 
-                    alt="Premium Walnut" 
+                  <img
+                    src="/walnut.png"
+                    alt="Premium Walnut"
                     className="fruit-image float-animation-3"
                     loading="lazy"
                   />
@@ -480,7 +493,7 @@ const Index = () => {
               Discover our most popular dry fruits, loved by customers for their exceptional quality and taste
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {isLoading ? (
               // Loading skeleton
@@ -504,7 +517,7 @@ const Index = () => {
               </div>
             )}
           </div>
-          
+
           <div className="text-center">
             <Link to="/products">
               <Button variant="outline" size="lg">
