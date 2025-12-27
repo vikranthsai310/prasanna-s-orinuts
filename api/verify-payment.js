@@ -2,6 +2,8 @@
 import crypto from 'crypto';
 import { requireAuth, verifyOwnership } from './_middleware/auth.js';
 import { logger } from './_utils/logger.js';
+import { checkRateLimitForRequest } from './_middleware/rateLimit.js';
+import { setSecurityHeaders } from './_middleware/securityHeaders.js';
 
 // Base URL for internal API calls
 const BASE_URL = process.env.VERCEL_URL
@@ -173,6 +175,16 @@ async function createShiprocketOrderFromAPI(orderData, db) {
 }
 
 async function handler(req, res) {
+  // 🔐 Set security headers
+  setSecurityHeaders(req, res);
+
+  // 🚦 Rate limiting for payment endpoints
+  const rateLimitResult = checkRateLimitForRequest(req, res, 'payment');
+  if (rateLimitResult.limited) {
+    logger.warn('VERIFY-PAYMENT', 'Rate limit exceeded', { userId: req.user?.uid });
+    return res.status(429).json(rateLimitResult.response.body);
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

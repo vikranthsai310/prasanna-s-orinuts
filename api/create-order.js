@@ -2,6 +2,8 @@
 import Razorpay from 'razorpay';
 import { requireAuth } from './_middleware/auth.js';
 import { logger } from './_utils/logger.js';
+import { checkRateLimitForRequest } from './_middleware/rateLimit.js';
+import { setSecurityHeaders } from './_middleware/securityHeaders.js';
 
 // Environment check at startup
 logger.envCheck('CREATE-ORDER', {
@@ -42,8 +44,18 @@ function getRazorpayInstance() {
 }
 
 async function handler(req, res) {
+  // 🔐 Set security headers
+  setSecurityHeaders(req, res);
+
+  // 🚦 Rate limiting for payment endpoints (10 requests/minute)
+  const rateLimitResult = checkRateLimitForRequest(req, res, 'payment');
+  if (rateLimitResult.limited) {
+    logger.warn('CREATE-ORDER', 'Rate limit exceeded', { userId: req.user?.uid });
+    return res.status(429).json(rateLimitResult.response.body);
+  }
+
   logger.request('CREATE-ORDER', req.method, '/api/create-order', req.user?.uid);
-  
+
   if (req.method !== 'POST') {
     logger.warn('CREATE-ORDER', `Method not allowed: ${req.method}`);
     return res.status(405).json({ error: 'Method not allowed' });
@@ -99,7 +111,7 @@ async function handler(req, res) {
       notes: enrichedNotes,
       payment_capture: 1 // Auto-capture payment
     };
-    
+
     logger.debug('CREATE-ORDER', 'Creating Razorpay order with params', {
       amount: orderParams.amount,
       amountInRupees: amount,
@@ -116,8 +128,8 @@ async function handler(req, res) {
         convertedAmount: orderParams.amount,
         minimumRequired: 100
       });
-      return res.status(400).json({ 
-        error: 'Order amount is too small. Minimum amount is ₹1.00' 
+      return res.status(400).json({
+        error: 'Order amount is too small. Minimum amount is ₹1.00'
       });
     }
 
@@ -132,7 +144,7 @@ async function handler(req, res) {
     });
 
     // Return the order details
-    return res.status(200).json({ 
+    return res.status(200).json({
       id: order.id,
       amount: order.amount,
       currency: order.currency,
@@ -144,11 +156,11 @@ async function handler(req, res) {
       statusCode: error.statusCode,
       name: error.name
     });
-    
+
     // Provide user-friendly error messages
     const statusCode = error.statusCode || 500;
     let errorMessage = 'Failed to create order';
-    
+
     if (error.message.includes('Payment gateway not configured')) {
       errorMessage = 'Payment service is temporarily unavailable. Please try again later.';
     } else if (error.message.includes('Payment gateway initialization failed')) {
@@ -158,8 +170,8 @@ async function handler(req, res) {
     } else if (statusCode >= 500) {
       errorMessage = 'Server error processing payment. Please try again.';
     }
-    
-    return res.status(statusCode).json({ 
+
+    return res.status(statusCode).json({
       error: errorMessage,
       message: error.message,
       code: error.code || 'PAYMENT_ERROR',

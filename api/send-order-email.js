@@ -1,5 +1,7 @@
 // Vercel Serverless Function for sending order emails (confirmation, shipped, delivered, etc.)
 import { logger } from './_utils/logger.js';
+import { checkRateLimitForRequest } from './_middleware/rateLimit.js';
+import { setSecurityHeaders } from './_middleware/securityHeaders.js';
 
 // Email configuration
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
@@ -407,6 +409,9 @@ async function sendEmailWithNodemailer(to, subject, htmlContent, textContent) {
 }
 
 export default async function handler(req, res) {
+  // 🔐 Set security headers
+  setSecurityHeaders(req, res);
+
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -419,6 +424,13 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
+  }
+
+  // 🚦 Rate limiting for email endpoints (5 emails/minute to prevent spam)
+  const rateLimitResult = checkRateLimitForRequest(req, res, 'email');
+  if (rateLimitResult.limited) {
+    logger.warn('SEND-ORDER-EMAIL', 'Rate limit exceeded - possible spam attempt');
+    return res.status(429).json(rateLimitResult.response.body);
   }
 
   if (req.method !== 'POST') {

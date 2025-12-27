@@ -1,8 +1,13 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCb4SZCCYMUUYiiB99DSEYmpwjahHKx6w0';
+// SECURITY: Never hardcode API keys! Always use environment variables.
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-const genAI = new GoogleGenerativeAI(API_KEY);
+if (!API_KEY) {
+  console.warn('⚠️ Gemini API key not configured. AI features will be disabled.');
+}
+
+const genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
 
 export interface NutritionalData {
   calories: number;
@@ -13,6 +18,10 @@ export interface NutritionalData {
 }
 
 export const getNutritionalInfo = async (productName: string): Promise<NutritionalData | null> => {
+  if (!genAI) {
+    console.warn('Gemini AI not configured');
+    return null;
+  }
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
@@ -60,6 +69,10 @@ Use decimal values for precision (e.g., 21.2, 3.3). Return only the JSON, nothin
 };
 
 export const getProductDescription = async (productName: string): Promise<string | null> => {
+  if (!genAI) {
+    console.warn('Gemini AI not configured');
+    return null;
+  }
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
@@ -75,6 +88,10 @@ export const getProductDescription = async (productName: string): Promise<string
 };
 
 export const askAIAssistant = async (question: string): Promise<string | null> => {
+  if (!genAI) {
+    console.warn('Gemini AI not configured');
+    return null;
+  }
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
